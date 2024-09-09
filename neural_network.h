@@ -54,6 +54,7 @@ struct neural_network* alloc_network(int count, const int numbers[]);
 void apply_params(struct neural_network* network, struct params params);
 void free_layers(struct layer* layers, int count);
 void free_network(struct neural_network* network);
+void randomize(struct neural_network* network, double from, double to);
 void set_layer(struct layer layer, const double* weights, const double* biases);
 struct input_data* alloc_input_data(int count);
 void free_input_data(struct input_data* data);
@@ -70,5 +71,6 @@ double cost(struct neural_network* network, struct input_data* data, struct inpu
 void apply_gradients(struct layer to, struct layer gradients, double learningRate);
 void update_gradients(const struct neural_network* network, struct layer* gradients, struct input_data input, struct input_data expected);
 struct layer* copy_layers_without_values(struct neural_network* network);
+int is_valid(struct input_data* output, struct input_data* expected);
 
 #endif // NEURAL_NETWORK_H

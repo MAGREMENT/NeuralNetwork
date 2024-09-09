@@ -22,3 +22,9 @@ inline double mean_square_cost(double predicted, double expected){
 inline double derivative_mean_square_cost(double predicted, double expected){
     return 2 * (predicted - expected);
 }
+
+inline int diagonal_cut(double x, double y) {
+    return x > y ? 1 : 0;
+}
+
+

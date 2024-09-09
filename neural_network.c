@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "neural_network.h"
 #include "functions.h"
+#include "utils.h"
 
 inline struct neural_network* alloc_network(const int count, const int numbers[]){
     struct neural_network* result = malloc(sizeof(struct neural_network));
@@ -44,6 +45,18 @@ inline void apply_params(struct neural_network* network, struct params params){
         default:
             network->cost = NULL;
             network->costDerivative = NULL;
+    }
+}
+
+inline void randomize(struct neural_network* network, double from, double to) {
+    for(int n = 0; n < network->count; n++) {
+        for(int o = 0; o < network->layers[n].out_count; o++) {
+            for(int i = 0; i < network->layers[n].in_count; i++) {
+                network->layers[n].weights[i * network->layers[n].out_count + o] = random(from, to);
+            }
+
+            network->layers[n].biases[o] = random(from, to);
+        }
     }
 }
 
@@ -275,4 +288,8 @@ inline void learn(struct neural_network* network, struct input_data data[], stru
     }
 
     free_layers(gradients, network->count);
+}
+
+inline int is_valid(struct input_data* output, struct input_data* expected) {
+    return max_index(output->values, output->count) == max_index(expected->values, expected->count);
 }

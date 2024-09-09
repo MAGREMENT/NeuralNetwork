@@ -2,45 +2,78 @@
 #include <stdlib.h>
 
 #include "neural_network.h"
+#include "generator.h"
+#include "functions.h"
 
-struct neural_network* example_network();
+void unit_tests();
+void program();
 
 int main() {
-    struct neural_network* network = example_network();
+    program();
+    //unit_tests();
 
-    struct input_data *data = alloc_input_data(2);
-    double v[] = {1, 2};
-    set_input_data(*data, v);
-
-    struct input_data* d1 = forward(network->layers[0], *data, network->activation);
-    struct input_data* d2 = forward(network->layers[1], *d1, network->activation);
-
-    printf("%f %f\n", data->values[0], data->values[1]);
-    printf("%f %f %f\n", d1->values[0], d1->values[1], d1->values[2]);
-    printf("%f %f", d2->values[0], d2->values[1]);
-
-    free_network(network);
     return EXIT_SUCCESS;
 }
 
-struct neural_network* example_network(){
+void program() {
     int numbers[] = {2, 3, 2};
     struct neural_network* network = alloc_network(3, numbers);
-
     struct params params;
     params.learningRate = 0.8;
     params.activationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
 
-    double w1[] = {0.5, -7, 2, -1, 2, 3};
-    double b1[] = {1, 2, -3};
-    set_layer(network->layers[0], w1, b1);
+    randomize(network, -10, 10);
+    const struct test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
 
-    double w2[] = {-2, 3, -4, 3, 0.7, 8};
-    double b2[] = {0, 1};
-    set_layer(network->layers[1], w2, b2);
+    for(int iteration = 0; iteration < 20; iteration++) {
+        learn(network, test->inputs, test->expected, test->count);
 
-    return network;
+        int valid = 0;
+        for(int i = 0; i < test->count; i++) {
+            struct input_data* output = predict(network, &test->inputs[i]);
+            if(is_valid(output, &test->expected[i])) valid++;
+            free_input_data(output);
+        }
+
+        printf("accuracy : %f / 100.0\n", (double)valid / test->count * 100);
+    }
+}
+
+void generate_test() {
+    const struct test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
+    if(test->count != 400) {
+        printf("invalid count");
+        return;
+    }
+
+    for(int i = 0; i < test->count; i++) {
+        if(test->inputs[i].count != 2) {
+            printf("invalid input count at %d", i);
+            return;
+        }
+
+        if(test->inputs[i].values[0] < 0 || test->inputs[i].values[1] < 0) {
+            printf("negative input at %d", i);
+            return;
+        }
+
+        if(test->expected[i].count != 2) {
+            printf("invalid expected count at %d", i);
+            return;
+        }
+
+        if(test->expected[i].values[0] < 0 || test->expected[i].values[1] < 0) {
+            printf("negative expected at %d", i);
+            return;
+        }
+    }
+
+    printf("generate test OK!");
+}
+
+void unit_tests() {
+    generate_test();
 }
 
