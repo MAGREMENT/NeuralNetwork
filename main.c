@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include "repository.h"
+#include <stdlib.h>
+
+#include "neural_network.h"
 
 struct neural_network* example_network();
 

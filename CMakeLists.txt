@@ -3,4 +3,4 @@ project(NeuralNetwork C)
 
 set(CMAKE_C_STANDARD 23)
 
-add_executable(NeuralNetwork main.c neural_network.h functions.h repository.h)
+add_executable(NeuralNetwork main.c neural_network.c functions.c repository.c)
