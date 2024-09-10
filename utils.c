@@ -19,3 +19,11 @@ inline int max_index(double values[], const int count) {
 
     return index;
 }
+
+inline int equals(const double left, const double right, const double margin) {
+    return abs(left - right) < margin;
+}
+
+int default_equals(const double left, const double right) {
+    return equals(left, right, 0.00001);
+}

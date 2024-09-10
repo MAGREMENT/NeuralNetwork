@@ -68,6 +68,7 @@ void first_advance(struct layer layer, struct backpropagation_data* data, struct
 void continue_advance(struct layer layer, struct backpropagation_data* data, int inputIndex, double (*activation)(double));
 struct backpropagation_data* traverse(const struct neural_network* network, struct input_data* data);
 double cost(struct neural_network* network, struct input_data* data, struct input_data* expected);
+double multi_cost(struct neural_network* network, struct input_data* data, struct input_data* expected, int count);
 void apply_gradients(struct layer to, struct layer gradients, double learningRate);
 void update_gradients(const struct neural_network* network, struct layer* gradients, struct input_data input, struct input_data expected);
 struct layer* copy_layers_without_values(struct neural_network* network);
