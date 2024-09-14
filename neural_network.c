@@ -167,7 +167,7 @@ inline void continue_advance(struct layer layer, struct backpropagation_data* da
         }
 
         data->layers[inputIndex + 1].weightedInputs[i] = n;
-        data->layers[inputIndex + 1].afterActivations[i] = activation(n);;
+        data->layers[inputIndex + 1].afterActivations[i] = activation(n);
     }
 }
 
@@ -246,8 +246,9 @@ inline void update_gradients(const struct neural_network* network, struct layer*
             for(int o = 0; o < gradients[n].out_count; o++) {
                 double value = 0;
                 for(int i = 0; i < gradients[n + 1].out_count; i++) {
-                    value += data->layers[n + 1].nodeValues[o] * network->layers[n + 1]
-                        .weights[i * gradients[n].out_count + o];
+                    const double w = network->layers[n + 1].weights[o * gradients[n + 1].out_count + i];
+                    const double nv = data->layers[n + 1].nodeValues[i];
+                    value += nv * w;
                 }
 
                 data->layers[n].nodeValues[o] = value * network->activationDerivative(data->layers[n].weightedInputs[o]);
@@ -256,20 +257,20 @@ inline void update_gradients(const struct neural_network* network, struct layer*
 
         struct layer current = gradients[n];
         for(int o = 0; o < current.out_count; o++) {
+            const double nv = data->layers[n].nodeValues[o];
             for(int i = 0; i < current.in_count; i++) {
-                double g = data->layers[n].nodeValues[o];
-                g *= n == 0 ? input.values[i] : data->layers[n - 1].afterActivations[i];
+                const double g = nv * (n == 0 ? input.values[i] : data->layers[n - 1].afterActivations[i]);
                 gradients[n].weights[i * current.out_count + o] += g;
             }
 
-            gradients[n].biases[o] += data->layers[n].nodeValues[o];
+            gradients[n].biases[o] += nv;
         }
     }
 
     free_back_data(data);
 }
 
-inline struct layer* copy_layers_without_values(struct neural_network* network) {
+inline struct layer* copy_layers(struct neural_network* network, int copyValues) {
     struct layer* result = malloc(network->count * sizeof(struct layer));
 
     for(int n = 0; n < network->count; n++) {
@@ -283,10 +284,10 @@ inline struct layer* copy_layers_without_values(struct neural_network* network) 
 
         for(int o = 0; o < out; o++) {
             for(int i = 0; i < in; i++) {
-                result[n].weights[i * out + o] = 0;
+                result[n].weights[i * out + o] = copyValues ? network->layers[n].weights[i * out + o] : 0;
             }
 
-            result[n].biases[o] = 0;
+            result[n].biases[o] = copyValues ? network->layers[n].biases[0] : 0;
         }
     }
 
@@ -294,7 +295,7 @@ inline struct layer* copy_layers_without_values(struct neural_network* network) 
 }
 
 inline void learn(struct neural_network* network, struct input_data data[], struct input_data expected[], int count){
-    struct layer* gradients = copy_layers_without_values(network);
+    struct layer* gradients = copy_layers(network, 0);
 
     for(int i = 0; i < count; i++){
         update_gradients(network, gradients, data[i], expected[i]);

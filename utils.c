@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <float.h>
+#include <math.h>
 #include <stdlib.h>
 
 inline double random(const double from, const double to) {
@@ -21,7 +22,7 @@ inline int max_index(double values[], const int count) {
 }
 
 inline int equals(const double left, const double right, const double margin) {
-    return abs(left - right) < margin;
+    return fabs(left - right) < margin;
 }
 
 int default_equals(const double left, const double right) {

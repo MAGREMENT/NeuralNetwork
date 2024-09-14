@@ -71,7 +71,7 @@ double cost(struct neural_network* network, struct input_data* data, struct inpu
 double multi_cost(struct neural_network* network, struct input_data* data, struct input_data* expected, int count);
 void apply_gradients(struct layer to, struct layer gradients, double learningRate);
 void update_gradients(const struct neural_network* network, struct layer* gradients, struct input_data input, struct input_data expected);
-struct layer* copy_layers_without_values(struct neural_network* network);
+struct layer* copy_layers(struct neural_network* network, int copyValues);
 int is_valid(struct input_data* output, struct input_data* expected);
 
 #endif // NEURAL_NETWORK_H
