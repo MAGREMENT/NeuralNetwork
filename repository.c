@@ -1,4 +1,5 @@
 #include "neural_network.h"
+#include "repository.h"
 #include <stdio.h>
 
 inline struct neural_network* initialize(const char* file){
@@ -35,6 +36,9 @@ inline void save(const struct neural_network* network, const struct params* para
     FILE* fptr = fopen(file, "w");
 
     int n = network->count + 1;
+    int count[] = { n };
+    fwrite(count, sizeof(int), 1, fptr);
+
     int size[n];
     size[0] = network->layers[0].in_count;
     for(int i = 0; i < network->count; i++){
@@ -52,7 +56,7 @@ inline void save(const struct neural_network* network, const struct params* para
         int types[] = {params->activationType, params->costType};
 
         fwrite(ln, sizeof(double), 1, fptr);
-        fwrite(types, sizeof(int), 1, fptr);
+        fwrite(types, sizeof(int), 2, fptr);
     }
 
     fclose(fptr);

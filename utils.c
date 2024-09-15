@@ -28,3 +28,24 @@ inline int equals(const double left, const double right, const double margin) {
 int default_equals(const double left, const double right) {
     return equals(left, right, 0.00001);
 }
+
+struct batch create_batch(int current, int size, int max) {
+    struct batch result;
+    if(size == max) {
+        result.to = max;
+        result.then = current;
+        return result;
+    }
+
+    int to = current + size;
+    if(to >= max) {
+        result.to = max;
+        result.then = to % max;
+    }
+    else {
+        result.to = to;
+        result.then = 0;
+    }
+
+    return result;
+}
