@@ -21,23 +21,23 @@ inline int max_index(double values[], const int count) {
     return index;
 }
 
-inline int equals(const double left, const double right, const double margin) {
+inline int deq(const double left, const double right, const double margin) {
     return fabs(left - right) < margin;
 }
 
-int default_equals(const double left, const double right) {
-    return equals(left, right, 0.00001);
+int def_deq(const double left, const double right) {
+    return deq(left, right, 0.00001);
 }
 
-struct batch create_batch(int current, int size, int max) {
-    struct batch result;
+batch create_batch(const int current, const int size, const int max) {
+    batch result;
     if(size == max) {
         result.to = max;
         result.then = current;
         return result;
     }
 
-    int to = current + size;
+    const int to = current + size;
     if(to >= max) {
         result.to = max;
         result.then = to % max;

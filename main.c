@@ -12,17 +12,17 @@ void unit_tests();
 void program();
 
 int main() {
-    //program();
-    unit_tests();
+    program();
+    //unit_tests();
 
     return EXIT_SUCCESS;
 }
 
-struct neural_network* example_network(int activation) {
+neural_network* example_network(int activation) {
     int numbers[] = {2, 3, 2};
-    struct neural_network* network = alloc_network(3, numbers);
-    struct params params;
-    params.learningRate = 1;
+    neural_network* network = alloc_network(3, numbers);
+    params params;
+    params.learningRate = 2;
     params.activationType = activation;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
@@ -30,8 +30,8 @@ struct neural_network* example_network(int activation) {
     return network;
 }
 
-struct neural_network* example_network_with_data(int activation) {
-    struct neural_network* network = example_network(activation);
+neural_network* example_network_with_data(int activation) {
+    neural_network* network = example_network(activation);
 
     double w1[] = {0.5, 1, 1.5, 0.5, 1, 1.5};
     double w2[] = {1.5, 1, 0.5, 1.5, 0.5, 1};
@@ -44,7 +44,7 @@ struct neural_network* example_network_with_data(int activation) {
     return network;
 }
 
-void print_network(struct neural_network* network) {
+void print_network(neural_network* network) {
     for(int i = 0; i < network->count; i++) {
         printf("weights %d : ", i);
 
@@ -63,10 +63,10 @@ void print_network(struct neural_network* network) {
     }
 }
 
-void test_network(struct neural_network* network, struct test_data *test) {
+void test_network(neural_network* network, test_data *test) {
     int valid = 0;
     for(int i = 0; i < test->count; i++) {
-        struct input_data* output = predict(network, &test->inputs[i]);
+        input_data* output = predict(network, &test->inputs[i]);
         if(is_valid(output, &test->expected[i])) valid++;
         free_input_data(output);
     }
@@ -77,15 +77,15 @@ void test_network(struct neural_network* network, struct test_data *test) {
 }
 
 void program() {
-    struct neural_network* network = example_network(SIGMOID);
+    neural_network* network = example_network(SIGMOID);
 
     randomize(network, -1, 1);
-    struct test_data *test = positive_generate_for_2(0.5, 20, 2, parabole_cut_10);
+    test_data *test = positive_generate_for_2(0.5, 20, 2, parabole_cut_10);
 
     test_network(network, test);
     int current = 0;
     for(int iteration = 0; iteration < 1000; iteration++) {
-        const struct batch b = create_batch(current, test->count, test->count);
+        const batch b = create_batch(current, test->count, test->count);
         learn(network, test->inputs, test->expected, current, b.to, b.then);
         current = b.then == 0 ? b.to : b.then;
 
@@ -96,7 +96,7 @@ void program() {
 }
 
 void generate_test(int verbose) {
-    struct test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
+    test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
     if(test->count != 400) {
         printf("invalid count\n");
         return;
@@ -136,14 +136,14 @@ void generate_test(int verbose) {
 }
 
 void traverse_test() {
-    struct neural_network* network = example_network_with_data(DEFAULT);
+    neural_network* network = example_network_with_data(DEFAULT);
 
-    struct input_data* input = alloc_input_data(2);
+    input_data* input = alloc_input_data(2);
     input->values[0] = 2;
     input->values[1] = 1;
-    struct backpropagation_data* data = traverse(network, input);
+    backpropagation_data* data = traverse(network, input);
 
-    struct backpropagation_data* expected = alloc_back_data(network);
+    backpropagation_data* expected = alloc_back_data(network);
     expected[0].weightedInputs[0] = 0.5;
     expected[0].weightedInputs[1] = 3;
     expected[0].weightedInputs[2] = 3.5;
@@ -154,7 +154,7 @@ void traverse_test() {
         for(int o = 0; o < data[l].count; o++) {
             const double w = data[l].weightedInputs[o];
             const double e = expected[l].weightedInputs[o];
-            if(!default_equals(w, e)) {
+            if(!def_deq(w, e)) {
                 printf("invalid input weight at layer %d and index %d, expected %.4f, got %.4f\n",l, o, e, w);
                 return;
             }
@@ -168,8 +168,8 @@ void traverse_test() {
 }
 
 void learn_test() {
-    struct neural_network* network = example_network_with_data(SIGMOID);
-    struct test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
+    neural_network* network = example_network_with_data(SIGMOID);
+    test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
 
     double cost = multi_cost(network, test->inputs, test->expected, test->count);
     for(int i = 0; i < 20; i++) {
@@ -188,16 +188,16 @@ void learn_test() {
 }
 
 void gradients_test() {
-    struct neural_network* network = example_network_with_data(SIGMOID);
-    struct input_data* input = alloc_input_data(2);
+    neural_network* network = example_network_with_data(SIGMOID);
+    input_data* input = alloc_input_data(2);
     input->values[0] = 2;
     input->values[1] = 1;
 
-    struct input_data* expected = alloc_input_data(2);
+    input_data* expected = alloc_input_data(2);
     expected->values[0] = 1;
     expected->values[1] = 0;
 
-    struct gradients* gradients = alloc_gradients(network, 0);
+    gradients* gradients = alloc_gradients(network, 0);
     update_gradients(network, gradients, *input, *expected);
 
     /* TODO
@@ -212,9 +212,20 @@ void gradients_test() {
        = 1.4707       = 0.19461     = 0.28621
 
     wd = -0.10731
-       = 0.29274
+       = 0.29814
        = 0.15503
     */
+
+    constexpr double margin = 0.001;
+    const double bGradEnd[] = {-0.262, 0.28621};
+
+    for(int i = 0; i < network->layers[1].out_count; i++) {
+        if(!deq(bGradEnd[i], gradients[1].biases[i], margin)) {
+            printf("Gradient for bias at layer 1 and index %d incorrect, expected %.3f, got %.3f", i,
+                bGradEnd[i], gradients[1].biases[i]);
+            return;
+        }
+    }
 
     free_network(network);
     free_input_data(input);
@@ -227,15 +238,15 @@ void repository_test() {
     FILE* fptr = fopen(filename, "w");
     fclose(fptr);
 
-    struct neural_network* network = example_network_with_data(SIGMOID);
-    struct params params;
+    neural_network* network = example_network_with_data(SIGMOID);
+    params params;
     params.learningRate = 1;
     params.activationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
 
     save(network, &params, filename);
-    struct neural_network* download = initialize(filename);
+    neural_network* download = initialize(filename);
 
     if(network->count != download->count) {
         printf("Different network count");
@@ -272,13 +283,13 @@ void repository_test() {
         const int out = network->layers[i].out_count;
 
         for(int o = 0; o < out; o++) {
-            if(!default_equals(network->layers[i].biases[o], download->layers[i].biases[o])) {
+            if(!def_deq(network->layers[i].biases[o], download->layers[i].biases[o])) {
                 printf("Different bias for layer %d and output %d", i, o);
                 return;
             }
 
             for(int j = 0; j < in; j++) {
-                if(!default_equals(network->layers[i].weights[j * out + o], download->layers[i].weights[j * out + o])) {
+                if(!def_deq(network->layers[i].weights[j * out + o], download->layers[i].weights[j * out + o])) {
                     printf("Different weights for layer %d, output %d and input %d", i, o, j);
                     return;
                 }

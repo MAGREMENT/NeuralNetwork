@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-inline void free_test_data(struct test_data* data){
+inline void free_test_data(test_data* data){
     for(int i = 0; i < data->count; i++) {
         free(data->inputs[i].values);
         free(data->expected[i].values);
@@ -12,11 +12,11 @@ inline void free_test_data(struct test_data* data){
     free(data);
 }
 
-inline struct test_data* positive_generate_for_2(const double spacing, const int count, const int max, int(*cut)(double, double)) {
-    struct test_data* result = malloc(sizeof(struct test_data));
+inline test_data* positive_generate_for_2(const double spacing, const int count, const int max, int(*cut)(double, double)) {
+    test_data* result = malloc(sizeof(test_data));
     result->count = count * count;
-    result->inputs = malloc(count * count * sizeof(struct input_data));
-    result->expected = malloc(count * count * sizeof(struct input_data));
+    result->inputs = malloc(count * count * sizeof(input_data));
+    result->expected = malloc(count * count * sizeof(input_data));
 
     for(int i = 0; i < count; i++) {
         for(int j = 0; j < count; j++) {

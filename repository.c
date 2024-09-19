@@ -2,7 +2,7 @@
 #include "repository.h"
 #include <stdio.h>
 
-inline struct neural_network* initialize(const char* file){
+inline neural_network* initialize(const char* file){
     FILE* fptr = fopen(file, "r");
 
     int size[1];
@@ -11,14 +11,14 @@ inline struct neural_network* initialize(const char* file){
     int dimensions[size[0]];
     fread(dimensions, sizeof(int), size[0], fptr);
 
-    struct neural_network* result = alloc_network(size[0], dimensions);
+    neural_network* result = alloc_network(size[0], dimensions);
     for(int i = 0; i < result->count; i++){
         const int wCount = result->layers[i].in_count * result->layers[i].out_count;
         fread(result->layers[i].weights, sizeof(double), wCount, fptr);
         fread(result->layers[i].biases, sizeof(double), result->layers[i].out_count, fptr);
     }
 
-    struct params params;
+    params params;
     double b1[1];
     fread(b1, sizeof(double), 1, fptr);
     params.learningRate = b1[0];
@@ -32,7 +32,7 @@ inline struct neural_network* initialize(const char* file){
     return result;
 }
 
-inline void save(const struct neural_network* network, const struct params* params, const char* file){
+inline void save(const neural_network* network, const params* params, const char* file){
     FILE* fptr = fopen(file, "w");
 
     int n = network->count + 1;

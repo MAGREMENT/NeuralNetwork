@@ -1,15 +1,13 @@
 #include <stdlib.h>
 #include "neural_network.h"
 
-#include <stdio.h>
-
 #include "functions.h"
 #include "utils.h"
 
-inline struct neural_network* alloc_network(const int count, const int numbers[]){
-    struct neural_network* result = malloc(sizeof(struct neural_network));
+inline neural_network* alloc_network(const int count, const int numbers[]){
+    neural_network* result = malloc(sizeof(neural_network));
     result->count = count - 1;
-    result->layers = malloc(result->count * sizeof(struct layer));
+    result->layers = malloc(result->count * sizeof(layer));
 
     for(int i = 1; i < count; i++){
         const int in = numbers[i - 1];
@@ -24,7 +22,7 @@ inline struct neural_network* alloc_network(const int count, const int numbers[]
     return result;
 }
 
-inline void apply_params(struct neural_network* network, struct params params){
+inline void apply_params(neural_network* network, params params){
     network->learningRate = params.learningRate;
     for(int i = 0; i < network->count; i++) {
         switch (params.activationType) {
@@ -53,7 +51,7 @@ inline void apply_params(struct neural_network* network, struct params params){
     }
 }
 
-inline void randomize(struct neural_network* network, double from, double to) {
+inline void randomize(neural_network* network, double from, double to) {
     for(int n = 0; n < network->count; n++) {
         for(int o = 0; o < network->layers[n].out_count; o++) {
             for(int i = 0; i < network->layers[n].in_count; i++) {
@@ -65,7 +63,7 @@ inline void randomize(struct neural_network* network, double from, double to) {
     }
 }
 
-inline void free_layers(struct layer* layers, int count) {
+inline void free_layers(layer* layers, int count) {
     for(int i = 0; i < count; i++){
         free(layers[i].biases);
         free(layers[i].weights);
@@ -74,12 +72,12 @@ inline void free_layers(struct layer* layers, int count) {
     free(layers);
 }
 
-inline void free_network(struct neural_network* network){
+inline void free_network(neural_network* network){
     free_layers(network->layers, network->count);
     free(network);
 }
 
-inline void set_layer(struct layer layer, const double* weights, const double* biases){
+inline void set_layer(layer layer, const double* weights, const double* biases){
     for(int i = 0; i < layer.in_count; i++){
         for(int j = 0; j < layer.out_count; j++){
             layer.weights[i * layer.out_count + j] = weights[i * layer.out_count + j];
@@ -91,27 +89,27 @@ inline void set_layer(struct layer layer, const double* weights, const double* b
     }
 }
 
-inline struct input_data* alloc_input_data(int count){
-    struct input_data* result = malloc(sizeof(struct input_data));
+inline input_data* alloc_input_data(int count){
+    input_data* result = malloc(sizeof(input_data));
 
     result->count = count;
     result->values = malloc(count * sizeof(double));
     return result;
 }
 
-inline void free_input_data(struct input_data* data){
+inline void free_input_data(input_data* data){
     free(data->values);
     free(data);
 }
 
-inline void set_input_data(struct input_data data, const double values[]){
+inline void set_input_data(input_data data, const double values[]){
     for(int i = 0; i < data.count; i++){
         data.values[i] = values[i];
     }
 }
 
-inline struct backpropagation_data* alloc_back_data(const struct neural_network* network) {
-    struct backpropagation_data* result = malloc(network->count * sizeof(struct backpropagation_data));
+inline backpropagation_data* alloc_back_data(const neural_network* network) {
+    backpropagation_data* result = malloc(network->count * sizeof(backpropagation_data));
 
     for(int i = 0; i < network->count; i++){
         const int n = network->layers[i].out_count;
@@ -124,7 +122,7 @@ inline struct backpropagation_data* alloc_back_data(const struct neural_network*
     return result;
 }
 
-inline void free_back_data(struct backpropagation_data* data, const int count){
+inline void free_back_data(backpropagation_data* data, const int count){
     for(int i = 0; i < count; i++){
         free(data[i].weightedInputs);
         free(data[i].afterActivations);
@@ -134,8 +132,8 @@ inline void free_back_data(struct backpropagation_data* data, const int count){
     free(data);
 }
 
-inline struct input_data* forward(struct layer layer, struct input_data input){
-    struct input_data* result = alloc_input_data(layer.out_count);
+inline input_data* forward(layer layer, input_data input){
+    input_data* result = alloc_input_data(layer.out_count);
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
         for(int j = 0; j < layer.in_count; j++){
@@ -148,10 +146,10 @@ inline struct input_data* forward(struct layer layer, struct input_data input){
     return result;
 }
 
-inline struct input_data* predict(struct neural_network* network, struct input_data* data){
-    struct input_data* input = data;
+inline input_data* predict(neural_network* network, input_data* data){
+    input_data* input = data;
     for(int i = 0; i < network->count; i++){
-        struct input_data* before = input;
+        input_data* before = input;
         input = forward(network->layers[i], *input);
         if(i != 0) free_input_data(before);
     }
@@ -159,7 +157,7 @@ inline struct input_data* predict(struct neural_network* network, struct input_d
     return input;
 }
 
-inline void continue_advance(struct layer layer, struct backpropagation_data* data, const int inputIndex){
+inline void continue_advance(layer layer, backpropagation_data* data, const int inputIndex){
 
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
@@ -172,7 +170,7 @@ inline void continue_advance(struct layer layer, struct backpropagation_data* da
     }
 }
 
-inline void first_advance(struct layer layer, struct backpropagation_data* data, struct input_data* input){
+inline void first_advance(layer layer, backpropagation_data* data, input_data* input){
 
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
@@ -185,8 +183,8 @@ inline void first_advance(struct layer layer, struct backpropagation_data* data,
     }
 }
 
-inline struct backpropagation_data* traverse(const struct neural_network* network, struct input_data* data){
-    struct backpropagation_data* result = alloc_back_data(network);
+inline backpropagation_data* traverse(const neural_network* network, input_data* data){
+    backpropagation_data* result = alloc_back_data(network);
 
     first_advance(network->layers[0], result, data);
     for(int i = 0; i < network->count - 1; i++) {
@@ -196,8 +194,8 @@ inline struct backpropagation_data* traverse(const struct neural_network* networ
     return result;
 }
 
-inline double cost(struct neural_network* network, struct input_data* data, struct input_data* expected) {
-    struct input_data* result = predict(network, data);
+inline double cost(neural_network* network, input_data* data, input_data* expected) {
+    input_data* result = predict(network, data);
     double cost = 0;
     for(int i = 0; i < expected->count; i++) {
         cost += network->cost(result->values[i], expected->values[i]);
@@ -207,7 +205,7 @@ inline double cost(struct neural_network* network, struct input_data* data, stru
     return cost;
 }
 
-inline double multi_cost(struct neural_network* network, struct input_data* data, struct input_data* expected, const int count) {
+inline double multi_cost(neural_network* network, input_data* data, input_data* expected, const int count) {
     double c = 0;
     for(int i = 0; i < count; i++) {
         c += cost(network, &data[i], &expected[i]);
@@ -216,7 +214,7 @@ inline double multi_cost(struct neural_network* network, struct input_data* data
     return c;
 }
 
-inline void apply_gradients(struct layer to, struct gradients gradients, double learningRate){
+inline void apply_gradients(layer to, gradients gradients, double learningRate){
     for(int i = 0; i < to.in_count; i++){
         for(int j = 0; j < to.out_count; j++){
             to.weights[i * to.out_count + j] -= gradients.weights[i * to.out_count + j] * learningRate;
@@ -228,10 +226,10 @@ inline void apply_gradients(struct layer to, struct gradients gradients, double 
     }
 }
 
-inline void update_gradients(const struct neural_network* network, struct gradients* gradients, struct input_data input,
-        const struct input_data expected) {
+inline void update_gradients(const neural_network* network, gradients* gradients, input_data input,
+        const input_data expected) {
 
-    struct backpropagation_data* data = traverse(network, &input);
+    backpropagation_data* data = traverse(network, &input);
     const int lastIndex = network->count - 1;
 
     for(int n = lastIndex; n >= 0; n--) {
@@ -243,19 +241,20 @@ inline void update_gradients(const struct neural_network* network, struct gradie
             }
         }
         else {
-            for(int o = 0; o < network->layers[n].out_count; o++) {
+            const int out = network->layers[n + 1].out_count;
+            for(int i = 0; i < network->layers[n].out_count; i++) {
                 double value = 0;
-                for(int i = 0; i < network->layers[n + 1].out_count; i++) {
-                    const double w = network->layers[n + 1].weights[o * network->layers[n + 1].out_count + i];
-                    const double nv = data[n + 1].nodeValues[i];
+                for(int o = 0; o < out; o++) {
+                    const double w = network->layers[n + 1].weights[i * out + o];
+                    const double nv = data[n + 1].nodeValues[o];
                     value += nv * w;
                 }
 
-                data[n].nodeValues[o] = value * network->layers[n].activationDerivative(data[n].weightedInputs[o]);
+                data[n].nodeValues[i] = value * network->layers[n].activationDerivative(data[n].weightedInputs[i]);
             }
         }
 
-        struct layer current = network->layers[n];
+        const layer current = network->layers[n];
         for(int o = 0; o < current.out_count; o++) {
             const double nv = data[n].nodeValues[o];
             for(int i = 0; i < current.in_count; i++) {
@@ -270,8 +269,8 @@ inline void update_gradients(const struct neural_network* network, struct gradie
     free_back_data(data, network->count);
 }
 
-inline struct gradients* alloc_gradients(struct neural_network* network, int copyValues) {
-    struct gradients* result = malloc(network->count * sizeof(struct gradients));
+inline gradients* alloc_gradients(neural_network* network, int copyValues) {
+    gradients* result = malloc(network->count * sizeof(gradients));
 
     for(int n = 0; n < network->count; n++) {
         const int in = network->layers[n].in_count;
@@ -292,18 +291,18 @@ inline struct gradients* alloc_gradients(struct neural_network* network, int cop
     return result;
 }
 
-inline void free_gradients(struct gradients* layers, const int count) {
+inline void free_gradients(gradients* gradients, const int count) {
     for(int i = 0; i < count; i++){
-        free(layers[i].biases);
-        free(layers[i].weights);
+        free(gradients[i].biases);
+        free(gradients[i].weights);
     }
 
-    free(layers);
+    free(gradients);
 }
 
-inline void learn(struct neural_network* network, struct input_data data[], struct input_data expected[],
+inline void learn(neural_network* network, input_data data[], input_data expected[],
         const int from, const int to, const int then){
-    struct gradients* gradients = alloc_gradients(network, 0);
+    gradients* gradients = alloc_gradients(network, 0);
 
     for(int i = from; i < to; i++){
         update_gradients(network, gradients, data[i], expected[i]);
@@ -320,6 +319,6 @@ inline void learn(struct neural_network* network, struct input_data data[], stru
     free_gradients(gradients, network->count);
 }
 
-inline int is_valid(struct input_data* output, struct input_data* expected) {
+inline int is_valid(input_data* output, input_data* expected) {
     return max_index(output->values, output->count) == max_index(expected->values, expected->count);
 }
