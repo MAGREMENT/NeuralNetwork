@@ -18,7 +18,7 @@ typedef struct params {
 
 typedef struct neural_network {
     int count;
-    struct layer* layers;
+    layer* layers;
     double learningRate;
     double (*cost)(double, double);
     double (*costDerivative)(double, double);
@@ -51,13 +51,15 @@ enum cost_type {
 };
 
 neural_network* alloc_network(int count, const int numbers[]);
-void apply_params(neural_network* network, params params);
-void free_layers(layer* layers, int count);
 void free_network(neural_network* network);
-void randomize(neural_network* network, double from, double to);
-void set_layer(layer layer, const double* weights, const double* biases);
+
 input_data* alloc_input_data(int count);
 void free_input_data(input_data* data);
+
+void apply_params(neural_network* network, params params);
+void free_layers(layer* layers, int count);
+void randomize(neural_network* network, double from, double to);
+void set_layer(layer layer, const double* weights, const double* biases);
 void set_input_data(input_data data, const double values[]);
 input_data* forward(layer layer, input_data input);
 void learn(neural_network* network, input_data data[], input_data expected[], int from,

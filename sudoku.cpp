@@ -17,7 +17,7 @@ inline string find_sudoku(const string filename) {
     findContours(threshold, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
     auto [biggest, maxArea] = biggest_contours(contours);
 
-    if(biggest.size() == 0) return "_No valid area found";
+    if(biggest.empty()) return "_No valid area found";
 
     biggest = reorder(biggest);
     const vector objective{Point(0, 0), Point(450, 0), Point(0, 450), Point(450, 450)};
@@ -40,9 +40,9 @@ Mat preprocess(const Mat &img) {
 
 tuple<vector<Point>, double> biggest_contours(vector<vector<Point>> contours) {
     vector<Point> biggest;
-    int maxArea = 0;
+    double maxArea = 0;
 
-    for (auto contour : contours) {
+    for (const auto& contour : contours) {
         const double area = contourArea(contour);
         if(area < 30 || area < maxArea) continue; //TODO adapt to image size
 
