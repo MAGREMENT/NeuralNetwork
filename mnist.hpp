@@ -1,6 +1,9 @@
 #ifndef MNIST_H
 #define MNIST_H
-#include "neural_network.h"
+
+extern "C" {
+    #include "neural_network.h"
+}
 #include "opencv2/opencv.hpp"
 
 using namespace std;

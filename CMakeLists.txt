@@ -10,8 +10,8 @@ add_executable(NeuralNetwork neural_network.c functions.c repository.c generator
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(Sudoku main.cpp sudoku.cpp)
-add_executable(Mnist mnist.cpp)
+add_executable(Sudoku sudoku.cpp)
+add_executable(Mnist functions.c utils.c neural_network.c mnist.cpp)
 
 target_link_libraries(Sudoku ${OpenCV_LIBS})
 target_link_libraries(Mnist ${OpenCV_LIBS})

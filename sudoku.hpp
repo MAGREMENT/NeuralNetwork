@@ -3,6 +3,6 @@
 
 #include <string>
 
-std::string find_sudoku(std::string filename);
+std::string find_sudoku(const std::string &filename);
 
 #endif //SUDOKU_H

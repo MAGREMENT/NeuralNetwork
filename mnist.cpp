@@ -1,13 +1,47 @@
 #include "mnist.hpp"
 
-int main() {
-    const auto images = read_images("C:/Users/Zach/Desktop/Perso/NeuralNetwork/mnist-data/train-images.idx3-ubyte");
-    imshow("Test", images.at(0));
-    waitKey(0);
+int main(int argc, char *argv[]) {
+    if(argc != 5) {
+        cout << "Expected 4 arguments : the image file and the label file for both training and testing";
+        return EXIT_FAILURE;
+    }
 
-    const auto labels = read_labels("C:/Users/Zach/Desktop/Perso/NeuralNetwork/mnist-data/train-labels.idx1-ubyte");
-    for(int i = 0; i < 20; i++) {
-        printf("%d\n", labels.at(i));
+    cout << "Starting up...\n";
+    vector<Mat> trainImages = read_images(argv[1]);
+    vector<int> trainLabels = read_labels(argv[2]);
+    vector<Mat> testImages = read_images(argv[3]);
+    vector<int> testLabels = read_labels(argv[4]);
+    cout << "App started\n";
+
+    char command = '\0';
+    while(command != 'e') {
+        cout << "\nSelect your command : \n"
+                "e : End\n"
+                "i : Show image\n";
+
+        cin >> command;
+        switch (command) {
+            case 'e' :
+                break;
+            case 'i' : {
+                cout << "Select index : \n";
+                int index;
+                cin >> index;
+                if(index < 0 || index > trainImages.size()) {
+                    cout << "Incorrect index\n";
+                    break;
+                }
+
+                auto s = to_string(trainLabels[index]);
+                imshow(s, trainImages[index]);
+                waitKey(0);
+                destroyWindow(s);
+
+                break;
+            }
+            default :
+                cout << "Command not recognized\n";
+        }
     }
 
     return EXIT_SUCCESS;
@@ -67,7 +101,7 @@ inline vector<int> read_labels(const char* filename) {
 }
 
 input_data* to_input(Mat mat) {
-    const input_data* result = alloc_input_data(mat.rows * mat.cols);
+    input_data* result = alloc_input_data(mat.rows * mat.cols);
     for(int r = 0; r < mat.rows; r++) {
         for(int c = 0; c < mat.cols; c++) {
             unsigned char v = mat.at<unsigned char>(r, c);
