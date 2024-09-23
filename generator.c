@@ -3,20 +3,8 @@
 
 #include <stdlib.h>
 
-inline void free_test_data(test_data* data){
-    for(int i = 0; i < data->count; i++) {
-        free(data->inputs[i].values);
-        free(data->expected[i].values);
-    }
-
-    free(data);
-}
-
 inline test_data* positive_generate_for_2(const double spacing, const int count, const int max, int(*cut)(double, double)) {
-    test_data* result = malloc(sizeof(test_data));
-    result->count = count * count;
-    result->inputs = malloc(count * count * sizeof(input_data));
-    result->expected = malloc(count * count * sizeof(input_data));
+    test_data* result = alloc_test_data(count * count);
 
     for(int i = 0; i < count; i++) {
         for(int j = 0; j < count; j++) {

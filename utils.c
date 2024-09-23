@@ -28,24 +28,3 @@ inline int deq(const double left, const double right, const double margin) {
 int def_deq(const double left, const double right) {
     return deq(left, right, 0.00001);
 }
-
-batch create_batch(const int current, const int size, const int max) {
-    batch result;
-    if(size == max) {
-        result.to = max;
-        result.then = current;
-        return result;
-    }
-
-    const int to = current + size;
-    if(to >= max) {
-        result.to = max;
-        result.then = to % max;
-    }
-    else {
-        result.to = to;
-        result.then = 0;
-    }
-
-    return result;
-}

@@ -12,8 +12,8 @@ void unit_tests();
 void program();
 
 int main() {
-    program();
-    //unit_tests();
+    //program();
+    unit_tests();
 
     return EXIT_SUCCESS;
 }
@@ -63,17 +63,12 @@ void print_network(neural_network* network) {
     }
 }
 
-void test_network(neural_network* network, test_data *test) {
-    int valid = 0;
-    for(int i = 0; i < test->count; i++) {
-        input_data* output = predict(network, &test->inputs[i]);
-        if(is_valid(output, &test->expected[i])) valid++;
-        free_input_data(output);
-    }
+void test_and_print_network(neural_network* network, test_data* data, const int i) {
+    const test_result result = test_network(network, data);
 
     print_network(network);
-    printf("   cost : %.5f\n", multi_cost(network, test->inputs, test->expected, test->count));
-    printf("   accuracy : %.2f / 100.0\n", (double)valid / test->count * 100);
+    printf("   cost : %.5f\n", result.cost);
+    printf("   accuracy : %.2f / 100.0\n", result.accuracy);
 }
 
 void program() {
@@ -82,20 +77,13 @@ void program() {
     randomize(network, -1, 1);
     test_data *test = positive_generate_for_2(0.5, 20, 2, parabole_cut_10);
 
-    test_network(network, test);
-    int current = 0;
-    for(int iteration = 0; iteration < 1000; iteration++) {
-        const batch b = create_batch(current, test->count, test->count);
-        learn(network, test->inputs, test->expected, current, b.to, b.then);
-        current = b.then == 0 ? b.to : b.then;
-
-        test_network(network, test);
-    }
+    test_and_print_network(network, test, -1);
+    multi_learn(network, test, test->count, 1000, test_and_print_network);
 
     free_network(network);
 }
 
-void generate_test(int verbose) {
+void generate_test(const int verbose) {
     test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
     if(test->count != 400) {
         printf("invalid count\n");
@@ -171,10 +159,10 @@ void learn_test() {
     neural_network* network = example_network_with_data(SIGMOID);
     test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
 
-    double cost = multi_cost(network, test->inputs, test->expected, test->count);
+    double cost = multi_cost(network, test);
     for(int i = 0; i < 20; i++) {
-        learn(network, test->inputs, test-> expected, 0, test->count, 0);
-        double nCost = multi_cost(network, test->inputs, test->expected, test->count);
+        learn(network, test, full_batch(test->count));
+        double nCost = multi_cost(network, test);
 
         if(nCost > cost + 1) {
             printf("new cost (%.5f) bigger by more than 1 than previous cost (%.5f) on iteration %d\n", nCost, cost, i);
@@ -246,7 +234,7 @@ void repository_test() {
     apply_params(network, params);
 
     save(network, &params, filename);
-    neural_network* download = initialize(filename);
+    neural_network* download = initialize(filename, NULL);
 
     if(network->count != download->count) {
         printf("Different network count");

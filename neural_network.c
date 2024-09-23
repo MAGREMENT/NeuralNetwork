@@ -205,10 +205,10 @@ inline double cost(neural_network* network, input_data* data, input_data* expect
     return cost;
 }
 
-inline double multi_cost(neural_network* network, input_data* data, input_data* expected, const int count) {
+inline double multi_cost(neural_network* network, test_data* data) {
     double c = 0;
-    for(int i = 0; i < count; i++) {
-        c += cost(network, &data[i], &expected[i]);
+    for(int i = 0; i < data->count; i++) {
+        c += cost(network, &data->inputs[i], &data->expected[i]);
     }
 
     return c;
@@ -300,25 +300,101 @@ inline void free_gradients(gradients* gradients, const int count) {
     free(gradients);
 }
 
-inline void learn(neural_network* network, input_data data[], input_data expected[],
-        const int from, const int to, const int then){
+inline void learn(neural_network* network, test_data* data, batch batch){
     gradients* gradients = alloc_gradients(network, 0);
 
-    for(int i = from; i < to; i++){
-        update_gradients(network, gradients, data[i], expected[i]);
+    for(int i = batch.then; i < batch.to; i++){
+        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
-    for(int i = 0; i < then; i++) {
-        update_gradients(network, gradients, data[i], expected[i]);
+    for(int i = 0; i < batch.then; i++) {
+        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
     for(int i = 0; i < network->count; i++){
-        apply_gradients(network->layers[i], gradients[i], network->learningRate / (to - from + then));
+        apply_gradients(network->layers[i], gradients[i], network->learningRate / (batch.to - batch.from + batch.then));
     }
 
     free_gradients(gradients, network->count);
 }
 
+inline void multi_learn(neural_network* network, test_data* data, const int batchSize, const int count,
+    void (*on_iteration_end)(neural_network* network, test_data* data, int i)) {
+    int current = 0;
+    for(int iteration = 0; iteration < count; iteration++) {
+        const batch b = create_batch(current, batchSize, data->count);
+        learn(network, data, b);
+
+        current = b.then == 0 ? b.to : b.then;
+        if(on_iteration_end != NULL) on_iteration_end(network, data, iteration);
+    }
+}
+
 inline int is_valid(input_data* output, input_data* expected) {
     return max_index(output->values, output->count) == max_index(expected->values, expected->count);
+}
+
+inline test_data* alloc_test_data(const int count) {
+    test_data* result = malloc(sizeof(test_data));
+    result->count = count;
+    result->inputs = malloc(count * sizeof(input_data));
+    result->expected = malloc(count * sizeof(input_data));
+
+    return result;
+}
+
+inline void free_test_data(test_data* data){
+    for(int i = 0; i < data->count; i++) {
+        free(data->inputs[i].values);
+        free(data->expected[i].values);
+    }
+
+    free(data);
+}
+
+inline test_result test_network(neural_network* network, test_data *test) {
+    double valid = 0;
+    for(int i = 0; i < test->count; i++) {
+        input_data* output = predict(network, &test->inputs[i]);
+        if(is_valid(output, &test->expected[i])) valid++;
+        free_input_data(output);
+    }
+
+    test_result result;
+    result.cost = multi_cost(network, test);
+    result.accuracy = valid / test->count * 100;
+
+    return result;
+}
+
+inline batch create_batch(const int current, const int size, const int max) {
+    batch result;
+    result.from = current;
+
+    if(size == max) {
+        result.to = max;
+        result.then = current;
+        return result;
+    }
+
+    const int to = current + size;
+    if(to >= max) {
+        result.to = max;
+        result.then = to % max;
+    }
+    else {
+        result.to = to;
+        result.then = 0;
+    }
+
+    return result;
+}
+
+inline batch full_batch(const int max) {
+    batch result;
+    result.from = 0;
+    result.to = max;
+    result.then = 0;
+
+    return result;
 }

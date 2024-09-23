@@ -2,7 +2,7 @@
 #include "repository.h"
 #include <stdio.h>
 
-inline neural_network* initialize(const char* file){
+inline neural_network* initialize(const char* file, params* toFill){
     FILE* fptr = fopen(file, "r");
 
     int size[1];
@@ -18,16 +18,18 @@ inline neural_network* initialize(const char* file){
         fread(result->layers[i].biases, sizeof(double), result->layers[i].out_count, fptr);
     }
 
-    params params;
+    params buff;
+    params* p = toFill == NULL ? &buff : toFill;
+
     double b1[1];
     fread(b1, sizeof(double), 1, fptr);
-    params.learningRate = b1[0];
+    p->learningRate = b1[0];
     int b2[2];
     fread(b2, sizeof(int), 2, fptr);
-    params.activationType = b2[0];
-    params.costType = b2[1];
+    p->activationType = b2[0];
+    p->costType = b2[1];
 
-    apply_params(result, params);
+    apply_params(result, *p);
     fclose(fptr);
     return result;
 }
