@@ -205,7 +205,18 @@ void gradients_test() {
     */
 
     constexpr double margin = 0.001;
-    const double bGradEnd[] = {-0.262, 0.28621};
+    constexpr double wGradEnd[] = {-0.16329, 0.17815, -0.2499, 0.27263, -0.25465, 0.277781};
+    constexpr double bGradEnd[] = {-0.26235, 0.28621};
+
+    const int total = network->layers[1].in_count * network->layers[1].out_count;
+
+    for(int i = 0; i < total; i++) {
+        if(!deq(wGradEnd[i], gradients[1].weights[i], margin)) {
+            printf("Gradient for weight at layer 1 and index %d incorrect, expected %.3f, got %.3f", i,
+                wGradEnd[i], gradients[1].weights[i]);
+            return;
+        }
+    }
 
     for(int i = 0; i < network->layers[1].out_count; i++) {
         if(!deq(bGradEnd[i], gradients[1].biases[i], margin)) {

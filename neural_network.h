@@ -6,8 +6,10 @@ typedef struct layer {
     int out_count;
     double* weights;
     double* biases;
-    double (*activation)(double);
-    double (*activationDerivative)(double);
+    double (*activation)(double, void*);
+    double (*activationDerivative)(double, void*);
+    void* (*processInputs)(double*, int);
+    void (*freeData)(void*);
 } layer;
 
 typedef struct params {
@@ -59,8 +61,12 @@ typedef struct batch {
 } batch;
 
 enum activation_type {
-    DEFAULT = 0,
-    SIGMOID = 1
+    DEFAULT,
+    SIGMOID,
+    TANH,
+    RELU,
+    SILU,
+    SOFTMAX
 };
 
 enum cost_type {

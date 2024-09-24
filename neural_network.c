@@ -26,17 +26,41 @@ inline void apply_params(neural_network* network, params params){
     network->learningRate = params.learningRate;
     for(int i = 0; i < network->count; i++) {
         switch (params.activationType) {
-            case DEFAULT:
-                network->layers[i].activation = default_activation;
+            case DEFAULT:network->layers[i].activation = default_activation;
             network->layers[i].activationDerivative = default_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
             break;
-            case SIGMOID :
-                network->layers[i].activation = sigmoid_activation;
+            case SIGMOID : network->layers[i].activation = sigmoid_activation;
             network->layers[i].activationDerivative = derivative_sigmoid_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
             break;
-            default:
-                network->layers[i].activation = NULL;
+            case TANH : network->layers[i].activation = tanh_activation;
+            network->layers[i].activationDerivative = derivative_tanh_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
+            break;
+            case RELU : network->layers[i].activation = relu_activation;
+            network->layers[i].activationDerivative = derivative_relu_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
+            break;
+            case SILU : network->layers[i].activation = silu_activation;
+            network->layers[i].activationDerivative = derivative_silu_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
+            break;
+            case SOFTMAX : network->layers[i].activation = softmax_activation;
+            network->layers[i].activationDerivative = derivative_softmax_activation;
+            network->layers[i].processInputs = softmax_process_inputs;
+            network->layers[i].freeData = softmax_free_data;
+            break;
+            default: network->layers[i].activation = NULL;
             network->layers[i].activationDerivative = NULL;
+            network->layers[i].processInputs = NULL;
+            network->layers[i].freeData = NULL;
+            break;
         }
     }
 
@@ -134,15 +158,23 @@ inline void free_back_data(backpropagation_data* data, const int count){
 
 inline input_data* forward(layer layer, input_data input){
     input_data* result = alloc_input_data(layer.out_count);
+    double weightedInputs[layer.out_count];
+
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
         for(int j = 0; j < layer.in_count; j++){
             n += input.values[j] * layer.weights[j * layer.out_count + i];
         }
 
-        result->values[i] = layer.activation(n);
+        weightedInputs[i] = n;
     }
 
+    void* data = layer.processInputs(weightedInputs, layer.out_count);
+    for(int i = 0; i < layer.out_count; i++) {
+        result->values[i] = layer.activation(weightedInputs[i], data);
+    }
+    layer.freeData(data);
+    
     return result;
 }
 
@@ -166,8 +198,13 @@ inline void continue_advance(layer layer, backpropagation_data* data, const int 
         }
 
         data[inputIndex + 1].weightedInputs[i] = n;
-        data[inputIndex + 1].afterActivations[i] = layer.activation(n);
     }
+
+    void* d = layer.processInputs(data[inputIndex + 1].weightedInputs, layer.out_count);
+    for(int i = 0; i < layer.out_count; i++) {
+        data[inputIndex + 1].afterActivations[i] = layer.activation(data[inputIndex + 1].weightedInputs[i], d);
+    }
+    layer.freeData(d);
 }
 
 inline void first_advance(layer layer, backpropagation_data* data, input_data* input){
@@ -179,8 +216,13 @@ inline void first_advance(layer layer, backpropagation_data* data, input_data* i
         }
 
         data[0].weightedInputs[i] = n;
-        data[0].afterActivations[i] = layer.activation(n);
     }
+
+    void* d = layer.processInputs(data[0].weightedInputs, layer.out_count);
+    for(int i = 0; i < layer.out_count; i++) {
+        data[0].afterActivations[i] = layer.activation(data[0].weightedInputs[i], d);
+    }
+    layer.freeData(d);
 }
 
 inline backpropagation_data* traverse(const neural_network* network, input_data* data){
@@ -233,10 +275,12 @@ inline void update_gradients(const neural_network* network, gradients* gradients
     const int lastIndex = network->count - 1;
 
     for(int n = lastIndex; n >= 0; n--) {
+        void* d = network->layers[n].processInputs(data[n].weightedInputs, network->layers[n].out_count);
+        
         if(n == lastIndex) {
             for(int i = 0; i < expected.count; i++){
                 const double costDerivative = network->costDerivative(data[n].afterActivations[i], expected.values[i]);
-                const double activationDerivative = network->layers[n].activationDerivative(data[n].weightedInputs[i]);
+                const double activationDerivative = network->layers[n].activationDerivative(data[n].weightedInputs[i], d);
                 data[n].nodeValues[i] = activationDerivative * costDerivative;
             }
         }
@@ -250,9 +294,11 @@ inline void update_gradients(const neural_network* network, gradients* gradients
                     value += nv * w;
                 }
 
-                data[n].nodeValues[i] = value * network->layers[n].activationDerivative(data[n].weightedInputs[i]);
+                data[n].nodeValues[i] = value * network->layers[n].activationDerivative(data[n].weightedInputs[i], d);
             }
         }
+
+        network->layers[n].freeData(d);
 
         const layer current = network->layers[n];
         for(int o = 0; o < current.out_count; o++) {

@@ -32,7 +32,7 @@ inline string find_sudoku(const string &filename) {
     warpPerspective(img, warp, matrix, Size(450, 450));
 
     vector<Mat> boxes = split_boxes(warp);
-    neural_network* network = initialize("");
+    neural_network* network = initialize("", nullptr);
 
     string result;
     for(const auto& box : boxes) {
@@ -112,9 +112,37 @@ void reorder(vector<Point> points) {
     points[3] = right[1];
 }
 
-vector<Mat> split_boxes(Mat img) {
+Mat remove_lines_static(Mat wholeImg, int lowerRow, int upperRow, int lowerColumn, int upperColumn) {
+    const int rDelta = upperRow - lowerRow;
+    lowerRow += rDelta;
+    upperRow -= rDelta;
+
+    const int cDelta = upperColumn - lowerColumn;
+    lowerColumn += cDelta;
+    upperColumn -= cDelta;
+
+    Mat result(Size(upperRow - lowerRow, upperColumn - lowerColumn), CV_8UC1);
+    for(int r = lowerRow; r < upperRow; r++) {
+        for(int c = lowerColumn; c < upperColumn; c++) {
+            //result.set(r - lowerRow, c - lowerColumn) = wholeImg.at<unsigned char>(r, c); TODO
+        }
+    }
+
+    return result;
+}
+
+vector<Mat> split_boxes(Mat img, Mat (*remove_lines)(Mat, int, int, int, int)) {
     vector<Mat> result;
-    return result; //TODO
+    const int rSize = img.rows / 9;
+    const int cSize = img.cols / 9;
+
+    for(int r = 0; r < img.rows; r += rSize) {
+        for(int c = 0; c < img.cols; c += cSize) {
+            result.push_back(remove_lines(img, r, r + rSize, c, c + cSize));
+        }
+    }
+
+    return result;
 }
 
 bool isEmpty(Mat img) {
