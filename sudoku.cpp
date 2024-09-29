@@ -1,18 +1,31 @@
 #include "sudoku.hpp"
 
-#include "mnist.hpp"
+extern "C" {
 #include "neural_network.h"
 #include "repository.h"
 #include "utils.h"
+}
 #include "opencv2/opencv.hpp"
 
 using namespace cv;
 using namespace std;
 
+int main(int argc, char* argv[]) {
+    if(argc != 2) {
+        cout << "Expected 1 argument : the image path";
+        return EXIT_FAILURE;
+    }
+
+    cout << find_sudoku(argv[1]);
+
+    return EXIT_SUCCESS;
+}
+
 Mat preprocess(const Mat &img);
 tuple<vector<Point>, double> biggest_contours(const vector<vector<Point>>& contours);
 void reorder(vector<Point> points);
-vector<Mat> split_boxes(Mat img);
+Mat remove_lines_static(Mat wholeImg, int lowerRow, int upperRow, int lowerColumn, int upperColumn);
+vector<Mat> split_boxes(Mat img, Mat (*remove_lines)(Mat, int, int, int, int));
 char predict(neural_network* network, const Mat &img);
 
 inline string find_sudoku(const string &filename) {
@@ -31,7 +44,7 @@ inline string find_sudoku(const string &filename) {
     Mat warp;
     warpPerspective(img, warp, matrix, Size(450, 450));
 
-    vector<Mat> boxes = split_boxes(warp);
+    vector<Mat> boxes = split_boxes(warp, remove_lines_static);
     neural_network* network = initialize("", nullptr);
 
     string result;
@@ -124,7 +137,7 @@ Mat remove_lines_static(Mat wholeImg, int lowerRow, int upperRow, int lowerColum
     Mat result(Size(upperRow - lowerRow, upperColumn - lowerColumn), CV_8UC1);
     for(int r = lowerRow; r < upperRow; r++) {
         for(int c = lowerColumn; c < upperColumn; c++) {
-            //result.set(r - lowerRow, c - lowerColumn) = wholeImg.at<unsigned char>(r, c); TODO
+            result.at<unsigned char>(r - lowerRow, c - lowerColumn) = wholeImg.at<unsigned char>(r, c);
         }
     }
 
@@ -153,6 +166,18 @@ bool isEmpty(Mat img) {
     }
 
     return true;
+}
+
+input_data* to_input(Mat mat) {
+    input_data* result = alloc_input_data(mat.rows * mat.cols);
+    for(int r = 0; r < mat.rows; r++) {
+        for(int c = 0; c < mat.cols; c++) {
+            const unsigned char v = mat.at<unsigned char>(r, c);
+            result->values[r * mat.cols + c] = static_cast<double>(v) / 255.0;
+        }
+    }
+
+    return result;
 }
 
 char predict(neural_network* network, const Mat &img) {
