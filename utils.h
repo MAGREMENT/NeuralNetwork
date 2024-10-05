@@ -2,8 +2,8 @@
 #define UTILS_H
 
 
-
-double random(double from, double to);
+void init_random();
+double random(double min, double max);
 int max_index(double values[], int count);
 //Double equals
 int deq(double left, double right, double margin);

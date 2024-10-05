@@ -1,5 +1,9 @@
 #include "mnist.hpp"
 
+extern "C"{
+#include "utils.h"
+}
+
 void print_iteration(neural_network* network, test_data* data, const int i) {
     printf("Iteration #%d done !", i + 1);
 }
@@ -11,22 +15,26 @@ int main(int argc, char *argv[]) {
     }
 
     cout << "Starting up...\n";
-    vector<Mat> trainImages = read_images(argv[1]);
-    vector<int> trainLabels = read_labels(argv[2]);
+    const vector<Mat> trainImages = read_images(argv[1]);
+    const vector<int> trainLabels = read_labels(argv[2]);
     test_data* trainData = to_test_data(trainImages, trainLabels);
 
-    vector<Mat> testImages = read_images(argv[3]);
-    vector<int> testLabels = read_labels(argv[4]);
+    const vector<Mat> testImages = read_images(argv[3]);
+    const vector<int> testLabels = read_labels(argv[4]);
     test_data* testData = to_test_data(testImages, testLabels);
 
     constexpr int layers[] = {784, 100, 10};
     neural_network* network = alloc_network(3, layers);
+    init_random();
+    randomize(network, 0, 0.05);
     params p;
     p.activationType = SIGMOID;
     p.costType = MEAN_SQUARED;
     p.learningRate = 1;
     apply_params(network, p);
     cout << "App started\n";
+
+    string* current = nullptr;
 
     char command = '\0';
     while(command != 'e') {
@@ -72,13 +80,27 @@ int main(int argc, char *argv[]) {
                 cin >> batchSize;
 
                 multi_learn(network, trainData, batchSize, count, print_iteration);
+                break;
             }
             case 's': {
+                if(current != nullptr) {
+                    cout << "Save in current file (y/n)";
+                    char decision;
+                    cin >> decision;
+
+                    if(decision == 'y') {
+                        save(network, &p, current->data());
+                        break;
+                    }
+                }
+
                 string file;
                 cout << "File : \n";
                 cin >> file;
 
+                current = &file;
                 save(network, &p, file.data());
+                break;
             }
             case 'l': {
                 string file;
@@ -86,7 +108,9 @@ int main(int argc, char *argv[]) {
                 cin >> file;
 
                 free_network(network);
+                current = &file;
                 network = initialize(file.data(), &p);
+                break;
             }
             default :
                 cout << "Command not recognized\n";
@@ -163,7 +187,7 @@ input_data* to_input(Mat mat) {
 
 input_data* to_expected(const int label, const int max) {
     input_data* result = alloc_input_data(max + 1);
-    for(int i = 0; i < max; i++) {
+    for(int i = 0; i < max + 1; i++) {
         result->values[i] = i == label ? 1 : 0;
     }
 

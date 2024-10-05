@@ -3,9 +3,14 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <time.h>
 
-inline double random(const double from, const double to) {
-    return (double)rand() / RAND_MAX * (to - from) + from;
+inline void init_random() {
+    srand(time(nullptr));
+}
+
+inline double random(const double min, const double max) {
+    return (double)rand() / RAND_MAX * (max - min) + min;
 }
 
 inline int max_index(double values[], const int count) {

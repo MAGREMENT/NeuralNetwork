@@ -76,7 +76,7 @@ enum cost_type {
 neural_network* alloc_network(int count, const int numbers[]);
 void free_network(neural_network* network);
 void apply_params(neural_network* network, params params);
-void randomize(neural_network* network, double from, double to);
+void randomize(neural_network* network, double min, double max);
 void learn(neural_network* network, test_data* data, batch batch);
 void multi_learn(neural_network* network, test_data* data, int batchSize, int count,
     void (*on_iteration_end)(neural_network* network, test_data* data, int i));

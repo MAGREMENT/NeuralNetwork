@@ -38,7 +38,7 @@ inline string find_sudoku(const string &filename) {
 
     if(biggest.empty()) return "_No valid area found";
 
-    reorder(biggest);
+    reorder(biggest); //error here TODO
     const vector objective{Point(0, 0), Point(450, 0), Point(0, 450), Point(450, 450)};
     const Mat matrix = getPerspectiveTransform(biggest, objective);
     Mat warp;

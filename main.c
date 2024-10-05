@@ -12,8 +12,8 @@ void unit_tests();
 void program();
 
 int main() {
-    //program();
-    unit_tests();
+    program();
+    //unit_tests();
 
     return EXIT_SUCCESS;
 }
@@ -22,7 +22,7 @@ neural_network* example_network(int activation) {
     int numbers[] = {2, 3, 2};
     neural_network* network = alloc_network(3, numbers);
     params params;
-    params.learningRate = 2;
+    params.learningRate = 1;
     params.activationType = activation;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
@@ -138,7 +138,7 @@ void traverse_test() {
     expected[1].weightedInputs[0] = 2;
     expected[1].weightedInputs[1] = 6.5;
 
-    for(int l = 0; l < data->count; l++) {
+    for(int l = 0; l < network->count; l++) {
         for(int o = 0; o < data[l].count; o++) {
             const double w = data[l].weightedInputs[o];
             const double e = expected[l].weightedInputs[o];
@@ -302,11 +302,40 @@ void repository_test() {
     printf("repository test OK!\n");
 }
 
+void randomize_test() {
+    neural_network* network = example_network(SIGMOID);
+    randomize(network, 0, 1);
+
+    for(int l = 0; l < network->count; l++) {
+        for(int o = 0; o < network->layers[l].out_count; o++) {
+            for(int i = 0; i < network->layers[l].in_count; i++) {
+                const double v = network->layers[l].weights[i * network->layers[l].out_count + o];
+                if(v < 0 || v > 1) {
+                    printf("Incorrect weight value at layer %d : %.4f", l, v);
+                    return;
+                }
+            }
+
+            const double n = network->layers[l].biases[o];
+            if(n < 0 || n > 1) {
+                printf("Incorrect bias value at layer %d : %.4f", l, n);
+                return;
+            }
+        }
+    }
+
+    free_network(network);
+    printf("randomize test OK!\n");
+}
+
 void unit_tests() {
+    init_random();
+
     generate_test(0);
     learn_test();
     traverse_test();
     gradients_test();
     repository_test();
+    randomize_test();
 }
 

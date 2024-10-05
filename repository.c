@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 inline neural_network* initialize(const char* file, params* toFill){
-    FILE* fptr = fopen(file, "r");
+    FILE* fptr = fopen(file, "rb");
 
     int size[1];
     fread(size, sizeof(int), 1, fptr);
@@ -35,7 +35,7 @@ inline neural_network* initialize(const char* file, params* toFill){
 }
 
 inline void save(const neural_network* network, const params* params, const char* file){
-    FILE* fptr = fopen(file, "w");
+    FILE* fptr = fopen(file, "wb");
 
     int n = network->count + 1;
     int count[] = { n };

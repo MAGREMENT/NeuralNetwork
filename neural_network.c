@@ -75,14 +75,14 @@ inline void apply_params(neural_network* network, params params){
     }
 }
 
-inline void randomize(neural_network* network, double from, double to) {
+inline void randomize(neural_network* network, double min, double max) {
     for(int n = 0; n < network->count; n++) {
         for(int o = 0; o < network->layers[n].out_count; o++) {
             for(int i = 0; i < network->layers[n].in_count; i++) {
-                network->layers[n].weights[i * network->layers[n].out_count + o] = random(from, to);
+                network->layers[n].weights[i * network->layers[n].out_count + o] = random(min, max);
             }
 
-            network->layers[n].biases[o] = random(from, to);
+            network->layers[n].biases[o] = random(min, max);
         }
     }
 }
@@ -276,7 +276,7 @@ inline void update_gradients(const neural_network* network, gradients* gradients
 
     for(int n = lastIndex; n >= 0; n--) {
         void* d = network->layers[n].processInputs(data[n].weightedInputs, network->layers[n].out_count);
-        
+
         if(n == lastIndex) {
             for(int i = 0; i < expected.count; i++){
                 const double costDerivative = network->costDerivative(data[n].afterActivations[i], expected.values[i]);
