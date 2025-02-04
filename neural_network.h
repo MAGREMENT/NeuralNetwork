@@ -13,7 +13,10 @@ typedef struct layer {
 } layer;
 
 typedef struct params {
-    double learningRate;
+    double initialLearningRate;
+    double learningRateDecay;
+    double regularization;
+    double momentum;
     int activationType;
     int costType;
 } params ;
@@ -21,7 +24,12 @@ typedef struct params {
 typedef struct neural_network {
     int count;
     layer* layers;
-    double learningRate;
+
+    double initialLearningRate;
+    double learningRateDecay;
+    double regularization;
+    double momentum;
+
     double (*cost)(double, double);
     double (*costDerivative)(double, double);
 } neural_network;
@@ -38,10 +46,10 @@ typedef struct backpropagation_data {
     double* nodeValues;
 } backpropagation_data;
 
-typedef struct gradients {
+typedef struct layer_data {
     double* weights;
     double* biases;
-} gradients;
+} layer_data;
 
 typedef struct test_data {
     int count;
@@ -77,10 +85,17 @@ neural_network* alloc_network(int count, const int numbers[]);
 void free_network(neural_network* network);
 void apply_params(neural_network* network, params params);
 void randomize(neural_network* network, double min, double max);
-void learn(neural_network* network, test_data* data, batch batch);
-void multi_learn(neural_network* network, test_data* data, int batchSize, int count,
+void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
+void iterative_learn(neural_network* network, test_data* data, int batchSize, int count,
     void (*on_iteration_end)(neural_network* network, test_data* data, int i));
 input_data* predict(neural_network* network, input_data* data);
+
+/**
+ * Traverse all layers to create backpropagation data
+ * @param network
+ * @param data
+ * @return
+ */
 backpropagation_data* traverse(const neural_network* network, input_data* data);
 double cost(neural_network* network, input_data* data, input_data* expected);
 double multi_cost(neural_network* network, test_data* data);
@@ -88,13 +103,22 @@ double multi_cost(neural_network* network, test_data* data);
 void set_layer(layer layer, const double* weights, const double* biases);
 void free_layers(layer* layers, int count);
 input_data* forward(layer layer, input_data input);
-void first_advance(layer layer, backpropagation_data* data, input_data* input);
-void continue_advance(layer layer, backpropagation_data* data, int inputIndex);
+void first_advance(layer layer, const backpropagation_data* data, const input_data* input);
+void continue_advance(layer layer, const backpropagation_data* data, int inputIndex);
 
-gradients* alloc_gradients(neural_network* network, int copyValues);
-void free_gradients(gradients* gradients, int count);
-void apply_gradients(layer to, gradients gradients, double learningRate);
-void update_gradients(const neural_network* network, gradients* gradients, input_data input,
+/**
+ * Allocates an array of layer data corresponding to the neural network
+ * @param network
+ * @param copyValues true if the values are copies of neural network weights and biases
+ * @return
+ */
+layer_data* alloc_layer_data_array(neural_network* network, int copyValues);
+void free_layer_data_array(layer_data* gradients, int count);
+
+void apply_gradients(layer to, layer_data gradients, double learningRate);
+void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
+    double momentum, double regularization);
+void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
     input_data expected);
 
 input_data* alloc_input_data(int count);

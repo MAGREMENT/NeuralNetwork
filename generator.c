@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-inline test_data* positive_generate_for_2(const double spacing, const int count, const int max, int(*cut)(double, double)) {
+inline test_data* positive_generate_for_2D(const double spacing, const int count, const int max, int(*cut)(double, double)) {
     test_data* result = alloc_test_data(count * count);
 
     for(int i = 0; i < count; i++) {

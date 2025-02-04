@@ -90,12 +90,18 @@ inline double derivative_mean_square_cost(double predicted, double expected){
     return 2 * (predicted - expected);
 }
 
+//Cut Functions---------------------------------------------------------------------------------------------------------
+
 inline int diagonal_cut(const double x, const double y) {
     return x > y ? 1 : 0;
 }
 
-inline int parabole_cut_10(const double x, const double y) {
+inline int parable_10_cut(const double x, const double y) {
     return 0.05 * x * x + 8 > y ? 1 : 0;
+}
+
+inline int sinus_cut(const double x, const double y) {
+    return sin(x) > y ? 1 : 0;
 }
 
 

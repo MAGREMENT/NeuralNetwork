@@ -21,9 +21,12 @@ inline neural_network* initialize(const char* file, params* toFill){
     params buff;
     params* p = toFill == NULL ? &buff : toFill;
 
-    double b1[1];
-    fread(b1, sizeof(double), 1, fptr);
-    p->learningRate = b1[0];
+    double b1[4];
+    fread(b1, sizeof(double), 4, fptr);
+    p->initialLearningRate = b1[0];
+    p->learningRateDecay = b1[1];
+    p->regularization = b1[2];
+    p->momentum = b1[3];
     int b2[2];
     fread(b2, sizeof(int), 2, fptr);
     p->activationType = b2[0];
@@ -54,10 +57,10 @@ inline void save(const neural_network* network, const params* params, const char
     }
 
     if(params != NULL){
-        double ln[] = {params->learningRate};
+        double ln[] = {params->initialLearningRate, params->learningRateDecay, params->regularization, params->momentum};
         int types[] = {params->activationType, params->costType};
 
-        fwrite(ln, sizeof(double), 1, fptr);
+        fwrite(ln, sizeof(double), 4, fptr);
         fwrite(types, sizeof(int), 2, fptr);
     }
 

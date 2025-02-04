@@ -23,7 +23,11 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
 }
 
 inline void apply_params(neural_network* network, params params){
-    network->learningRate = params.learningRate;
+    network->initialLearningRate = params.initialLearningRate;
+    network->learningRateDecay = params.learningRateDecay;
+    network->momentum = params.momentum;
+    network->regularization = params.regularization;
+
     for(int i = 0; i < network->count; i++) {
         switch (params.activationType) {
             case DEFAULT:network->layers[i].activation = default_activation;
@@ -189,7 +193,7 @@ inline input_data* predict(neural_network* network, input_data* data){
     return input;
 }
 
-inline void continue_advance(layer layer, backpropagation_data* data, const int inputIndex){
+inline void continue_advance(const layer layer, const backpropagation_data* data, const int inputIndex){
 
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
@@ -207,7 +211,7 @@ inline void continue_advance(layer layer, backpropagation_data* data, const int 
     layer.freeData(d);
 }
 
-inline void first_advance(layer layer, backpropagation_data* data, input_data* input){
+inline void first_advance(const layer layer, const backpropagation_data* data, const input_data* input){
 
     for(int i = 0; i < layer.out_count; i++){
         double n = layer.biases[i];
@@ -256,7 +260,38 @@ inline double multi_cost(neural_network* network, test_data* data) {
     return c;
 }
 
-inline void apply_gradients(layer to, gradients gradients, double learningRate){
+inline layer_data* alloc_layer_data_array(neural_network* network, int copyValues) {
+    layer_data* result = malloc(network->count * sizeof(layer_data));
+
+    for(int n = 0; n < network->count; n++) {
+        const int in = network->layers[n].in_count;
+        const int out = network->layers[n].out_count;
+
+        result[n].biases = malloc(out * sizeof(double));
+        result[n].weights = malloc(in * out * sizeof(double));
+
+        for(int o = 0; o < out; o++) {
+            for(int i = 0; i < in; i++) {
+                result[n].weights[i * out + o] = copyValues ? network->layers[n].weights[i * out + o] : 0;
+            }
+
+            result[n].biases[o] = copyValues ? network->layers[n].biases[0] : 0;
+        }
+    }
+
+    return result;
+}
+
+inline void free_layer_data_array(layer_data* gradients, const int count) {
+    for(int i = 0; i < count; i++){
+        free(gradients[i].biases);
+        free(gradients[i].weights);
+    }
+
+    free(gradients);
+}
+
+inline void apply_gradients(layer to, layer_data gradients, double learningRate){
     for(int i = 0; i < to.in_count; i++){
         for(int j = 0; j < to.out_count; j++){
             to.weights[i * to.out_count + j] -= gradients.weights[i * to.out_count + j] * learningRate;
@@ -268,7 +303,30 @@ inline void apply_gradients(layer to, gradients gradients, double learningRate){
     }
 }
 
-inline void update_gradients(const neural_network* network, gradients* gradients, input_data input,
+inline void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
+    double momentum, double regularization){
+
+    const double weightDecay = 1- regularization * learningRate;
+
+    for(int i = 0; i < to.in_count; i++){
+        for(int j = 0; j < to.out_count; j++){
+            const int index = i * to.out_count + j;
+            const double velocity = velocities.weights[index] * momentum - gradients.weights[index] * learningRate;
+
+            velocities.weights[index] = velocity;
+            to.weights[index] = to.weights[index] * weightDecay * velocity;
+        }
+    }
+
+    for(int i = 0; i < to.out_count; i++){
+        const double velocity = velocities.biases[i] * momentum - gradients.biases[i] * learningRate;
+
+        velocities.biases[i] = velocity;
+        to.biases[i] = velocity;
+    }
+}
+
+inline void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
     backpropagation_data* data = traverse(network, &input);
@@ -315,39 +373,8 @@ inline void update_gradients(const neural_network* network, gradients* gradients
     free_back_data(data, network->count);
 }
 
-inline gradients* alloc_gradients(neural_network* network, int copyValues) {
-    gradients* result = malloc(network->count * sizeof(gradients));
-
-    for(int n = 0; n < network->count; n++) {
-        const int in = network->layers[n].in_count;
-        const int out = network->layers[n].out_count;
-
-        result[n].biases = malloc(out * sizeof(double));
-        result[n].weights = malloc(in * out * sizeof(double));
-
-        for(int o = 0; o < out; o++) {
-            for(int i = 0; i < in; i++) {
-                result[n].weights[i * out + o] = copyValues ? network->layers[n].weights[i * out + o] : 0;
-            }
-
-            result[n].biases[o] = copyValues ? network->layers[n].biases[0] : 0;
-        }
-    }
-
-    return result;
-}
-
-inline void free_gradients(gradients* gradients, const int count) {
-    for(int i = 0; i < count; i++){
-        free(gradients[i].biases);
-        free(gradients[i].weights);
-    }
-
-    free(gradients);
-}
-
-inline void learn(neural_network* network, test_data* data, batch batch){
-    gradients* gradients = alloc_gradients(network, 0);
+inline void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities){
+    layer_data* gradients = alloc_layer_data_array(network, 0);
 
     for(int i = batch.then; i < batch.to; i++){
         update_gradients(network, gradients, data->inputs[i], data->expected[i]);
@@ -357,23 +384,38 @@ inline void learn(neural_network* network, test_data* data, batch batch){
         update_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
-    for(int i = 0; i < network->count; i++){
-        apply_gradients(network->layers[i], gradients[i], network->learningRate / (batch.to - batch.from + batch.then));
+    if (velocities == NULL) {
+        for(int i = 0; i < network->count; i++){
+            apply_gradients(network->layers[i], gradients[i], learningRate);
+        }
+    }
+    else {
+        for(int i = 0; i < network->count; i++){
+            apply_gradients_with_velocities(network->layers[i], gradients[i], velocities[i], learningRate,
+                network->momentum, network->regularization);
+        }
     }
 
-    free_gradients(gradients, network->count);
+    free_layer_data_array(gradients, network->count);
 }
 
-inline void multi_learn(neural_network* network, test_data* data, const int batchSize, const int count,
+inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int count,
     void (*on_iteration_end)(neural_network* network, test_data* data, int i)) {
+
+    //layer_data* velocities = alloc_layer_data_array(network, false);
+    double learningRate = network->initialLearningRate / batchSize;
     int current = 0;
+
     for(int iteration = 0; iteration < count; iteration++) {
         const batch b = create_batch(current, batchSize, data->count);
-        learn(network, data, b);
+        learn(network, data, b, learningRate, NULL);
 
         current = b.then == 0 ? b.to : b.then;
+        learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * network->initialLearningRate / batchSize;
         if(on_iteration_end != NULL) on_iteration_end(network, data, iteration);
     }
+
+    //free_layer_data_array(velocities, network->count);
 }
 
 inline int is_valid(input_data* output, input_data* expected) {

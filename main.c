@@ -9,10 +9,10 @@
 #include "repository.h"
 
 void unit_tests();
-void program();
+void cut_2D_test();
 
 int main() {
-    program();
+    cut_2D_test();
     //unit_tests();
 
     return EXIT_SUCCESS;
@@ -22,7 +22,10 @@ neural_network* example_network(int activation) {
     int numbers[] = {2, 3, 2};
     neural_network* network = alloc_network(3, numbers);
     params params;
-    params.learningRate = 1;
+    params.initialLearningRate = 1;
+    params.learningRateDecay = 0.02;
+    params.regularization = 0.1;
+    params.momentum = 0.9;
     params.activationType = activation;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
@@ -71,20 +74,20 @@ void test_and_print_network(neural_network* network, test_data* data, const int 
     printf("   accuracy : %.2f / 100.0\n", result.accuracy);
 }
 
-void program() {
+void cut_2D_test() {
     neural_network* network = example_network(SIGMOID);
 
     randomize(network, -1, 1);
-    test_data *test = positive_generate_for_2(0.5, 20, 2, parabole_cut_10);
+    test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    multi_learn(network, test, test->count, 1000, test_and_print_network);
+    iterative_learn(network, test, test->count, 1000, test_and_print_network);
 
     free_network(network);
 }
 
 void generate_test(const int verbose) {
-    test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
+    test_data *test = positive_generate_for_2D(0.5, 20, 2, diagonal_cut);
     if(test->count != 400) {
         printf("invalid count\n");
         return;
@@ -157,11 +160,11 @@ void traverse_test() {
 
 void learn_test() {
     neural_network* network = example_network_with_data(SIGMOID);
-    test_data *test = positive_generate_for_2(0.5, 20, 2, diagonal_cut);
+    test_data *test = positive_generate_for_2D(0.5, 20, 2, diagonal_cut);
 
     double cost = multi_cost(network, test);
     for(int i = 0; i < 20; i++) {
-        learn(network, test, full_batch(test->count));
+        learn(network, test, full_batch(test->count), network->initialLearningRate / test->count, NULL);
         double nCost = multi_cost(network, test);
 
         if(nCost > cost + 1) {
@@ -185,7 +188,7 @@ void gradients_test() {
     expected->values[0] = 1;
     expected->values[1] = 0;
 
-    gradients* gradients = alloc_gradients(network, 0);
+    layer_data* gradients = alloc_layer_data_array(network, 0);
     update_gradients(network, gradients, *input, *expected);
 
     /* TODO
@@ -239,7 +242,10 @@ void repository_test() {
 
     neural_network* network = example_network_with_data(SIGMOID);
     params params;
-    params.learningRate = 1;
+    params.initialLearningRate = 1;
+    params.regularization = 0.02;
+    params.momentum = 0.9;
+    params.learningRateDecay = 0.05;
     params.activationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
@@ -252,8 +258,23 @@ void repository_test() {
         return;
     }
 
-    if(network->learningRate != download->learningRate) {
+    if(network->initialLearningRate != download->initialLearningRate) {
         printf("Different learning rate");
+        return;
+    }
+
+    if(network->learningRateDecay != download->learningRateDecay) {
+        printf("Different learning rate decay");
+        return;
+    }
+
+    if(network->regularization != download->regularization) {
+        printf("Different regularization");
+        return;
+    }
+
+    if(network->momentum != download->momentum) {
+        printf("Different momentum");
         return;
     }
 

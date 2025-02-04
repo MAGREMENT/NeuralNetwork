@@ -3,6 +3,14 @@
 
 #include "neural_network.h"
 
-test_data* positive_generate_for_2(double spacing, int count, int max, int(*cut)(double, double));
+/**
+ * Generate test data in a 2d space
+ * @param spacing
+ * @param count
+ * @param max
+ * @param cut
+ * @return
+ */
+test_data* positive_generate_for_2D(double spacing, int count, int max, int(*cut)(double, double));
 
 #endif //GENERATOR_H
