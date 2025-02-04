@@ -1,2 +1,7 @@
-/.idea/**
-/cmake-build-debug/**
+Implementation/.idea
+.idea
+Superset/.idea
+
+Implementation/cmake-build-debug/**
+
+Superset/Model/obj
