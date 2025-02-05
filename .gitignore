@@ -10,3 +10,6 @@ Superset/Model/bin
 
 Superset/Tests/obj
 Superset/Tests/bin
+
+Superset/WpfApp/obj
+Superset/WpfApp/bin
