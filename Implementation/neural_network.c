@@ -304,9 +304,9 @@ inline void apply_gradients(layer to, layer_data gradients, double learningRate)
 }
 
 inline void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
-    double momentum, double regularization){
+                                            const double momentum, const double regularization){
 
-    const double weightDecay = 1- regularization * learningRate;
+    const double weightDecay = 1 - regularization * learningRate;
 
     for(int i = 0; i < to.in_count; i++){
         for(int j = 0; j < to.out_count; j++){
@@ -314,7 +314,7 @@ inline void apply_gradients_with_velocities(layer to, layer_data gradients, laye
             const double velocity = velocities.weights[index] * momentum - gradients.weights[index] * learningRate;
 
             velocities.weights[index] = velocity;
-            to.weights[index] = to.weights[index] * weightDecay * velocity;
+            to.weights[index] = to.weights[index] * weightDecay + velocity;
         }
     }
 
@@ -322,7 +322,7 @@ inline void apply_gradients_with_velocities(layer to, layer_data gradients, laye
         const double velocity = velocities.biases[i] * momentum - gradients.biases[i] * learningRate;
 
         velocities.biases[i] = velocity;
-        to.biases[i] = velocity;
+        to.biases[i] += velocity;
     }
 }
 
@@ -402,20 +402,20 @@ inline void learn(neural_network* network, test_data* data, batch batch, double 
 inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int count,
     void (*on_iteration_end)(neural_network* network, test_data* data, int i)) {
 
-    //layer_data* velocities = alloc_layer_data_array(network, false);
+    layer_data* velocities = alloc_layer_data_array(network, false);
     double learningRate = network->initialLearningRate / batchSize;
     int current = 0;
 
     for(int iteration = 0; iteration < count; iteration++) {
         const batch b = create_batch(current, batchSize, data->count);
-        learn(network, data, b, learningRate, NULL);
+        learn(network, data, b, learningRate, velocities);
 
         current = b.then == 0 ? b.to : b.then;
         learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * network->initialLearningRate / batchSize;
         if(on_iteration_end != NULL) on_iteration_end(network, data, iteration);
     }
 
-    //free_layer_data_array(velocities, network->count);
+    free_layer_data_array(velocities, network->count);
 }
 
 inline int is_valid(input_data* output, input_data* expected) {

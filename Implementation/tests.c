@@ -12,8 +12,8 @@ void unit_tests();
 void cut_2D_test();
 
 int main() {
-    //cut_2D_test();
-    unit_tests();
+    cut_2D_test();
+    //unit_tests();
 
     return EXIT_SUCCESS;
 }
@@ -81,7 +81,7 @@ void cut_2D_test() {
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    iterative_learn(network, test, test->count, 1000, test_and_print_network);
+    iterative_learn(network, test, 32, 1000, test_and_print_network);
 
     free_network(network);
 }
