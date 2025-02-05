@@ -5,4 +5,4 @@ project(Export C)
 set(CMAKE_C_STANDARD 23)
 
 add_executable(Test neural_network.c functions.c repository.c generator.c utils.c tests.c)
-add_library(Export SHARED export.c)
+add_library(Export SHARED export.c neural_network.c functions.c utils.c)

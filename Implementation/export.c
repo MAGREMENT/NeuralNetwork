@@ -2,11 +2,10 @@
 #include "functions.h"
 #include "utils.h"
 
-inline neural_network* Initialize() {
-    const int numbers[] = {2, 3, 2};
-    return alloc_network(3, numbers);
+inline neural_network* Initialize(int count, int numbers[]) {
+    return alloc_network(count, numbers);
 }
 
-inline int ExportTest(const int a) {
-    return a * 2;
+inline int GetCount(neural_network* ptr) {
+    return ptr->count;
 }

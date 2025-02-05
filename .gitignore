@@ -1,3 +1,4 @@
+*.user
 Implementation/.idea
 .idea
 Superset/.idea
@@ -5,3 +6,7 @@ Superset/.idea
 Implementation/cmake-build-debug/**
 
 Superset/Model/obj
+Superset/Model/bin
+
+Superset/Tests/obj
+Superset/Tests/bin
