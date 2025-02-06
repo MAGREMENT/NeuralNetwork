@@ -4,13 +4,36 @@ namespace Tests;
 
 public class NeuralNetworkTests
 {
+    private static readonly int[][] _testing =  
+    {
+        new[] { 2, 3, 2 },
+        new[] { 1, 1, 1, 1, 1 }
+    };
+    
     [Test]
     public void LengthTest()
     {
-        var network = new NeuralNetwork(new[] {2, 3, 2});
-        Assert.That(network.Length, Is.EqualTo(2));
+        foreach (var n in _testing)
+        {
+            using var network = new NeuralNetwork(n);
+            Assert.That(network.Length, Is.EqualTo(n.Length - 1));
+            for (int i = 1; i < n.Length; i++)
+            {
+                Assert.That(network.GetInCount(i - 1), Is.EqualTo(n[i - 1]));
+                Assert.That(network.GetOutCount(i - 1), Is.EqualTo(n[i]));
+            }
+        }
+    }
 
-        network = new NeuralNetwork(new[] { 1, 1, 1, 1, 1 });
-        Assert.That(network.Length, Is.EqualTo(4));
+    [Test]
+    public void PredictTest()
+    {
+        foreach (var n in _testing)
+        {
+            using var network = new NeuralNetwork(n);
+            var input = new double[n[0]];
+            var output = network.Predict(input);
+            Assert.That(output.Length, Is.EqualTo(n[^1]));
+        }
     }
 }
