@@ -2,23 +2,25 @@
 
 namespace Model;
 
-public unsafe partial class NeuralNetwork : IDisposable
+public partial class NeuralNetwork : IDisposable
 {
-    private readonly void* _ptr;
+    private readonly IntPtr _ptr;
     private readonly NeuralNetworkParameters _params;
 
     public int Length => GetCount(_ptr);
 
-    public NeuralNetwork(int[] layers)
+    public NeuralNetwork(params int[] layers)
     {
         _ptr = Initialize(layers.Length, layers);
         _params = NeuralNetworkParameters.Default;
+        ApplyParams(_ptr, _params);
     }
 
-    private NeuralNetwork(void* ptr, NeuralNetworkParameters parameters)
+    private NeuralNetwork(IntPtr ptr, NeuralNetworkParameters parameters)
     {
         _ptr = ptr;
         _params = parameters;
+        ApplyParams(_ptr, parameters);
     }
 
     public static NeuralNetwork Import(string file)
@@ -39,6 +41,11 @@ public unsafe partial class NeuralNetwork : IDisposable
         ApplyParams(_ptr, _params);
     }
 
+    public void Randomize(double min, double max)
+    {
+        Randomize(_ptr, min, max);
+    }
+
     public int GetInCount(int layer)
     {
         if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
@@ -51,25 +58,25 @@ public unsafe partial class NeuralNetwork : IDisposable
         return GetOutCount(_ptr, layer);
     }
 
-    public void SetWeight(int layer, int input, int output, int value)
+    public void SetWeight(int layer, int input, int output, double value)
     {
         CheckBounds(layer, input, output);
         SetWeight(_ptr, layer, input, output, value);
     }
 
-    public int GetWeight(int layer, int input, int output)
+    public double GetWeight(int layer, int input, int output)
     {
         CheckBounds(layer, input, output);
         return GetWeight(_ptr, layer, input, output);
     }
     
-    public void SetBias(int layer, int output, int value)
+    public void SetBias(int layer, int output, double value)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
         SetBias(_ptr, layer, output, value);
     }
     
-    public int GetBias(int layer, int output)
+    public double GetBias(int layer, int output)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
         return GetBias(_ptr, layer, output);
@@ -79,8 +86,12 @@ public unsafe partial class NeuralNetwork : IDisposable
     {
         if (inputs.Length != GetInCount(0))
             throw new ArgumentException("Inputs length does not correspond to the first layer of the neural network");
-
-        return Predict(_ptr, inputs, GetInCount(0), GetOutCount(Length - 1));
+        
+        var count = GetOutCount(Length - 1);
+        var arr = new double[count];
+        
+        Predict(_ptr, inputs, inputs.Length, arr, count);
+        return arr;
     }
     
     public void Dispose()
@@ -97,56 +108,61 @@ public unsafe partial class NeuralNetwork : IDisposable
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void* Initialize(int count, int[] layers);
+    private static partial IntPtr Initialize(int count, int[] layers);
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Dispose(void* ptr);
+    private static partial void Dispose(IntPtr ptr);
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void ApplyParams(void* ptr, NeuralNetworkParameters parameters);
+    private static partial void ApplyParams(IntPtr ptr, NeuralNetworkParameters parameters);
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial int GetCount(void* ptr);
+    private static partial int GetCount(IntPtr ptr);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial int GetOutCount(void* ptr, int layer);
+    private static partial int GetOutCount(IntPtr ptr, int layer);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial int GetInCount(void* ptr, int layer);
+    private static partial int GetInCount(IntPtr ptr, int layer);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void SetWeight(void* ptr, int layer, int input, int output, int value);
+    private static partial void SetWeight(IntPtr ptr, int layer, int input, int output, double value);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial int GetWeight(void* ptr, int layer, int input, int output);
+    private static partial double GetWeight(IntPtr ptr, int layer, int input, int output);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void SetBias(void* ptr, int layer, int output, int value);
+    private static partial void SetBias(IntPtr ptr, int layer, int output, double value);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial int GetBias(void* ptr, int layer, int output);
+    private static partial double GetBias(IntPtr ptr, int layer, int output);
     
     [LibraryImport("libExport.dll")]
-    [return : MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial  double[] Predict(void* ptr, double[] input, int inCount, int outCount);
+    private static partial void Predict(IntPtr ptr, 
+        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] input, int inCount,
+        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] double[] output, int outCount);
 
     [LibraryImport("libExport.dll", StringMarshalling = StringMarshalling.Utf8)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void* FromFile(string file, ref NeuralNetworkParameters parameters);
+    private static partial IntPtr FromFile(string file, ref NeuralNetworkParameters parameters);
     
     [LibraryImport("libExport.dll", StringMarshalling = StringMarshalling.Utf8)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Save(void* ptr, NeuralNetworkParameters parameters, string file);
+    private static partial void Save(IntPtr ptr, NeuralNetworkParameters parameters, string file);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void Randomize(IntPtr ptr, double min, double max);
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -173,11 +189,11 @@ public struct NeuralNetworkParameters
 public static class ActivationType
 {
     public const int DEFAULT = 0;
-    public const int SIGMOID = 0;
-    public const int TANH = 0;
-    public const int RELU = 0;
-    public const int SILU = 0;
-    public const int SOFTMAX = 0;
+    public const int SIGMOID = 1;
+    public const int TANH = 2;
+    public const int RELU = 3;
+    public const int SILU = 4;
+    public const int SOFTMAX = 5;
 }
 
 public static class CostType

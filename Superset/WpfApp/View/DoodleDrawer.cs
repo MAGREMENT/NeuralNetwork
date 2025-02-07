@@ -12,6 +12,7 @@ public class DoodleDrawer : FrameworkElement
     private double[,] _data = new double[28, 28];
 
     public event Action<int, int, double, double>? OnDraw;
+    public event Action? OnDrawStop;
 
     public void SetData(double[,] data)
     {
@@ -70,6 +71,12 @@ public class DoodleDrawer : FrameworkElement
     {
         base.OnMouseLeftButtonDown(e);
         Draw(e);
+    }
+
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        OnDrawStop?.Invoke();
     }
 
     private void Draw(MouseEventArgs e)

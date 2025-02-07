@@ -1,5 +1,6 @@
 #include "export.h"
 #include "repository.h"
+#include "utils.h"
 
 inline neural_network* Initialize(int count, int numbers[]) {
     return alloc_network(count, numbers);
@@ -41,11 +42,17 @@ double GetBias(neural_network* ptr, int layer, int output) {
     return ptr->layers[layer].biases[output];
 }
 
-inline double* Predict(neural_network* ptr, double inputs[], int inCount, int outCount) {
+inline void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount) {
     input_data data;
     data.count = inCount;
     data.values = inputs;
-    return predict(ptr, &data)->values;
+
+    input_data* predicted = predict(ptr, &data);
+    for(int i = 0; i < outCount; i++) {
+        outputs[i] = predicted->values[i];
+    }
+
+    free_input_data(predicted);
 }
 
 inline neural_network* FromFile(char file[], params* toFill) {
@@ -54,4 +61,9 @@ inline neural_network* FromFile(char file[], params* toFill) {
 
 inline void Save(neural_network* ptr, params p, char file[]) {
     save(ptr, &p, file);
+}
+
+void Randomize(neural_network* ptr, double min, double max) {
+    init_random();
+    randomize(ptr, min, max);
 }

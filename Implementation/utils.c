@@ -6,7 +6,7 @@
 #include <time.h>
 
 inline void init_random() {
-    srand(time(nullptr));
+    srand(time(NULL));
 }
 
 inline double random(const double min, const double max) {

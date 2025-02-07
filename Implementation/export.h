@@ -13,8 +13,9 @@ void SetWeight(neural_network* ptr, int layer, int input, int output, double val
 double GetWeight(neural_network* ptr, int layer, int input, int output);
 void SetBias(neural_network* ptr, int layer, int output, double value);
 double GetBias(neural_network* ptr, int layer, int output);
-double* Predict(neural_network* ptr, double inputs[], int inCount, int outCount);
+void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount);
 neural_network* FromFile(char file[], params* toFill);
 void Save(neural_network* ptr, params p, char file[]);
+void Randomize(neural_network* ptr, double min, double max);
 
 #endif //EXPORT_H

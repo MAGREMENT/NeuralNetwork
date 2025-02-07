@@ -26,6 +26,16 @@ public class NeuralNetworkTests
     }
 
     [Test]
+    public void WeightsAndBiasesTest()
+    {
+        using var network = new NeuralNetwork(_testing[0]);
+        const double w = 0.5;
+
+        network.SetWeight(0, 1, 1, w);
+        Assert.That(network.GetWeight(0, 1, 1), Is.EqualTo(w));
+    }
+
+    [Test]
     public void PredictTest()
     {
         foreach (var n in _testing)
