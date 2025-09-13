@@ -12,8 +12,8 @@ void unit_tests();
 void cut_2D_test();
 
 int main() {
-    //cut_2D_test();
-    unit_tests();
+    cut_2D_test();
+    //unit_tests();
 
     return EXIT_SUCCESS;
 }

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 inline test_data* positive_generate_for_2D(const double spacing, const int count, const int max, int(*cut)(double, double)) {
-    test_data* result = alloc_test_data(count * count);
+    test_data* result = alloc_test_data(count * count, 2, max);
 
     for(int i = 0; i < count; i++) {
         for(int j = 0; j < count; j++) {
@@ -13,12 +13,9 @@ inline test_data* positive_generate_for_2D(const double spacing, const int count
             const int index = i * count + j;
 
             result->inputs[index].count = 2;
-            result->inputs[index].values = malloc(2 * sizeof(double));
             result->inputs[index].values[0] = x;
             result->inputs[index].values[1] = y;
 
-            result->expected[index].count = max;
-            result->expected[index].values = malloc(max * sizeof(double));
             const int e = cut(x, y);
             for(int n = 0; n < max; n++) {
                 result->expected[index].values[n] = n == e;
