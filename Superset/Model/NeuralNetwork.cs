@@ -82,16 +82,24 @@ public partial class NeuralNetwork : IDisposable
         return GetBias(_ptr, layer, output);
     }
 
-    public double[] Predict(double[] inputs)
+    public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
+    
+    public double[] Predict(double[] inputs, int length)
     {
-        if (inputs.Length != GetInCount(0))
+        if (length != GetInCount(0))
             throw new ArgumentException("Inputs length does not correspond to the first layer of the neural network");
         
         var count = GetOutCount(Length - 1);
         var arr = new double[count];
         
-        Predict(_ptr, inputs, inputs.Length, arr, count);
+        Predict(_ptr, inputs, length, arr, count);
         return arr;
+    }
+
+    public void Learn(FlattenedData data, int batchSize, int iterations)
+    {
+        Learn(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
+            batchSize, iterations);
     }
     
     public void Dispose()
@@ -163,6 +171,11 @@ public partial class NeuralNetwork : IDisposable
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void Randomize(IntPtr ptr, double min, double max);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void Learn(IntPtr ptr, double[] inputs, int inputCutOff, double[] expected, 
+        int expectedCutOff, int count, int batchSize, int iterations);
 }
 
 [StructLayout(LayoutKind.Sequential)]

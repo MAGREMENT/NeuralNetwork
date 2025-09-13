@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <time.h>
 
+
 inline void init_random() {
     srand(time(NULL));
 }
 
 inline double random(const double min, const double max) {
-    return (double)rand() / RAND_MAX * (max - min) + min;
+    return (double)rand() / (double)RAND_MAX * (max - min) + min;
 }
 
 inline int max_index(double values[], const int count) {

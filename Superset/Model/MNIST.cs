@@ -28,12 +28,14 @@ public static class MNIST
         var count = GetFlippedInt(labelsHeader, 4);
         if (count != GetFlippedInt(imagesHeader, 4)) throw new Exception("Different images and labels count");
 
+        count = Math.Min(limit, count);
+        
         var rows = GetFlippedInt(imagesHeader, 8);
         var cols = GetFlippedInt(imagesHeader, 12);
         var total = rows * cols;
-
+        
         var result = new (int, double[])[count];
-        for(int i = 0; i < count && i < limit; i++)
+        for(int i = 0; i < count; i++)
         {
             var labelBuffer = new byte[1];
             var imageBuffer = new byte[total];
@@ -55,7 +57,29 @@ public static class MNIST
         }
         
         return result;
-    } 
+    }
+
+    public static FlattenedData FlattenForNeuralNetwork(IReadOnlyList<(int, double[])> data)
+    {
+        var imgSize = data[0].Item2.Length;
+        var inputs = new double[data.Count * imgSize];
+        var expected = new double[10 * data.Count];
+
+        for (int i = 0; i < data.Count; i++)
+        {
+            var value = data[i].Item1;
+            expected[i * 10 + value] = 1;
+
+            var img = data[i].Item2;
+            var start = imgSize * i;
+            for (int j = 0; j < imgSize; j++)
+            {
+                inputs[start + j] = img[j];
+            }
+        }
+
+        return new FlattenedData(inputs, imgSize, expected, 10);
+    }
     
     private static int GetFlippedInt(Span<byte> span, int from)
     {

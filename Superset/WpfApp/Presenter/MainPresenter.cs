@@ -8,8 +8,8 @@ public class MainPresenter
     
     private readonly Doodle _doodle = new(28, 28);
     private readonly IReadOnlyList<(int, double[])> dataSet = MNIST.Read(
-        @"C:\Users\Zach\Desktop\Perso\NeuralNetwork\Superset\Model\mnist-data\t10k-labels.idx1-ubyte", 
-        @"C:\Users\Zach\Desktop\Perso\NeuralNetwork\Superset\Model\mnist-data\t10k-images.idx3-ubyte", 100);
+        "mnist-data/t10k-labels.idx1-ubyte", 
+        "mnist-data/t10k-images.idx3-ubyte", 100);
     private readonly NeuralNetwork _network = new(784, 200, 100, 9);
     private int _index = -1;
 

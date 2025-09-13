@@ -81,7 +81,7 @@ void cut_2D_test() {
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    iterative_learn(network, test, 32, 1000, test_and_print_network);
+    iterative_learn(network, test, 32, 1000);
 
     free_network(network);
 }
@@ -349,6 +349,29 @@ void randomize_test() {
     printf("randomize test OK!\n");
 }
 
+void alloc_flattened_test_data_test() {
+    double inputs[] = {0, 7, 8, 9, 6, 2, 44, 5, 6, 3 , 4 , 2 ,2};
+    double expected[] = {77, 88 ,6 ,2 ,5, 74,8 ,5 ,5 ,2, 7,4, 9 ,89, 5, 3 ,2 ,4, 7,7, 5,5};
+
+    test_data* data = alloc_flattened_test_data(inputs, 2, expected, 3, 5);
+
+    for (int i = 0; i < 5; i++) {
+        int start = i * 2;
+        for (int j = 0; j < 2; j++) {
+            if (!def_deq(data->inputs[i].values[j], inputs[start + j])) printf("Bad correspondance\n");
+        }
+
+        start = i * 3;
+        for (int j = 0; j < 3; j++) {
+            if (!def_deq(data->expected[i].values[j], expected[start + j])) printf("Bad correspondance\n");
+        }
+    }
+
+    free_test_data(data);
+
+    printf("alloc flattened test data OK!\n");
+}
+
 void unit_tests() {
     init_random();
 
@@ -358,5 +381,6 @@ void unit_tests() {
     gradients_test();
     repository_test();
     randomize_test();
+    alloc_flattened_test_data_test();
 }
 

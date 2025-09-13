@@ -38,7 +38,7 @@ inline void SetBias(neural_network* ptr, int layer, int output, double value) {
     ptr->layers[layer].biases[output] = value;
 }
 
-double GetBias(neural_network* ptr, int layer, int output) {
+inline double GetBias(neural_network* ptr, int layer, int output) {
     return ptr->layers[layer].biases[output];
 }
 
@@ -63,7 +63,14 @@ inline void Save(neural_network* ptr, params p, char file[]) {
     save(ptr, &p, file);
 }
 
-void Randomize(neural_network* ptr, double min, double max) {
+inline void Randomize(neural_network* ptr, double min, double max) {
     init_random();
     randomize(ptr, min, max);
+}
+
+inline void Learn(neural_network* ptr, double* inputs, int inputCutoff,
+        double* expected, int expectedCutoff, int count, int batchSize, int iterations) {
+    test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    iterative_learn(ptr, test, batchSize, iterations);
+    free_test_data(test);
 }

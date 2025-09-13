@@ -86,8 +86,7 @@ void free_network(neural_network* network);
 void apply_params(neural_network* network, params params);
 void randomize(neural_network* network, double min, double max);
 void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
-void iterative_learn(neural_network* network, test_data* data, int batchSize, int count,
-    void (*on_iteration_end)(neural_network* network, test_data* data, int i));
+void iterative_learn(neural_network* network, test_data* data, int batchSize, int iterations);
 input_data* predict(neural_network* network, input_data* data);
 
 /**
@@ -122,14 +121,17 @@ void update_gradients(const neural_network* network, const layer_data* gradients
     input_data expected);
 
 input_data* alloc_input_data(int count);
+input_data* alloc_input_datas(int innerCount, int count);
 void free_input_data(input_data* data);
+void free_input_datas(input_data* data, int count);
 void set_input_data(input_data data, const double values[]);
 int is_valid(input_data* output, input_data* expected);
 
 backpropagation_data* alloc_back_data(const neural_network* network);
 void free_back_data(backpropagation_data* data, int count);
 
-test_data* alloc_test_data(int count);
+test_data* alloc_test_data(int count, int inputCount, int outputCount);
+test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 void free_test_data(test_data* data);
 test_result test_network(neural_network* network, test_data *test);
 

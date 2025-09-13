@@ -17,5 +17,7 @@ void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[]
 neural_network* FromFile(char file[], params* toFill);
 void Save(neural_network* ptr, params p, char file[]);
 void Randomize(neural_network* ptr, double min, double max);
+void Learn(neural_network* ptr, double* inputs, int inputCutoff,
+        double* expected, int expectedCutoff, int count, int batchSize, int iterations);
 
 #endif //EXPORT_H

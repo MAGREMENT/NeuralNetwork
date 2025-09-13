@@ -4,12 +4,12 @@ namespace Tests;
 
 public class NeuralNetworkTests
 {
-    private static readonly int[][] _testing =  
+    private static readonly int[][] _testing =
     {
         new[] { 2, 3, 2 },
         new[] { 1, 1, 1, 1, 1 }
     };
-    
+
     [Test]
     public void LengthTest()
     {
@@ -36,7 +36,7 @@ public class NeuralNetworkTests
     }
 
     [Test]
-    public void PredictTest()
+    public void PredictCountTest()
     {
         foreach (var n in _testing)
         {
@@ -46,4 +46,67 @@ public class NeuralNetworkTests
             Assert.That(output.Length, Is.EqualTo(n[^1]));
         }
     }
+
+    #region SimpleLearnTest
+
+    [Test]
+    public void SimpleLearnTest()
+    {
+        var network = new NeuralNetwork(7, 4, 3);
+        network.Randomize(0, 1);
+
+        var data = GenerateTestDataForSimpleLearnTest();
+        data.Shuffle(5);
+        var flattened = FlattenedData.FromArrays(data);
+        double[] predicted;
+
+        const int tests = 50;
+        for (int i = 0; i < tests; i++)
+        {
+            predicted = network.Predict(flattened.Inputs, 7);
+            flattened.Inputs.Print(7);
+            predicted.Print();
+            Console.WriteLine();
+            
+            network.Learn(flattened, 50, 100);
+        }
+        
+        predicted = network.Predict(flattened.Inputs, 7);
+        flattened.Inputs.Print(7);
+        predicted.Print();
+        Console.WriteLine();
+    }
+
+    private (double[], double[])[] GenerateTestDataForSimpleLearnTest()
+    {
+        List<(double[], double[])> result = new();
+        GenerateTestDataForSimpleLearnTest(result, new double[7], 0);
+        return result.ToArray();
+    }
+
+    private void GenerateTestDataForSimpleLearnTest(List<(double[], double[])> result, double[] current, int ind)
+    {
+        if (ind == 7)
+        {
+            var count = 0;
+            foreach (var val in current) count += (int)val;
+
+            var expected = new double[]
+            {
+                count >= 4 ? 1 : 0,
+                count is 2 or 3 or 6 or 7 ? 1 : 0,
+                count & 1
+            };
+                
+            result.Add((current.Copy(), expected));
+            return;
+        }
+        
+        GenerateTestDataForSimpleLearnTest(result, current, ind + 1);
+        current[ind] = 1;
+        GenerateTestDataForSimpleLearnTest(result, current, ind + 1);
+        current[ind] = 0;
+    }
+
+    #endregion
 }

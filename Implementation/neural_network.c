@@ -125,8 +125,26 @@ inline input_data* alloc_input_data(int count){
     return result;
 }
 
+inline input_data* alloc_input_datas(int innerCount, int count){
+    input_data* result = malloc(sizeof(input_data) * count);
+
+    for (int i = 0; i < count; i++) {
+        result[i].count = innerCount;
+        result[i].values = malloc(innerCount * sizeof(double));
+    }
+    return result;
+}
+
 inline void free_input_data(input_data* data){
     free(data->values);
+    free(data);
+}
+
+void free_input_datas(input_data* data, int count) {
+    for (int i = 0; i < count; i++) {
+        free(data[i].values);
+    }
+
     free(data);
 }
 
@@ -399,20 +417,18 @@ inline void learn(neural_network* network, test_data* data, batch batch, double 
     free_layer_data_array(gradients, network->count);
 }
 
-inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int count,
-    void (*on_iteration_end)(neural_network* network, test_data* data, int i)) {
+inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int iterations) {
 
     layer_data* velocities = alloc_layer_data_array(network, false);
     double learningRate = network->initialLearningRate / batchSize;
     int current = 0;
 
-    for(int iteration = 0; iteration < count; iteration++) {
+    for(int iteration = 0; iteration < iterations; iteration++) {
         const batch b = create_batch(current, batchSize, data->count);
         learn(network, data, b, learningRate, velocities);
 
         current = b.then == 0 ? b.to : b.then;
         learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * network->initialLearningRate / batchSize;
-        if(on_iteration_end != NULL) on_iteration_end(network, data, iteration);
     }
 
     free_layer_data_array(velocities, network->count);
@@ -422,21 +438,40 @@ inline int is_valid(input_data* output, input_data* expected) {
     return max_index(output->values, output->count) == max_index(expected->values, expected->count);
 }
 
-inline test_data* alloc_test_data(const int count) {
+inline test_data* alloc_test_data(const int count, const int inputCount, const int outputCount) {
     test_data* result = malloc(sizeof(test_data));
     result->count = count;
-    result->inputs = malloc(count * sizeof(input_data));
-    result->expected = malloc(count * sizeof(input_data));
+    result->inputs = alloc_input_datas(inputCount, count);
+    result->expected = alloc_input_datas(outputCount, count);
 
     return result;
 }
 
-inline void free_test_data(test_data* data){
-    for(int i = 0; i < data->count; i++) {
-        free(data->inputs[i].values);
-        free(data->expected[i].values);
+inline test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
+    test_data* test = alloc_test_data(count, inputCutoff, expectedCutoff);
+
+    for (int i = 0; i < count; i++) {
+        int start = inputCutoff * i;
+        test->inputs[i].count = inputCutoff;
+
+        for (int j = 0; j < inputCutoff; j++) {
+            test->inputs[i].values[j] = inputs[start + j];
+        }
+
+        start = expectedCutoff * i;
+        test->expected[i].count = expectedCutoff;
+
+        for (int j = 0; j < expectedCutoff; j++) {
+            test->expected[i].values[j] = expected[start + j];
+        }
     }
 
+    return test;
+}
+
+inline void free_test_data(test_data* data){
+    free_input_datas(data->inputs, data->count);
+    free_input_datas(data->expected, data->count);
     free(data);
 }
 
