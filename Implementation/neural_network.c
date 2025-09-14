@@ -29,7 +29,8 @@ inline void apply_params(neural_network* network, params params){
     network->regularization = params.regularization;
 
     for(int i = 0; i < network->count; i++) {
-        switch (params.activationType) {
+        int type = i == network->count - 1 ? params.outputActivationType : params.activationType;
+        switch (type) {
             case DEFAULT:network->layers[i].activation = default_activation;
             network->layers[i].activationDerivative = default_activation;
             network->layers[i].processInputs = default_process_inputs;
@@ -312,7 +313,8 @@ inline void free_layer_data_array(layer_data* gradients, const int count) {
 inline void apply_gradients(layer to, layer_data gradients, double learningRate){
     for(int i = 0; i < to.in_count; i++){
         for(int j = 0; j < to.out_count; j++){
-            to.weights[i * to.out_count + j] -= gradients.weights[i * to.out_count + j] * learningRate;
+            const int index = i * to.out_count + j;
+            to.weights[index] -= gradients.weights[index] * learningRate;
         }
     }
 
@@ -418,8 +420,10 @@ inline void learn(neural_network* network, test_data* data, batch batch, double 
 }
 
 inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int iterations) {
+    layer_data* velocities = network->regularization == 0 && network->momentum == 0
+        ? NULL
+        : alloc_layer_data_array(network, false);
 
-    layer_data* velocities = alloc_layer_data_array(network, false);
     double learningRate = network->initialLearningRate / batchSize;
     int current = 0;
 

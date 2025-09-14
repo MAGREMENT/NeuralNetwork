@@ -19,5 +19,7 @@ void Save(neural_network* ptr, params p, char file[]);
 void Randomize(neural_network* ptr, double min, double max);
 void Learn(neural_network* ptr, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int batchSize, int iterations);
+double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount);
+inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 
 #endif //EXPORT_H

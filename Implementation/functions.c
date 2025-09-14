@@ -36,9 +36,8 @@ inline double derivative_tanh_activation(double input, void* processedData) {
     return 1 - t * t;
 }
 
-inline double relu_activation(double input, void* processedData) {
-    const double n = input;
-    return n < 0 ? n : 0;
+inline double relu_activation(const double input, void* processedData) {
+    return input > 0 ? input : 0;
 }
 
 inline double derivative_relu_activation(double input, void* processedData) {

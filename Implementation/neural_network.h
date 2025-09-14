@@ -18,6 +18,7 @@ typedef struct params {
     double regularization;
     double momentum;
     int activationType;
+    int outputActivationType;
     int costType;
 } params ;
 

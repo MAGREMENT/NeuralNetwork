@@ -74,3 +74,20 @@ inline void Learn(neural_network* ptr, double* inputs, int inputCutoff,
     iterative_learn(ptr, test, batchSize, iterations);
     free_test_data(test);
 }
+
+inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount) {
+    input_data i, e;
+    i.count = inputCount;
+    i.values = inputs;
+    e.count = expectedCount;
+    e.values = expected;
+
+    return cost(ptr, &i, &e);
+}
+
+inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
+    test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    double result = multi_cost(ptr, test);
+    free_test_data(test);
+    return result;
+}

@@ -5,7 +5,7 @@ namespace Model;
 public partial class NeuralNetwork : IDisposable
 {
     private readonly IntPtr _ptr;
-    private readonly NeuralNetworkParameters _params;
+    private NeuralNetworkParameters _params;
 
     public int Length => GetCount(_ptr);
 
@@ -35,9 +35,9 @@ public partial class NeuralNetwork : IDisposable
         Save(_ptr, _params, file);
     }
 
-    public void ChangeParameters(Action<NeuralNetworkParameters> action)
+    public void ChangeParameters(EditParams action)
     {
-        action(_params);
+        action(ref _params);
         ApplyParams(_ptr, _params);
     }
 
@@ -101,6 +101,18 @@ public partial class NeuralNetwork : IDisposable
         Learn(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
             batchSize, iterations);
     }
+
+    public double GetCost(double[] inputs, double[] expected)
+    {
+        CheckTestDataBounds(inputs.Length, expected.Length);
+        return Cost(_ptr, inputs, inputs.Length, expected, expected.Length); 
+    }
+
+    public double GetCost(FlattenedData data)
+    {
+        CheckTestDataBounds(data.InputCutOff, data.ExpectedCutOff);
+        return MultiCost(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount());
+    }
     
     public void Dispose()
     {
@@ -112,6 +124,12 @@ public partial class NeuralNetwork : IDisposable
     {
         if (input < 0 || input >= GetInCount(layer) || output < 0 || output >= GetOutCount(layer))
             throw new IndexOutOfRangeException();
+    }
+
+    private void CheckTestDataBounds(int inputCount, int outputCount)
+    {
+        if (inputCount != GetInCount(0) || outputCount != GetOutCount(Length - 1))
+            throw new ArgumentException("Test data input or output count incorrect");
     }
 
     [LibraryImport("libExport.dll")]
@@ -176,7 +194,19 @@ public partial class NeuralNetwork : IDisposable
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void Learn(IntPtr ptr, double[] inputs, int inputCutOff, double[] expected, 
         int expectedCutOff, int count, int batchSize, int iterations);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial double Cost(IntPtr ptr, double[] inputs, int inputCount, double[] expected,
+        int expectedCount);
+
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial double MultiCost(IntPtr ptr, double[] inputs, int inputCutOff, double[] expected,
+        int expectedCutOff, int count);
 }
+
+public delegate void EditParams(ref NeuralNetworkParameters p);
 
 [StructLayout(LayoutKind.Sequential)]
 public struct NeuralNetworkParameters
@@ -186,15 +216,17 @@ public struct NeuralNetworkParameters
     public double Regularization;
     public double Momentum;
     public int ActivationType;
+    public int OutputActivationType;
     public int CostType;
 
     public static NeuralNetworkParameters Default { get; } = new()
     {
         InitialLearningRate = 1,
-        LearningRateDecay = 0.002,
-        Regularization = 0.9,
-        Momentum = 0.1,
+        LearningRateDecay = 0,
+        Regularization = 0,
+        Momentum = 0,
         ActivationType = Model.ActivationType.SIGMOID,
+        OutputActivationType = Model.ActivationType.SIGMOID,
         CostType = Model.CostType.MEAN_SQUARED
     };
 }

@@ -12,8 +12,8 @@ void unit_tests();
 void cut_2D_test();
 
 int main() {
-    cut_2D_test();
-    //unit_tests();
+    //cut_2D_test();
+    unit_tests();
 
     return EXIT_SUCCESS;
 }
@@ -27,6 +27,7 @@ neural_network* example_network(int activation) {
     params.regularization = 0.1;
     params.momentum = 0.9;
     params.activationType = activation;
+    params.outputActivationType = activation;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
 

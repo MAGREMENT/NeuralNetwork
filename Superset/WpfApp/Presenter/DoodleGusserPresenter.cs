@@ -2,9 +2,9 @@
 
 namespace WpfApp.Presenter;
 
-public class MainPresenter
+public class DoodleGusserPresenter
 {
-    private readonly IMainView _view;
+    private readonly IDoodleGuesserView _view;
     
     private readonly Doodle _doodle = new(28, 28);
     private readonly IReadOnlyList<(int, double[])> dataSet = MNIST.Read(
@@ -13,7 +13,7 @@ public class MainPresenter
     private readonly NeuralNetwork _network = new(784, 200, 100, 9);
     private int _index = -1;
 
-    public MainPresenter(IMainView view)
+    public DoodleGusserPresenter(IDoodleGuesserView view)
     {
         _view = view;
         _network.Randomize(0, 1);
@@ -60,7 +60,7 @@ public class MainPresenter
     }
 }
 
-public interface IMainView
+public interface IDoodleGuesserView
 {
     void SetDoodleData(double[,] data);
     void SetPredictions(IReadOnlyList<(int, double)> predictions);

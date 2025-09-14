@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using WpfApp.Presenter;
 
 namespace WpfApp.View;
@@ -8,47 +9,20 @@ namespace WpfApp.View;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : IMainView
+public partial class MainWindow
 {
-    private readonly MainPresenter _presenter;
-    
+    private readonly bool _cancelNavigation = false;
+
     public MainWindow()
     {
         InitializeComponent();
 
-        _presenter = new MainPresenter(this);
-        Drawer.OnDraw += _presenter.Draw;
-        Drawer.OnDrawStop += _presenter.Predict;
+        Frame.Content = new GraphGuesser();
+        _cancelNavigation = true;
     }
 
-    public void SetDoodleData(double[,] data)
+    private void CancelNavigation(object sender, NavigatingCancelEventArgs e)
     {
-        Drawer.SetData(data);
-    }
-
-    public void SetPredictions(IReadOnlyList<(int, double)> predictions)
-    {
-        Predictions.Children.Clear();
-        for (int i = 0; i < predictions.Count; i++)
-        {
-            var tb = new TextBlock
-            {
-                Padding = new Thickness(10),
-                FontSize = 16,
-                Foreground = i == 0 ? Brushes.Black : Brushes.DarkGray,
-                Text = $"{predictions[i].Item1} - {predictions[i].Item2}%"
-            };
-            Predictions.Children.Add(tb);
-        }
-    }
-
-    private void Previous(object sender, RoutedEventArgs e)
-    {
-        _presenter.Previous();
-    }
-
-    private void Next(object sender, RoutedEventArgs e)
-    {
-        _presenter.Next();
+        if(_cancelNavigation) e.Cancel = true;
     }
 }
