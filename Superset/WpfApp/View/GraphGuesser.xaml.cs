@@ -1,17 +1,42 @@
+using System.Globalization;
 using System.Windows;
+using Model;
+using WpfApp.Presenter;
 
 namespace WpfApp.View;
 
-public partial class GraphGuesser
+public partial class GraphGuesser : IGraphGuesserView
 {
+    private readonly GraphGuesserPresenter _presenter;
+    
     public GraphGuesser()
     {
         InitializeComponent();
 
-        Graph.Points = new Point[]
-        {
-            new(1, 1),
-            new(2, 4)
-        };
+        _presenter = new GraphGuesserPresenter(this);
+        Graph.OutputGetter = _presenter.Predict;
+        
+        _presenter.Start();
+    }
+
+    public void Generate(object? o, RoutedEventArgs args)
+    {
+        Graph.SetMaxValues(_presenter.Box.UpperX, _presenter.Box.UpperY);
+        _presenter.GeneratePoints();
+    }
+
+    public void Remove(object? o, RoutedEventArgs args)
+    {
+        _presenter.RemovePoints();
+    }
+
+    public void SetPoints(IReadOnlyList<GuessingPoint> points)
+    {
+        Graph.Points = points;
+    }
+
+    public void SetCost(double v)
+    {
+        CostBlock.Text = v.ToString("0.00", CultureInfo.CreateSpecificCulture("en-US"));
     }
 }

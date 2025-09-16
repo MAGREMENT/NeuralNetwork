@@ -2,7 +2,7 @@
 
 namespace WpfApp.Presenter;
 
-public class DoodleGusserPresenter
+public class DoodleGuesserPresenter
 {
     private readonly IDoodleGuesserView _view;
     
@@ -13,7 +13,7 @@ public class DoodleGusserPresenter
     private readonly NeuralNetwork _network = new(784, 200, 100, 9);
     private int _index = -1;
 
-    public DoodleGusserPresenter(IDoodleGuesserView view)
+    public DoodleGuesserPresenter(IDoodleGuesserView view)
     {
         _view = view;
         _network.Randomize(0, 1);

@@ -49,7 +49,7 @@ public class NeuralNetworkTests
 
     #region SimpleLearnTest
 
-    [Test]
+    [Test] //TODO fix
     public void SimpleLearnTest()
     {
         var network = new NeuralNetwork(7, 4, 3);

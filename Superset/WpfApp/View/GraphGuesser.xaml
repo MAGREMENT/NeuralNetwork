@@ -7,6 +7,21 @@
       mc:Ignorable="d"
       Title="GraphGuesser" Height="450" Width="800">
     <Grid>
-        <local:Graph x:Name="Graph"></local:Graph>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        
+        <local:GuessingGraph x:Name="Graph" Grid.Column="0"/>
+        <StackPanel Grid.Column="1" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Button Click="Generate">Generate</Button>
+                <Button Click="Remove">Remove</Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock>Cost :</TextBlock>
+                <TextBlock x:Name="CostBlock"></TextBlock>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Page>

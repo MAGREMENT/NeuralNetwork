@@ -37,6 +37,25 @@ public static class ArrayExtensions
         }
     }
 
+    public static int IndexOfHighestValue(this double[] arr)
+    {
+        if (arr.Length == 0) return -1;
+
+        var max = arr[0];
+        var ind = 0;
+
+        for (int i = 1; i < arr.Length; i++)
+        {
+            if (arr[i] > max)
+            {
+                ind = i;
+                max = arr[i];
+            }
+        }
+
+        return ind;
+    }
+
     public static void Print<T>(this T[] array)
     {
         Console.Write("[");

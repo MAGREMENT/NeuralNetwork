@@ -34,4 +34,25 @@ public class FlattenedData(double[] inputs, int inputCutOff, double[] expected, 
 
         return new FlattenedData(inputs, cutOff1, expected, cutOff2);
     }
+
+    public static FlattenedData FromGuessingPoints(IReadOnlyList<GuessingPoint> points, int outputValueCount)
+    {
+        var inputs = new double[points.Count * 2];
+        var expected = new double[points.Count * outputValueCount];
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            var p = points[i];
+            inputs[i * 2] = p.X;
+            inputs[i * 2 + 1] = p.Y;
+
+            var start = i * outputValueCount;
+            for (int j = 0; j < outputValueCount; j++)
+            {
+                if (j == p.Output) expected[start + j] = 1;
+            }
+        }
+
+        return new FlattenedData(inputs, 2, expected, outputValueCount);
+    }
 }

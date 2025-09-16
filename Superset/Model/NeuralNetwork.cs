@@ -52,10 +52,20 @@ public partial class NeuralNetwork : IDisposable
         return GetInCount(_ptr, layer);
     }
 
+    public int GetInputInCount()
+    {
+        return GetInCount(_ptr, 0);
+    }
+
     public int GetOutCount(int layer)
     {
         if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
         return GetOutCount(_ptr, layer);
+    }
+
+    public int GetOutputOutCount()
+    {
+        return GetOutCount(_ptr, Length - 1);
     }
 
     public void SetWeight(int layer, int input, int output, double value)

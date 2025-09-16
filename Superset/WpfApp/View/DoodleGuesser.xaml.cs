@@ -7,13 +7,13 @@ namespace WpfApp.View;
 
 public partial class DoodleGuesser : IDoodleGuesserView
 {
-    private readonly DoodleGusserPresenter _presenter;
+    private readonly DoodleGuesserPresenter _presenter;
     
     public DoodleGuesser()
     {
         InitializeComponent();
 
-        _presenter = new DoodleGusserPresenter(this);
+        _presenter = new DoodleGuesserPresenter(this);
         Drawer.OnDraw += _presenter.Draw;
         Drawer.OnDrawStop += _presenter.Predict;
     }
