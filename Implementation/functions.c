@@ -55,6 +55,14 @@ inline double derivative_silu_activation(double input, void* processedData) {
     return n * sig * (1 - sig) + sig;
 }
 
+inline double cube_activation(double input, void* processedData) {
+    return input * input * input;
+}
+
+inline double derivative_cube_activation(double input, void* processedData) {
+    return 3 * input * input;
+}
+
 inline double softmax_activation(double input, void* processedData) {
     return exp(input) / *(double*)processedData;
 }

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "neural_network.h"
 
+#include <stdio.h>
+
 #include "functions.h"
 #include "utils.h"
 
@@ -53,6 +55,11 @@ inline void apply_params(neural_network* network, params params){
             break;
             case SILU : network->layers[i].activation = silu_activation;
             network->layers[i].activationDerivative = derivative_silu_activation;
+            network->layers[i].processInputs = default_process_inputs;
+            network->layers[i].freeData = default_free_data;
+            break;
+            case CUBE : network->layers[i].activation = cube_activation;
+            network->layers[i].activationDerivative = derivative_cube_activation;
             network->layers[i].processInputs = default_process_inputs;
             network->layers[i].freeData = default_free_data;
             break;
@@ -179,88 +186,105 @@ inline void free_back_data(backpropagation_data* data, const int count){
     free(data);
 }
 
-inline input_data* forward(layer layer, input_data input){
-    input_data* result = alloc_input_data(layer.out_count);
-    double weightedInputs[layer.out_count];
+inline void forward(layer layer, input_data input, input_data* result) {
+    double* weightedInputs = malloc(layer.out_count * sizeof(double));
 
-    for(int i = 0; i < layer.out_count; i++){
-        double n = layer.biases[i];
-        for(int j = 0; j < layer.in_count; j++){
-            n += input.values[j] * layer.weights[j * layer.out_count + i];
+    for(int o = 0; o < layer.out_count; o++){
+        double n = layer.biases[o];
+
+        for(int i = 0; i < layer.in_count; i++){
+            const int ind = i * layer.out_count + o;
+            n += input.values[i] * layer.weights[ind];
         }
 
-        weightedInputs[i] = n;
+        weightedInputs[o] = n;
     }
 
     void* data = layer.processInputs(weightedInputs, layer.out_count);
-    for(int i = 0; i < layer.out_count; i++) {
-        result->values[i] = layer.activation(weightedInputs[i], data);
+    for(int o = 0; o < layer.out_count; o++) {
+        result->values[o] = layer.activation(weightedInputs[o], data);
     }
     layer.freeData(data);
-    
+
+    free(weightedInputs);
+}
+
+input_data* alloc_predict(neural_network* network, input_data* data) {
+    input_data* result = alloc_input_data(network->layers[network->count - 1].out_count);
+    predict(network, data, result);
     return result;
 }
 
-inline input_data* predict(neural_network* network, input_data* data){
-    input_data* input = data;
+inline void predict(neural_network* network, input_data* data, input_data* result) {
     for(int i = 0; i < network->count; i++){
-        input_data* before = input;
-        input = forward(network->layers[i], *input);
-        if(i != 0) free_input_data(before);
-    }
+        const int isLast = i == network->count - 1;
 
-    return input;
+        input_data* output = isLast ? result : alloc_input_data(network->layers[i].out_count);
+        forward(network->layers[i], *data, output);
+
+        if (!isLast) {
+            data = output;
+        }
+
+        if (i > 0) {
+            free_input_data(data);
+        }
+    }
 }
 
 inline void continue_advance(const layer layer, const backpropagation_data* data, const int inputIndex){
+    for(int o = 0; o < layer.out_count; o++){
+        double n = layer.biases[o];
 
-    for(int i = 0; i < layer.out_count; i++){
-        double n = layer.biases[i];
-        for(int j = 0; j < layer.in_count; j++){
-            n += data[inputIndex].afterActivations[j] * layer.weights[j * layer.out_count + i];
+        for(int i = 0; i < layer.in_count; i++){
+            const int ind = i * layer.out_count + o;
+            n += data[inputIndex].afterActivations[i] * layer.weights[ind];
         }
 
-        data[inputIndex + 1].weightedInputs[i] = n;
+        data[inputIndex + 1].weightedInputs[o] = n;
     }
 
     void* d = layer.processInputs(data[inputIndex + 1].weightedInputs, layer.out_count);
-    for(int i = 0; i < layer.out_count; i++) {
-        data[inputIndex + 1].afterActivations[i] = layer.activation(data[inputIndex + 1].weightedInputs[i], d);
+    for(int o = 0; o < layer.out_count; o++) {
+        data[inputIndex + 1].afterActivations[o] = layer.activation(data[inputIndex + 1].weightedInputs[o], d);
     }
     layer.freeData(d);
 }
 
 inline void first_advance(const layer layer, const backpropagation_data* data, const input_data* input){
+    for(int o = 0; o < layer.out_count; o++){
+        double n = layer.biases[o];
 
-    for(int i = 0; i < layer.out_count; i++){
-        double n = layer.biases[i];
-        for(int j = 0; j < layer.in_count; j++){
-            n += input->values[j] * layer.weights[j * layer.out_count + i];
+        for(int i = 0; i < layer.in_count; i++){
+            const int ind = i * layer.out_count + o;
+            n += input->values[i] * layer.weights[ind];
         }
 
-        data[0].weightedInputs[i] = n;
+        data[0].weightedInputs[o] = n;
     }
 
     void* d = layer.processInputs(data[0].weightedInputs, layer.out_count);
-    for(int i = 0; i < layer.out_count; i++) {
-        data[0].afterActivations[i] = layer.activation(data[0].weightedInputs[i], d);
+    for(int o = 0; o < layer.out_count; o++) {
+        data[0].afterActivations[o] = layer.activation(data[0].weightedInputs[o], d);
     }
     layer.freeData(d);
 }
 
-inline backpropagation_data* traverse(const neural_network* network, input_data* data){
-    backpropagation_data* result = alloc_back_data(network);
-
+inline void traverse(const neural_network* network, input_data* data, backpropagation_data* result){
     first_advance(network->layers[0], result, data);
     for(int i = 0; i < network->count - 1; i++) {
         continue_advance(network->layers[i + 1], result, i);
     }
+}
 
+inline backpropagation_data* alloc_traverse(const neural_network* network, input_data* data) {
+    backpropagation_data* result = alloc_back_data(network);
+    traverse(network, data, result);
     return result;
 }
 
 inline double cost(neural_network* network, input_data* data, input_data* expected) {
-    input_data* result = predict(network, data);
+    input_data* result = alloc_predict(network, data);
     double cost = 0;
     for(int i = 0; i < expected->count; i++) {
         cost += network->cost(result->values[i], expected->values[i]);
@@ -349,7 +373,7 @@ inline void apply_gradients_with_velocities(layer to, layer_data gradients, laye
 inline void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
-    backpropagation_data* data = traverse(network, &input);
+    backpropagation_data* data = alloc_traverse(network, &input);
     const int lastIndex = network->count - 1;
 
     for(int n = lastIndex; n >= 0; n--) {
@@ -381,6 +405,7 @@ inline void update_gradients(const neural_network* network, const layer_data* gr
         const layer current = network->layers[n];
         for(int o = 0; o < current.out_count; o++) {
             const double nv = data[n].nodeValues[o];
+
             for(int i = 0; i < current.in_count; i++) {
                 const double g = nv * (n == 0 ? input.values[i] : data[n - 1].afterActivations[i]);
                 gradients[n].weights[i * current.out_count + o] += g;
@@ -482,7 +507,7 @@ inline void free_test_data(test_data* data){
 inline test_result test_network(neural_network* network, test_data *test) {
     double valid = 0;
     for(int i = 0; i < test->count; i++) {
-        input_data* output = predict(network, &test->inputs[i]);
+        input_data* output = alloc_predict(network, &test->inputs[i]);
         if(is_valid(output, &test->expected[i])) valid++;
         free_input_data(output);
     }

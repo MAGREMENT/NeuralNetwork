@@ -75,7 +75,8 @@ enum activation_type {
     TANH,
     RELU,
     SILU,
-    SOFTMAX
+    SOFTMAX,
+    CUBE
 };
 
 enum cost_type {
@@ -88,7 +89,8 @@ void apply_params(neural_network* network, params params);
 void randomize(neural_network* network, double min, double max);
 void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
 void iterative_learn(neural_network* network, test_data* data, int batchSize, int iterations);
-input_data* predict(neural_network* network, input_data* data);
+input_data* alloc_predict(neural_network* network, input_data* data);
+void predict(neural_network* network, input_data* data, input_data* result);
 
 /**
  * Traverse all layers to create backpropagation data
@@ -96,13 +98,14 @@ input_data* predict(neural_network* network, input_data* data);
  * @param data
  * @return
  */
-backpropagation_data* traverse(const neural_network* network, input_data* data);
+void traverse(const neural_network* network, input_data* data, backpropagation_data* result);
+backpropagation_data* alloc_traverse(const neural_network* network, input_data* data);
 double cost(neural_network* network, input_data* data, input_data* expected);
 double multi_cost(neural_network* network, test_data* data);
 
 void set_layer(layer layer, const double* weights, const double* biases);
 void free_layers(layer* layers, int count);
-input_data* forward(layer layer, input_data input);
+void forward(layer layer, input_data input, input_data* result);
 void first_advance(layer layer, const backpropagation_data* data, const input_data* input);
 void continue_advance(layer layer, const backpropagation_data* data, int inputIndex);
 

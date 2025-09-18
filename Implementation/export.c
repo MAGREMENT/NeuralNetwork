@@ -47,12 +47,11 @@ inline void Predict(neural_network* ptr, double inputs[], int inCount, double ou
     data.count = inCount;
     data.values = inputs;
 
-    input_data* predicted = predict(ptr, &data);
-    for(int i = 0; i < outCount; i++) {
-        outputs[i] = predicted->values[i];
-    }
+    input_data predicted;
+    predicted.count = outCount;
+    predicted.values = outputs;
 
-    free_input_data(predicted);
+    predict(ptr, &data, &predicted);
 }
 
 inline neural_network* FromFile(char file[], params* toFill) {

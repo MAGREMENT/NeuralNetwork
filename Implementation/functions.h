@@ -22,6 +22,9 @@ double derivative_softmax_activation(double input, void* processedData);
 void* softmax_process_inputs(double* inputs, int count);
 void softmax_free_data(void* data);
 
+double cube_activation(double input, void* processedData);
+double derivative_cube_activation(double input, void* processedData);
+
 double mean_square_cost(double predicted, double expected);
 double derivative_mean_square_cost(double predicted, double expected);
 
