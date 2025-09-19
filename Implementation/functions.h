@@ -2,6 +2,7 @@
 #define FUNCTIONS_H
 
 double default_activation(double input, void* processedData);
+double derivative_default_activation(double input, void* processedData);
 void* default_process_inputs(double* inputs, int count);
 void default_free_data(void* data);
 

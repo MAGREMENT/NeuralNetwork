@@ -47,12 +47,39 @@ public class NeuralNetworkTests
         }
     }
 
+    [Test]
+    public void CostTest()
+    {
+        using var network = new NeuralNetwork(_testing[0]);
+        network.Randomize(0, 1);
+        
+        Console.WriteLine(network.GetCost(new [] {1, 2.2}, new [] {1, 2.2}));
+        
+        var data = GenerateTestDataForSimpleLearnTest();
+        data.Shuffle(5);
+        var flattened = FlattenedData.FromArrays(data);
+        
+        using var network2 = new NeuralNetwork(7, 4, 3);
+        network2.Randomize(0, 1);
+        Console.WriteLine(network2.GetCost(flattened));
+    }
+
+    [Test]
+    public void LearnFromLittleFlattenedTest()
+    {
+        using var network = new NeuralNetwork(_testing[0]);
+        network.Randomize(0, 1);
+
+        var f = new FlattenedData(new[] { 1, 2.2, 3, 4 }, 2, new[] { 1.1, 2, 3, 4, 5, 6 }, 3);
+        network.Learn(f, 1, 1);
+    }
+
     #region SimpleLearnTest
 
     [Test] //TODO fix
     public void SimpleLearnTest()
     {
-        var network = new NeuralNetwork(7, 4, 3);
+        using var network = new NeuralNetwork(7, 4, 3);
         network.Randomize(0, 1);
 
         var data = GenerateTestDataForSimpleLearnTest();

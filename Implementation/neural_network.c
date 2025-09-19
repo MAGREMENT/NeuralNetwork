@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include "neural_network.h"
 
-#include <stdio.h>
-
 #include "functions.h"
 #include "utils.h"
 
@@ -34,7 +32,7 @@ inline void apply_params(neural_network* network, params params){
         int type = i == network->count - 1 ? params.outputActivationType : params.activationType;
         switch (type) {
             case DEFAULT:network->layers[i].activation = default_activation;
-            network->layers[i].activationDerivative = default_activation;
+            network->layers[i].activationDerivative = derivative_default_activation;
             network->layers[i].processInputs = default_process_inputs;
             network->layers[i].freeData = default_free_data;
             break;

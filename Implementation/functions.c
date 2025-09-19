@@ -8,6 +8,10 @@ inline double default_activation(double input, void* processedData){
     return input;
 }
 
+inline double derivative_default_activation(double input, void* processedData){
+    return 1;
+}
+
 inline void* default_process_inputs(double* inputs, int count) {
     return NULL;
 }

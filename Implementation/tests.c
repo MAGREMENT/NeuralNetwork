@@ -7,11 +7,14 @@
 #include "functions.h"
 #include "utils.h"
 #include "repository.h"
+#include "big-array.c"
 
 void unit_tests();
 void cut_2D_test();
 
 int main() {
+    printf("bitch\n");
+
     //cut_2D_test();
     unit_tests();
 
@@ -392,7 +395,25 @@ void alloc_flattened_test_data_test() {
     }
 
     free_test_data(data);
+    data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
+    int numbers[] = {7, 4, 3};
+    neural_network* network = alloc_network(3, numbers);
+    params params;
+    params.initialLearningRate = 1;
+    params.learningRateDecay = 0.02;
+    params.regularization = 0.1;
+    params.momentum = 0.9;
+    params.activationType = SIGMOID;
+    params.outputActivationType = SIGMOID;
+    params.costType = MEAN_SQUARED;
+    apply_params(network, params);
+    randomize(network, 0, 1);
+
+    iterative_learn(network, data, 50, 100);
+
+    free_network(network);
+    free_test_data(data);
     printf("alloc flattened test data OK!\n");
 }
 
@@ -401,7 +422,7 @@ void full_test_value_check(double v, double expected) {
 }
 
 void full_test() {
-    neural_network* n = alloc_example_network_with_data(CUBE);
+    neural_network* n = alloc_example_network_with_data(DEFAULT);
 
     input_data i;
     double iv[] = {2, 2};
@@ -416,8 +437,8 @@ void full_test() {
     forward(n->layers[0], i, &o1);
 
     full_test_value_check(o1.values[0], 1);
-    full_test_value_check(o1.values[1], 64);
-    full_test_value_check(o1.values[2], 125);
+    full_test_value_check(o1.values[1], 4);
+    full_test_value_check(o1.values[2], 5);
 
     input_data o2;
     double ov2[2];
@@ -426,8 +447,8 @@ void full_test() {
 
     forward(n->layers[1], o1, &o2);
 
-    full_test_value_check(o2.values[0], 830584);
-    full_test_value_check(o2.values[1], 10648000);
+    full_test_value_check(o2.values[0], 4);
+    full_test_value_check(o2.values[1], 10);
 
     input_data o3;
     double ov3[2];
@@ -450,8 +471,8 @@ void full_test() {
     full_test_value_check(1, back[0].weightedInputs[0]);
     full_test_value_check(4, back[0].weightedInputs[1]);
     full_test_value_check(5, back[0].weightedInputs[2]);
-    full_test_value_check(94, back[1].weightedInputs[0]);
-    full_test_value_check(220, back[1].weightedInputs[1]);
+    full_test_value_check(4, back[1].weightedInputs[0]);
+    full_test_value_check(10, back[1].weightedInputs[1]);
 
     layer_data* gradients = alloc_layer_data_array(n, 0);
     input_data e;
@@ -461,28 +482,63 @@ void full_test() {
 
     update_gradients(n, gradients, i, e);
     //Node values :
-    //1 661 172 * 26 508 = 44 034 347 376
-    //21 296 004 * 145 200 = 3 092 179 780 800
-    const double nv0 = 44034347376;
-    const double nv1 = 3092179780800;
+    //12 * 1 = 12
+    //24 * 1 = 24
+    const double nv0 = 12;
+    const double nv1 = 24;
 
     full_test_value_check(gradients[1].weights[0], nv0 * 1);
     full_test_value_check(gradients[1].weights[1], nv1 * 1);
-    full_test_value_check(gradients[1].weights[2], nv0 * 64);
-    full_test_value_check(gradients[1].weights[3], nv1 * 64);
-    full_test_value_check(gradients[1].weights[4], nv0 * 125);
-    full_test_value_check(gradients[1].weights[5], nv1 * 125);
+    full_test_value_check(gradients[1].weights[2], nv0 * 4);
+    full_test_value_check(gradients[1].weights[3], nv1 * 4);
+    full_test_value_check(gradients[1].weights[4], nv0 * 5);
+    full_test_value_check(gradients[1].weights[5], nv1 * 5);
 
     full_test_value_check(gradients[1].biases[0], nv0);
     full_test_value_check(gradients[1].biases[1], nv1);
 
     //Node values :
-    //(44034347376 * 1.5 + 3092179780800 * 1) * 3 = 9 474 693 905 562
+    //18 + 24 = 42
+    //6 + 36 = 42
+    //6 + 24 = 30;
+    const double nv2 = 42;
+    const double nv3 = 42;
+    const double nv4 = 30;
+
+    full_test_value_check(gradients[0].weights[0], nv2 * 2);
+    full_test_value_check(gradients[0].weights[1], nv3 * 2);
+    full_test_value_check(gradients[0].weights[2], nv4 * 2);
+    full_test_value_check(gradients[0].weights[3], nv2 * 2);
+    full_test_value_check(gradients[0].weights[4], nv3 * 2);
+    full_test_value_check(gradients[0].weights[5], nv4 * 2);
+
+    full_test_value_check(gradients[0].biases[0], nv2);
+    full_test_value_check(gradients[0].biases[1], nv3);
+    full_test_value_check(gradients[0].biases[2], nv4);
 
     const double lr = 0.001;
+    const double c1 = cost(n, &i, &e);
 
     apply_gradients(n->layers[1], gradients[1], lr);
     apply_gradients(n->layers[0], gradients[0], lr);
+
+    full_test_value_check(n->layers[0].weights[0], 0.5 - nv2 * 2 * lr);
+
+    const double c2 = cost(n, &i, &e);
+
+    if (c2 > c1) printf("Problem with cost");
+
+    test_data test;
+    test.count = 1;
+    test.inputs = &i;
+    test.expected = &e;
+
+    for (int i = 0; i < 1000; i++) {
+        learn(n, &test, create_batch(0, 1, 1), lr, NULL);
+    }
+
+    const double c3 = cost(n, &i, &e);
+    if (c3 > c1) printf("Problem with cost");
 
     input_data o4;
     double ov4[2];
@@ -490,6 +546,9 @@ void full_test() {
     o4.values = ov4;
 
     predict(n, &i, &o4);
+
+    full_test_value_check(ov4[0], ev[0]);
+    full_test_value_check(ov4[1], ev[1]);
 
     free_back_data(back, n->count);
     free_network(n);
