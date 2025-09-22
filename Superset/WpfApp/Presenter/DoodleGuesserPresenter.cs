@@ -10,7 +10,7 @@ public class DoodleGuesserPresenter
     private readonly IReadOnlyList<(int, double[])> dataSet = MNIST.Read(
         "mnist-data/t10k-labels.idx1-ubyte", 
         "mnist-data/t10k-images.idx3-ubyte", 100);
-    private readonly NeuralNetwork _network = new(784, 200, 100, 9);
+    private readonly NeuralNetwork _network = new(NeuralNetworkParameters.NoMomentumSigmoid, 784, 200, 100, 9);
     private int _index = -1;
 
     public DoodleGuesserPresenter(IDoodleGuesserView view)

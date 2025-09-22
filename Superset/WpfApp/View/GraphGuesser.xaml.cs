@@ -14,7 +14,7 @@ public partial class GraphGuesser : IGraphGuesserView
         InitializeComponent();
 
         _presenter = new GraphGuesserPresenter(this);
-        Graph.OutputGetter = _presenter.Predict;
+        Graph.OutputGetter = _presenter.GetValueFor;
         
         _presenter.Start();
     }
@@ -38,5 +38,11 @@ public partial class GraphGuesser : IGraphGuesserView
     public void SetCost(double v)
     {
         CostBlock.Text = v.ToString("0.00", CultureInfo.CreateSpecificCulture("en-US"));
+    }
+
+    private void Learn(object sender, RoutedEventArgs e)
+    {
+        _presenter.Learn();
+        Graph.Refresh();
     }
 }

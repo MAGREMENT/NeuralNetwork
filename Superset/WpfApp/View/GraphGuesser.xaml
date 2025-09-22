@@ -22,6 +22,7 @@
                 <TextBlock>Cost :</TextBlock>
                 <TextBlock x:Name="CostBlock"></TextBlock>
             </StackPanel>
+            <Button Click="Learn">Learn</Button>
         </StackPanel>
     </Grid>
 </Page>

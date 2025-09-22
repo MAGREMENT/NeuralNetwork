@@ -26,6 +26,6 @@ DLL_EXPORT void Randomize(neural_network* ptr, double min, double max);
 DLL_EXPORT void Learn(neural_network* ptr, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int batchSize, int iterations);
 DLL_EXPORT double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount);
-DLL_EXPORT inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
+DLL_EXPORT double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 
 #endif //EXPORT_H

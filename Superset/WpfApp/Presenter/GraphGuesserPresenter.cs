@@ -5,9 +5,10 @@ namespace WpfApp.Presenter;
 public class GraphGuesserPresenter
 {
     private readonly IGraphGuesserView _view;
-    
-    private readonly NeuralNetwork _network = new(2, 3, 2);
+
+    private readonly NeuralNetwork _network;
     private readonly List<GuessingPoint> _points = new();
+    private readonly Dictionary<(double, double), int> _valueBuffer = new();
     
     public int GenerateCount { get; set; } = 15;
     
@@ -15,19 +16,21 @@ public class GraphGuesserPresenter
 
     public GraphGuesserPresenter(IGraphGuesserView view)
     {
+        _network = new(NeuralNetworkParameters.MomentumSigmoid, 2, 7, 2);
         _view = view;
         _network.Randomize(0, 1);
     }
 
     public void Start()
     {
-        _view.SetCost(_network.GetCost(FlattenedData.FromGuessingPoints(_points, 2)));
+        _view.SetCost(_network.GetCost(GetFlattenedData()));
     }
 
     public void GeneratePoints()
     {
         _points.AddRange(GuessingPoint.GenerateRandom(GenerateParabolaOutput, Box, GenerateCount));
         _view.SetPoints(_points);
+        _view.SetCost(_network.GetCost(GetFlattenedData()));
     }
 
     public void RemovePoints()
@@ -37,11 +40,32 @@ public class GraphGuesserPresenter
 
         _points.RemoveRange(_points.Count - v, v);
         _view.SetPoints(_points);
+        _view.SetCost(_network.GetCost(GetFlattenedData()));
     }
 
-    public int Predict(double x, double y)
+    public void Learn()
     {
-        return _network.Predict(new[] { x, y }).IndexOfHighestValue();
+        _network.Learn(GetFlattenedData(), _points.Count / 5 * 2, 50);
+        
+        _view.SetCost(_network.GetCost(GetFlattenedData()));
+        _valueBuffer.Clear();
+    }
+
+    public int GetValueFor(double x, double y)
+    {
+        var entry = (x, y);
+        if (!_valueBuffer.TryGetValue(entry, out var v))
+        {
+            v =  _network.Predict(new[] { x, y }).IndexOfHighestValue();
+            _valueBuffer[entry] = v;
+        }
+
+        return v;
+    }
+
+    private FlattenedData GetFlattenedData()
+    {
+        return FlattenedData.FromGuessingPoints(_points, 2);
     }
 
     private static int GenerateSinusOutput(double x, double y)

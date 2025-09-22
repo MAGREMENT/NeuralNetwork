@@ -447,7 +447,8 @@ inline void iterative_learn(neural_network* network, test_data* data, const int 
         ? NULL
         : alloc_layer_data_array(network, false);
 
-    double learningRate = network->initialLearningRate / batchSize;
+    const double baseLr = network->initialLearningRate / batchSize;
+    double learningRate = baseLr;
     int current = 0;
 
     for(int iteration = 0; iteration < iterations; iteration++) {
@@ -455,10 +456,10 @@ inline void iterative_learn(neural_network* network, test_data* data, const int 
         learn(network, data, b, learningRate, velocities);
 
         current = b.then == 0 ? b.to : b.then;
-        learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * network->initialLearningRate / batchSize;
+        learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * baseLr;
     }
 
-    free_layer_data_array(velocities, network->count);
+    if (velocities != NULL) free_layer_data_array(velocities, network->count);
 }
 
 inline int is_valid(input_data* output, input_data* expected) {

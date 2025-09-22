@@ -9,10 +9,10 @@ public partial class NeuralNetwork : IDisposable
 
     public int Length => GetCount(_ptr);
 
-    public NeuralNetwork(params int[] layers)
+    public NeuralNetwork(NeuralNetworkParameters parameters, params int[] layers)
     {
         _ptr = Initialize(layers.Length, layers);
-        _params = NeuralNetworkParameters.Default;
+        _params = parameters;
         ApplyParams(_ptr, _params);
     }
 
@@ -100,7 +100,7 @@ public partial class NeuralNetwork : IDisposable
             throw new ArgumentException("Inputs length does not correspond to the first layer of the neural network");
         
         var count = GetOutCount(Length - 1);
-        var arr = new double[count];
+        var arr = new double[count]; //TODO Look into using stackalloc when output is a single int
         
         Predict(_ptr, inputs, length, arr, count);
         return arr;
@@ -202,7 +202,9 @@ public partial class NeuralNetwork : IDisposable
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Learn(IntPtr ptr, double[] inputs, int inputCutOff, double[] expected, 
+    private static partial void Learn(IntPtr ptr, 
+        [MarshalAs(UnmanagedType.LPArray)] double[] inputs, int inputCutOff, 
+        [MarshalAs(UnmanagedType.LPArray)] double[] expected, 
         int expectedCutOff, int count, int batchSize, int iterations);
     
     [LibraryImport("libExport.dll")]
@@ -229,12 +231,23 @@ public struct NeuralNetworkParameters
     public int OutputActivationType;
     public int CostType;
 
-    public static NeuralNetworkParameters Default { get; } = new()
+    public static NeuralNetworkParameters NoMomentumSigmoid { get; } = new()
     {
         InitialLearningRate = 1,
         LearningRateDecay = 0,
         Regularization = 0,
         Momentum = 0,
+        ActivationType = Model.ActivationType.SIGMOID,
+        OutputActivationType = Model.ActivationType.SIGMOID,
+        CostType = Model.CostType.MEAN_SQUARED
+    };
+    
+    public static NeuralNetworkParameters MomentumSigmoid { get; } = new()
+    {
+        InitialLearningRate = 1,
+        LearningRateDecay = 0,
+        Regularization = 0.1,
+        Momentum = 0.9,
         ActivationType = Model.ActivationType.SIGMOID,
         OutputActivationType = Model.ActivationType.SIGMOID,
         CostType = Model.CostType.MEAN_SQUARED
