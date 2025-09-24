@@ -23,7 +23,7 @@ DLL_EXPORT void Predict(neural_network* ptr, double inputs[], int inCount, doubl
 DLL_EXPORT neural_network* FromFile(char file[], params* toFill);
 DLL_EXPORT void Save(neural_network* ptr, params p, char file[]);
 DLL_EXPORT void Randomize(neural_network* ptr, double min, double max);
-DLL_EXPORT void Learn(neural_network* ptr, double* inputs, int inputCutoff,
+DLL_EXPORT void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int batchSize, int iterations);
 DLL_EXPORT double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount);
 DLL_EXPORT double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);

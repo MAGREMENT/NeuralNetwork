@@ -361,7 +361,6 @@ inline void apply_gradients(layer to, layer_data gradients, double learningRate)
 
 inline void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
                                             const double momentum, const double regularization){
-
     const double weightDecay = 1 - regularization * learningRate;
 
     for(int i = 0; i < to.in_count; i++){
@@ -456,24 +455,42 @@ inline void learn(neural_network* network, test_data* data, batch batch, double 
     free_layer_data_array(gradients, network->count);
 }
 
-inline void iterative_learn(neural_network* network, test_data* data, const int batchSize, const int iterations) {
-    layer_data* velocities = network->regularization == 0 && network->momentum == 0
+inline void iterative_learn(neural_network* network, test_data* data, learning_state* state,
+    const int batchSize, const int iterations) {
+
+    int freeState = false;
+    const double baseLearningRate = network->initialLearningRate / batchSize;
+
+    if (state == NULL) {
+        state = alloc_state(network, batchSize);
+        freeState = true;
+    }
+
+    for(int iteration = 0; iteration < iterations; iteration++) {
+        const batch b = create_batch(state->current, batchSize, data->count);
+        learn(network, data, b, state->learningRate, state->velocities);
+
+        state->current = b.then == 0 ? b.to : b.then;
+        state->learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * baseLearningRate;
+    }
+
+    if (freeState) free_state(state, network);
+}
+
+learning_state* alloc_state(neural_network* network, int batchSize) {
+    learning_state* state = malloc(sizeof(learning_state));
+    state->learningRate = network->initialLearningRate / batchSize;
+    state->current = 0;
+    state->velocities = network->regularization == 0 && network->momentum == 0
         ? NULL
         : alloc_layer_data_array(network, false);
 
-    const double baseLr = network->initialLearningRate / batchSize;
-    double learningRate = baseLr;
-    int current = 0;
+    return state;
+}
 
-    for(int iteration = 0; iteration < iterations; iteration++) {
-        const batch b = create_batch(current, batchSize, data->count);
-        learn(network, data, b, learningRate, velocities);
-
-        current = b.then == 0 ? b.to : b.then;
-        learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * baseLr;
-    }
-
-    if (velocities != NULL) free_layer_data_array(velocities, network->count);
+void free_state(learning_state* state, neural_network* network) {
+    if (state->velocities != NULL) free_layer_data_array(state->velocities, network->count);
+    free(state);
 }
 
 inline int is_valid(input_data* output, input_data* expected) {

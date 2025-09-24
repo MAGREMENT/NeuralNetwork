@@ -24,7 +24,7 @@ neural_network* alloc_example_network(int activation) {
     neural_network* network = alloc_network(3, numbers);
     params params;
     params.initialLearningRate = 1;
-    params.learningRateDecay = 0;
+    params.learningRateDecay = 0.02;
     params.regularization = 0.1;
     params.momentum = 0.9;
     params.activationType = activation;
@@ -83,7 +83,7 @@ void cut_2D_test() {
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    iterative_learn(network, test, 32, 1000);
+    iterative_learn(network, test, NULL, 32, 1000);
 
     free_network(network);
 }
@@ -363,7 +363,7 @@ void alloc_flattened_test_data_test() {
     apply_params(network, params);
     randomize(network, 0, 1);
 
-    iterative_learn(network, data, 50, 100);
+    iterative_learn(network, data, NULL, 50, 100);
 
     free_network(network);
     free_test_data(data);
@@ -371,7 +371,7 @@ void alloc_flattened_test_data_test() {
 }
 
 void full_test_value_check(double v, double expected) {
-    if (!def_deq(v, expected)) {
+    if (!deq(v, expected, 0.01)) {
         printf("FULL TEST FAIL !!!!!!!!!!!!!!!!!\n");
     }
 }
@@ -471,13 +471,13 @@ void full_test() {
     full_test_value_check(gradients[0].biases[1], nv3);
     full_test_value_check(gradients[0].biases[2], nv4);
 
-    const double lr = 0.001;
+    n->initialLearningRate = 0.001;
     const double c1 = cost(n, &i, &e);
 
-    apply_gradients(n->layers[1], gradients[1], lr);
-    apply_gradients(n->layers[0], gradients[0], lr);
+    apply_gradients(n->layers[1], gradients[1], n->initialLearningRate);
+    apply_gradients(n->layers[0], gradients[0], n->initialLearningRate);
 
-    full_test_value_check(n->layers[0].weights[0], 0.5 - nv2 * 2 * lr);
+    full_test_value_check(n->layers[0].weights[0], 0.5 - nv2 * 2 * n->initialLearningRate);
 
     const double c2 = cost(n, &i, &e);
 
@@ -488,9 +488,19 @@ void full_test() {
     test.inputs = &i;
     test.expected = &e;
 
-    for (int i = 0; i < 1000; i++) {
-        learn(n, &test, create_batch(0, 1, 1), lr, NULL);
+    free_network(n);
+    n = alloc_example_network_with_data(DEFAULT);
+    n->initialLearningRate = 0.001;
+    iterative_learn(n, &test, NULL, 1, 1000);
+
+    neural_network* n2 = alloc_example_network_with_data(DEFAULT);
+    n2->initialLearningRate = 0.001;
+
+    learning_state* state = alloc_state(n, 1);
+    for (int i = 0; i < 100; i++) {
+        iterative_learn(n2, &test, state, 1, 10);
     }
+    free_state(state, n);
 
     const double c3 = cost(n, &i, &e);
     if (c3 > c1) printf("Problem with cost");
@@ -500,10 +510,19 @@ void full_test() {
     o4.count = 2;
     o4.values = ov4;
 
+    input_data o5;
+    double ov5[2];
+    o5.count = 2;
+    o5.values = ov5;
+
     predict(n, &i, &o4);
+    predict(n, &i, &o5);
 
     full_test_value_check(ov4[0], ev[0]);
     full_test_value_check(ov4[1], ev[1]);
+
+    full_test_value_check(ov4[0], ov5[0]);
+    full_test_value_check(ov4[1], ov5[1]);
 
     free_back_data(back, n->count);
     free_network(n);

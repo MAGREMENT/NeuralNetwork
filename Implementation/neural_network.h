@@ -69,6 +69,12 @@ typedef struct batch {
     int then;
 } batch;
 
+typedef struct learning_state {
+    int current;
+    double learningRate;
+    layer_data* velocities;
+} learning_state;
+
 enum activation_type {
     DEFAULT,
     SIGMOID,
@@ -91,8 +97,12 @@ void set_cost_type(neural_network* network, int type);
 void apply_params(neural_network* network, params params);
 
 void randomize(neural_network* network, double min, double max);
+
+learning_state* alloc_state(neural_network* network, int batchSize);
+void free_state(learning_state* state, neural_network* network);
 void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
-void iterative_learn(neural_network* network, test_data* data, int batchSize, int iterations);
+void iterative_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
+
 input_data* alloc_predict(neural_network* network, input_data* data);
 void predict(neural_network* network, input_data* data, input_data* result);
 
