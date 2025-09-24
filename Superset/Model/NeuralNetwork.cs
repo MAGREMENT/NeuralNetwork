@@ -252,6 +252,17 @@ public struct NeuralNetworkParameters
         OutputActivationType = Model.ActivationType.SIGMOID,
         CostType = Model.CostType.MEAN_SQUARED
     };
+    
+    public static NeuralNetworkParameters MomentumRelUSoftmax { get; } = new()
+    {
+        InitialLearningRate = 0.005,
+        LearningRateDecay = 0.075,
+        Regularization = 0.1,
+        Momentum = 0.9,
+        ActivationType = Model.ActivationType.RELU,
+        OutputActivationType = Model.ActivationType.SOFTMAX,
+        CostType = Model.CostType.CROSS_ENTROPY
+    };
 }
 
 public static class ActivationType
@@ -267,4 +278,5 @@ public static class ActivationType
 public static class CostType
 {
     public const int MEAN_SQUARED = 0;
+    public const int CROSS_ENTROPY = 1;
 }

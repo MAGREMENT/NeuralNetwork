@@ -16,7 +16,7 @@ public class GraphGuesserPresenter
 
     public GraphGuesserPresenter(IGraphGuesserView view)
     {
-        _network = new(NeuralNetworkParameters.MomentumSigmoid, 2, 7, 2);
+        _network = new(NeuralNetworkParameters.MomentumSigmoid, 2, 7, 4, 2);
         _view = view;
         _network.Randomize(0, 1);
     }
@@ -45,7 +45,7 @@ public class GraphGuesserPresenter
 
     public void Learn()
     {
-        _network.Learn(GetFlattenedData(), _points.Count / 5 * 2, 50);
+        _network.Learn(GetFlattenedData(), _points.Count / 5, 10000);
         
         _view.SetCost(_network.GetCost(GetFlattenedData()));
         _valueBuffer.Clear();
