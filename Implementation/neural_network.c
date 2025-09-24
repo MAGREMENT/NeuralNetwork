@@ -22,67 +22,81 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     return result;
 }
 
+inline void set_activation_type(neural_network* network, int type, int outputType) {
+    for(int i = 0; i < network->count; i++) {
+        const int t = i == network->count - 1 ? type : outputType;
+        switch (t) {
+            case DEFAULT :
+                network->layers[i].activation = default_activation;
+                network->layers[i].activationDerivative = derivative_default_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+            break;
+            case SIGMOID :
+                network->layers[i].activation = sigmoid_activation;
+                network->layers[i].activationDerivative = derivative_sigmoid_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+            break;
+            case TANH :
+                network->layers[i].activation = tanh_activation;
+                network->layers[i].activationDerivative = derivative_tanh_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+            break;
+            case RELU :
+                network->layers[i].activation = relu_activation;
+                network->layers[i].activationDerivative = derivative_relu_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+            break;
+            case SILU :
+                network->layers[i].activation = silu_activation;
+                network->layers[i].activationDerivative = derivative_silu_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+            break;
+            case SOFTMAX :
+                network->layers[i].activation = softmax_activation;
+                network->layers[i].activationDerivative = derivative_softmax_activation;
+                network->layers[i].processInputs = softmax_process_inputs;
+                network->layers[i].freeData = softmax_free_data;
+            break;
+            default:
+                network->layers[i].activation = NULL;
+                network->layers[i].activationDerivative = NULL;
+                network->layers[i].processInputs = NULL;
+                network->layers[i].freeData = NULL;
+            break;
+        }
+    }
+}
+
+inline void set_cost_type(neural_network* network, int type) {
+    switch (type) {
+        case MEAN_SQUARED:
+            network->cost = mean_square_cost;
+            network->costDerivative = derivative_mean_square_cost;
+        break;
+        case CROSS_ENTROPY:
+            network->cost = cross_entropy_cost;
+            network->costDerivative = derivative_cross_entropy_cost;
+        break;
+        default:
+            network->cost = NULL;
+            network->costDerivative = NULL;
+        break;
+    }
+}
+
 inline void apply_params(neural_network* network, params params){
     network->initialLearningRate = params.initialLearningRate;
     network->learningRateDecay = params.learningRateDecay;
     network->momentum = params.momentum;
     network->regularization = params.regularization;
 
-    for(int i = 0; i < network->count; i++) {
-        int type = i == network->count - 1 ? params.outputActivationType : params.activationType;
-        switch (type) {
-            case DEFAULT:network->layers[i].activation = default_activation;
-            network->layers[i].activationDerivative = derivative_default_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case SIGMOID : network->layers[i].activation = sigmoid_activation;
-            network->layers[i].activationDerivative = derivative_sigmoid_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case TANH : network->layers[i].activation = tanh_activation;
-            network->layers[i].activationDerivative = derivative_tanh_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case RELU : network->layers[i].activation = relu_activation;
-            network->layers[i].activationDerivative = derivative_relu_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case SILU : network->layers[i].activation = silu_activation;
-            network->layers[i].activationDerivative = derivative_silu_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case CUBE : network->layers[i].activation = cube_activation;
-            network->layers[i].activationDerivative = derivative_cube_activation;
-            network->layers[i].processInputs = default_process_inputs;
-            network->layers[i].freeData = default_free_data;
-            break;
-            case SOFTMAX : network->layers[i].activation = softmax_activation;
-            network->layers[i].activationDerivative = derivative_softmax_activation;
-            network->layers[i].processInputs = softmax_process_inputs;
-            network->layers[i].freeData = softmax_free_data;
-            break;
-            default: network->layers[i].activation = NULL;
-            network->layers[i].activationDerivative = NULL;
-            network->layers[i].processInputs = NULL;
-            network->layers[i].freeData = NULL;
-            break;
-        }
-    }
-
-    switch (params.costType) {
-        case MEAN_SQUARED:
-            network->cost = mean_square_cost;
-            network->costDerivative = derivative_mean_square_cost;
-            break;
-        default:
-            network->cost = NULL;
-            network->costDerivative = NULL;
-    }
+    set_activation_type(network, params.activationType, params.outputActivationType);
+    set_cost_type(network, params.costType);
 }
 
 inline void randomize(neural_network* network, double min, double max) {
@@ -220,12 +234,12 @@ inline void predict(neural_network* network, input_data* data, input_data* resul
         input_data* output = isLast ? result : alloc_input_data(network->layers[i].out_count);
         forward(network->layers[i], *data, output);
 
-        if (!isLast) {
-            data = output;
-        }
-
         if (i > 0) {
             free_input_data(data);
+        }
+
+        if (!isLast) {
+            data = output;
         }
     }
 }

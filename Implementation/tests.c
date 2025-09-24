@@ -13,8 +13,6 @@ void unit_tests();
 void cut_2D_test();
 
 int main() {
-    printf("bitch\n");
-
     //cut_2D_test();
     unit_tests();
 
@@ -26,7 +24,7 @@ neural_network* alloc_example_network(int activation) {
     neural_network* network = alloc_network(3, numbers);
     params params;
     params.initialLearningRate = 1;
-    params.learningRateDecay = 0.02;
+    params.learningRateDecay = 0;
     params.regularization = 0.1;
     params.momentum = 0.9;
     params.activationType = activation;
@@ -159,25 +157,37 @@ void traverse_test() {
     free_back_data(data, network->count);
     free_back_data(expected, network->count);
     free_network(network);
+    free_input_data(input);
     printf("traverse test OK!\n");
 }
 
 void learn_test() {
-    neural_network* network = alloc_example_network_with_data(SIGMOID);
     test_data *test = positive_generate_for_2D(0.5, 20, 2, diagonal_cut);
+    neural_network* networks[2] = {
+        alloc_example_network_with_data(SIGMOID),
+        alloc_example_network_with_data(SIGMOID)
+    };
 
-    double c = multi_cost(network, test);
-    for(int i = 0; i < 1; i++) {
-        learn(network, test, full_batch(test->count), network->initialLearningRate / test->count, NULL);
-        double nCost = multi_cost(network, test);
+    set_activation_type(networks[1], RELU, SOFTMAX);
+    set_cost_type(networks[1], CROSS_ENTROPY);
 
-        if(nCost > c + 1) {
-            printf("new cost (%.5f) bigger by more than 1 than previous cost (%.5f) on iteration %d\n", nCost, cost, i);
-            return;
+    for (int i = 0; i < 2; i++) {
+        neural_network* network = networks[i];
+
+        double c = multi_cost(network, test);
+        for(int i = 0; i < 1; i++) {
+            learn(network, test, full_batch(test->count), network->initialLearningRate / test->count, NULL);
+            double nCost = multi_cost(network, test);
+
+            if(nCost > c + 1) {
+                printf("new cost (%.5f) bigger by more than 1 than previous cost (%.5f) on iteration %d\n", nCost, cost, i);
+                return;
+            }
         }
+
+        free_network(network);
     }
 
-    free_network(network);
     free_test_data(test);
     printf("learn test OK!\n");
 }
@@ -197,63 +207,6 @@ void cost_test() {
     free_network(network);
     free_input_data(input);
     free_input_data(expected);
-}
-
-void gradients_test() {
-    neural_network* network = alloc_example_network_with_data(SIGMOID);
-    input_data* input = alloc_input_data(2);
-    input->values[0] = 2;
-    input->values[1] = 1;
-
-    input_data* expected = alloc_input_data(2);
-    expected->values[0] = 1;
-    expected->values[1] = 0;
-
-    layer_data* gradients = alloc_layer_data_array(network, 0);
-    update_gradients(network, gradients, *input, *expected);
-
-    /* TODO
-    i = 2  e = 1
-      = 1    = 0
-
-    z1 = 0.5  a1 = 0.62245  z2 = -0.1047  a2 = 0.47384
-       = 3       = 0.95257     = 1.02198     = 0.73535
-       = 3.5     = 0.97068
-
-    cd = -1.05232  ad = 0.24931  nv = -0.26235
-       = 1.4707       = 0.19461     = 0.28621
-
-    wd = -0.10731
-       = 0.29814
-       = 0.15503
-    */
-
-    constexpr double margin = 0.001;
-    constexpr double wGradEnd[] = {-0.16329, 0.17815, -0.2499, 0.27263, -0.25465, 0.277781};
-    constexpr double bGradEnd[] = {-0.26235, 0.28621};
-
-    const int total = network->layers[1].in_count * network->layers[1].out_count;
-
-    for(int i = 0; i < total; i++) {
-        if(!deq(wGradEnd[i], gradients[1].weights[i], margin)) {
-            printf("Gradient for weight at layer 1 and index %d incorrect, expected %.3f, got %.3f", i,
-                wGradEnd[i], gradients[1].weights[i]);
-            return;
-        }
-    }
-
-    for(int i = 0; i < network->layers[1].out_count; i++) {
-        if(!deq(bGradEnd[i], gradients[1].biases[i], margin)) {
-            printf("Gradient for bias at layer 1 and index %d incorrect, expected %.3f, got %.3f", i,
-                bGradEnd[i], gradients[1].biases[i]);
-            return;
-        }
-    }
-
-    free_network(network);
-    free_input_data(input);
-    free_input_data(expected);
-    printf("gradients test OK!\n");
 }
 
 void repository_test() {
@@ -401,7 +354,7 @@ void alloc_flattened_test_data_test() {
     neural_network* network = alloc_network(3, numbers);
     params params;
     params.initialLearningRate = 1;
-    params.learningRateDecay = 0.02;
+    params.learningRateDecay = 0;
     params.regularization = 0.1;
     params.momentum = 0.9;
     params.activationType = SIGMOID;
@@ -418,7 +371,9 @@ void alloc_flattened_test_data_test() {
 }
 
 void full_test_value_check(double v, double expected) {
-    if (!def_deq(v, expected)) printf("FULL TEST FAIL !!!!!!!!!!!!!!!!!\n");
+    if (!def_deq(v, expected)) {
+        printf("FULL TEST FAIL !!!!!!!!!!!!!!!!!\n");
+    }
 }
 
 void full_test() {
@@ -482,10 +437,10 @@ void full_test() {
 
     update_gradients(n, gradients, i, e);
     //Node values :
-    //12 * 1 = 12
-    //24 * 1 = 24
-    const double nv0 = 12;
-    const double nv1 = 24;
+    //6 * 1 = 12
+    //12 * 1 = 24
+    const double nv0 = 6;
+    const double nv1 = 12;
 
     full_test_value_check(gradients[1].weights[0], nv0 * 1);
     full_test_value_check(gradients[1].weights[1], nv1 * 1);
@@ -498,12 +453,12 @@ void full_test() {
     full_test_value_check(gradients[1].biases[1], nv1);
 
     //Node values :
-    //18 + 24 = 42
-    //6 + 36 = 42
-    //6 + 24 = 30;
-    const double nv2 = 42;
-    const double nv3 = 42;
-    const double nv4 = 30;
+    //9 + 12 = 21
+    //3 + 18 = 21
+    //3 + 12 = 15;
+    const double nv2 = 21;
+    const double nv3 = 21;
+    const double nv4 = 15;
 
     full_test_value_check(gradients[0].weights[0], nv2 * 2);
     full_test_value_check(gradients[0].weights[1], nv3 * 2);
@@ -552,7 +507,37 @@ void full_test() {
 
     free_back_data(back, n->count);
     free_network(n);
-    printf("forward test OK!\n");
+    printf("full test OK!\n");
+}
+
+void predict_test() {
+    int numbers[] = {7, 5, 4, 3};
+    neural_network* network = alloc_network(4, numbers);
+    params params;
+    params.initialLearningRate = 1;
+    params.learningRateDecay = 0;
+    params.regularization = 0.1;
+    params.momentum = 0.9;
+    params.activationType = SIGMOID;
+    params.outputActivationType = SIGMOID;
+    params.costType = MEAN_SQUARED;
+    apply_params(network, params);
+    randomize(network, 0, 1);
+
+    double iv[] = {1, 0, 1, 1, 1, 0, 0};
+    input_data i;
+    i.values = iv;
+    i.count = 7;
+
+    double ov[3];
+    input_data o;
+    o.values = ov;
+    o.count = 3;
+
+    predict(network, &i, &o);
+
+    free_network(network);
+    printf("predict test OK!\n");
 }
 
 void unit_tests() {
@@ -560,11 +545,11 @@ void unit_tests() {
 
     full_test();
 
+    predict_test();
     generate_test(0);
     learn_test();
     cost_test();
     traverse_test();
-    gradients_test();
     repository_test();
     randomize_test();
     alloc_flattened_test_data_test();

@@ -29,6 +29,9 @@ double derivative_cube_activation(double input, void* processedData);
 double mean_square_cost(double predicted, double expected);
 double derivative_mean_square_cost(double predicted, double expected);
 
+double cross_entropy_cost(double predicted, double expected);
+double derivative_cross_entropy_cost(double predicted, double expected);
+
 int diagonal_cut(double x, double y);
 int parable_10_cut(double x, double y);
 int sinus_cut(double x, double y);

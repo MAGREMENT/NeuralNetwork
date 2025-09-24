@@ -75,17 +75,21 @@ enum activation_type {
     TANH,
     RELU,
     SILU,
-    SOFTMAX,
-    CUBE
+    SOFTMAX
 };
 
 enum cost_type {
-    MEAN_SQUARED
+    MEAN_SQUARED,
+    CROSS_ENTROPY
 };
 
 neural_network* alloc_network(int count, const int numbers[]);
 void free_network(neural_network* network);
+
+void set_activation_type(neural_network* network, int type, int outputType);
+void set_cost_type(neural_network* network, int type);
 void apply_params(neural_network* network, params params);
+
 void randomize(neural_network* network, double min, double max);
 void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
 void iterative_learn(neural_network* network, test_data* data, int batchSize, int iterations);

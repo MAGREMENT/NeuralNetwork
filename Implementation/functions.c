@@ -4,6 +4,8 @@
 
 #include <stdlib.h>
 
+#include "neural_network.h"
+
 inline double default_activation(double input, void* processedData){
     return input;
 }
@@ -49,22 +51,12 @@ inline double derivative_relu_activation(double input, void* processedData) {
 }
 
 inline double silu_activation(double input, void* processedData) {
-    const double n = input;
-    return n / (1 + exp(-n));
+    return input / (1 + exp(-input));
 }
 
 inline double derivative_silu_activation(double input, void* processedData) {
-    const double n = input;
-    const double sig = 1 / (1 + exp(-n));
-    return n * sig * (1 - sig) + sig;
-}
-
-inline double cube_activation(double input, void* processedData) {
-    return input * input * input;
-}
-
-inline double derivative_cube_activation(double input, void* processedData) {
-    return 3 * input * input;
+    const double sig = 1 / (1 + exp(-input));
+    return input * sig * (1 - sig) + sig;
 }
 
 inline double softmax_activation(double input, void* processedData) {
@@ -94,11 +86,22 @@ void softmax_free_data(void* data) {
 
 inline double mean_square_cost(double predicted, double expected){
     const double error = predicted - expected;
-    return error * error;
+    return 0.5 * error * error;
 }
 
 inline double derivative_mean_square_cost(double predicted, double expected){
-    return 2 * (predicted - expected);
+    return predicted - expected;
+}
+
+inline double cross_entropy_cost(double predicted, double expected) {
+    const double v = expected >= 1 ? predicted : 1 - predicted;
+    if (v <= 0) return 0;
+    return -log(v);
+}
+
+inline double derivative_cross_entropy_cost(double predicted, double expected) {
+    if (predicted == 0 || predicted == 1) return 0;
+    return (expected - predicted) / (predicted * (predicted - 1));
 }
 
 //Cut Functions---------------------------------------------------------------------------------------------------------

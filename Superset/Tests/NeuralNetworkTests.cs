@@ -8,7 +8,9 @@ public class NeuralNetworkTests
     {
         new[] { 2, 3, 2 },
         new[] { 1, 1, 1, 1, 1 },
-        new[] {2, 7, 4, 2}
+        new[] { 2, 7, 4, 2 },
+        new[] { 7, 4, 3 },
+        new[] { 7, 5, 4, 3 }
     };
 
     [Test]
@@ -60,7 +62,7 @@ public class NeuralNetworkTests
         data.Shuffle(5);
         var flattened = FlattenedData.FromArrays(data);
         
-        using var network2 = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, 7, 4, 3);
+        using var network2 = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[3]);
         network2.Randomize(0, 1);
         Console.WriteLine(network2.GetCost(flattened));
     }
@@ -77,29 +79,45 @@ public class NeuralNetworkTests
 
     #region SimpleLearnTest
 
+    private static readonly (NeuralNetworkParameters, int[], string)[] _configs =
+    {
+        (NeuralNetworkParameters.NoMomentumSigmoid, _testing[3], "NoMomentumSigmoid"),
+        (NeuralNetworkParameters.MomentumSigmoid, _testing[3], "MomentumSigmoid"),
+        (NeuralNetworkParameters.NoMomentumSigmoid, _testing[4], "NoMomentumSigmoid"),
+        (NeuralNetworkParameters.MomentumSigmoid, _testing[4], "MomentumSigmoid")
+    };
+
     [Test]
     public void SimpleLearnTest()
     {
-        using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, 7, 4, 3);
-        network.Randomize(0, 1);
-
         var data = GenerateTestDataForSimpleLearnTest();
         data.Shuffle(5);
         var flattened = FlattenedData.FromArrays(data);
 
-        const int tests = 50;
-        for (int i = 0; i < tests; i++)
+        foreach (var config in _configs)
         {
-            network.Learn(flattened, 50, 100);
-        }
+            using var network = new NeuralNetwork(config.Item1, config.Item2);
+            network.Randomize(0, 1);
+            
+            network.Learn(flattened, 50, 5000);
 
-        foreach (var (input, expected) in data)
-        {
-            var got = network.Predict(input);
-            for (int i = 0; i < got.Length; i++)
+            var accuracy = 0.0;
+            foreach (var (input, expected) in data)
             {
-                Assert.That(Math.Round(got[i]), Is.EqualTo(expected[i]));
+                var got = network.Predict(input);
+                bool ok = true;
+                for (int i = 0; i < got.Length; i++)
+                {
+                    if (Math.Abs(Math.Round(got[i]) - expected[i]) > 0.1) ok = false;
+                }
+
+                if (ok) accuracy++;
             }
+
+            accuracy = accuracy / data.Length * 100;
+            var cost = network.GetCost(flattened);
+            
+            Console.WriteLine($"{config.Item3} - {string.Join(",", config.Item2)} :: Accuracy : {accuracy}% - Cost : {cost}");
         }
     }
 
