@@ -98,8 +98,13 @@ public class NeuralNetworkTests
         {
             using var network = new NeuralNetwork(config.Item1, config.Item2);
             network.Randomize(0, 1);
-            
-            network.Learn(flattened, 50, 5000);
+
+            const int batchSize = 50;
+            using var state = new LearningState(network, batchSize);
+            for (int i = 0; i < 5; i++)
+            {
+                network.Learn(flattened, batchSize, 1000, state);
+            }
 
             var accuracy = 0.0;
             foreach (var (input, expected) in data)

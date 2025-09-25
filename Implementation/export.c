@@ -1,4 +1,7 @@
 #include "export.h"
+
+#include <stddef.h>
+
 #include "repository.h"
 #include "utils.h"
 
@@ -89,4 +92,12 @@ inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, do
     double result = multi_cost(ptr, test);
     free_test_data(test);
     return result;
+}
+
+inline learning_state* InitializeState(neural_network* ptr, int batchSize) {
+    return alloc_state(ptr, batchSize);
+}
+
+inline void DisposeState(learning_state* ptr, int layerCount) {
+    free_state(ptr, layerCount);
 }

@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:local="clr-namespace:WpfApp.View"
       mc:Ignorable="d"
-      Title="GraphGuesser" Height="450" Width="800">
+      Title="GraphGuesser" Height="650" Width="1200">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>
@@ -13,7 +13,8 @@
         </Grid.ColumnDefinitions>
         
         <local:GuessingGraph x:Name="Graph" Grid.Column="0"/>
-        <StackPanel Grid.Column="1" Orientation="Vertical">
+        
+        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="20, 0, 20, 0" x:Name="ControlPanel">
             <StackPanel Orientation="Horizontal">
                 <Button Click="Generate">Generate</Button>
                 <Button Click="Remove">Remove</Button>
@@ -22,7 +23,10 @@
                 <TextBlock>Cost :</TextBlock>
                 <TextBlock x:Name="CostBlock"></TextBlock>
             </StackPanel>
-            <Button Click="Learn">Learn</Button>
+            <StackPanel Orientation="Horizontal">
+                <Button Click="Learn">Learn</Button>
+                <Button Click="Stop">Stop</Button>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

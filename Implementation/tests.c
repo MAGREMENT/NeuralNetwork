@@ -500,7 +500,7 @@ void full_test() {
     for (int i = 0; i < 100; i++) {
         iterative_learn(n2, &test, state, 1, 10);
     }
-    free_state(state, n);
+    free_state(state, n->count);
 
     const double c3 = cost(n, &i, &e);
     if (c3 > c1) printf("Problem with cost");
@@ -559,12 +559,76 @@ void predict_test() {
     printf("predict test OK!\n");
 }
 
+void are_networks_same(neural_network* n1, neural_network* n2) {
+    for (int l = 0; l < n1->count; l++) {
+        const int oc = n1->layers[l].out_count;
+        for (int o = 0; o < oc; o++) {
+            for (int i = 0; i < n1->layers[l].in_count; i++) {
+                const int index = i * oc + o;
+
+                const double w1 = n1->layers[l].weights[index];
+                const double w2 = n2->layers[l].weights[index];
+                if (w1 != w2) {
+                    printf("BAD\n");
+                }
+            }
+
+            const double b1 = n1->layers[l].biases[o];
+            const double b2 = n2->layers[l].biases[o];
+            if (b1 != b2) {
+                printf("BAD\n");
+            }
+        }
+    }
+}
+
+void learn_deterministic_test() {
+    int types[] = {SIGMOID};
+    for (int i = 0; i < 1; i++) {
+        const int type = types[i];
+
+        neural_network* n1 = alloc_example_network_with_data(type);
+        neural_network* n2 = alloc_example_network_with_data(type);
+        n1->initialLearningRate = 0.0001;
+        n2->initialLearningRate = 0.0001;
+
+        test_data d1;
+        d1.count = 1;
+
+        input_data i1;
+        double iv1[] = {2, 2};
+        i1.count = 2;
+        i1.values = iv1;
+
+        input_data e1;
+        double ev1[] = {-2, -2};
+        e1.count = 2;
+        e1.values = ev1;
+
+        d1.inputs = &i1;
+        d1.expected = &e1;
+
+        learn(n1, &d1, create_batch(0, 1, 1), 1, NULL);
+        learn(n2, &d1, create_batch(0, 1, 1), 1, NULL);
+
+        are_networks_same(n1, n2);
+
+        iterative_learn(n1, &d1, NULL, 1, 100);
+        iterative_learn(n2, &d1, NULL, 1, 100);
+
+        are_networks_same(n1, n2);
+    }
+
+    printf("Learn deterministic test OK ! \n");
+}
+
 void unit_tests() {
     init_random();
 
     full_test();
 
     predict_test();
+    learn_deterministic_test();
     generate_test(0);
     learn_test();
     cost_test();

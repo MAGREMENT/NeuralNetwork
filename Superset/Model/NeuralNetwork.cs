@@ -4,23 +4,25 @@ namespace Model;
 
 public partial class NeuralNetwork : IDisposable
 {
-    private readonly IntPtr _ptr;
     private NeuralNetworkParameters _params;
 
-    public int Length => GetCount(_ptr);
+    internal IntPtr Ptr { get; }
+    public int Length { get; }
 
     public NeuralNetwork(NeuralNetworkParameters parameters, params int[] layers)
     {
-        _ptr = Initialize(layers.Length, layers);
+        Ptr = Initialize(layers.Length, layers);
+        Length = GetCount(Ptr);
+        
         _params = parameters;
-        ApplyParams(_ptr, _params);
+        ApplyParams(Ptr, _params);
     }
 
     private NeuralNetwork(IntPtr ptr, NeuralNetworkParameters parameters)
     {
-        _ptr = ptr;
+        Ptr = ptr;
         _params = parameters;
-        ApplyParams(_ptr, parameters);
+        ApplyParams(Ptr, parameters);
     }
 
     public static NeuralNetwork Import(string file)
@@ -32,64 +34,64 @@ public partial class NeuralNetwork : IDisposable
 
     public void Save(string file)
     {
-        Save(_ptr, _params, file);
+        Save(Ptr, _params, file);
     }
 
     public void ChangeParameters(EditParams action)
     {
         action(ref _params);
-        ApplyParams(_ptr, _params);
+        ApplyParams(Ptr, _params);
     }
 
     public void Randomize(double min, double max)
     {
-        Randomize(_ptr, min, max);
+        Randomize(Ptr, min, max);
     }
 
     public int GetInCount(int layer)
     {
-        if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
-        return GetInCount(_ptr, layer);
+        if (layer < 0 || layer >= GetCount(Ptr)) throw new IndexOutOfRangeException();
+        return GetInCount(Ptr, layer);
     }
 
     public int GetInputInCount()
     {
-        return GetInCount(_ptr, 0);
+        return GetInCount(Ptr, 0);
     }
 
     public int GetOutCount(int layer)
     {
-        if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
-        return GetOutCount(_ptr, layer);
+        if (layer < 0 || layer >= GetCount(Ptr)) throw new IndexOutOfRangeException();
+        return GetOutCount(Ptr, layer);
     }
 
     public int GetOutputOutCount()
     {
-        return GetOutCount(_ptr, Length - 1);
+        return GetOutCount(Ptr, Length - 1);
     }
 
     public void SetWeight(int layer, int input, int output, double value)
     {
         CheckBounds(layer, input, output);
-        SetWeight(_ptr, layer, input, output, value);
+        SetWeight(Ptr, layer, input, output, value);
     }
 
     public double GetWeight(int layer, int input, int output)
     {
         CheckBounds(layer, input, output);
-        return GetWeight(_ptr, layer, input, output);
+        return GetWeight(Ptr, layer, input, output);
     }
     
     public void SetBias(int layer, int output, double value)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
-        SetBias(_ptr, layer, output, value);
+        SetBias(Ptr, layer, output, value);
     }
     
     public double GetBias(int layer, int output)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
-        return GetBias(_ptr, layer, output);
+        return GetBias(Ptr, layer, output);
     }
 
     public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
@@ -102,32 +104,33 @@ public partial class NeuralNetwork : IDisposable
         var count = GetOutCount(Length - 1);
         var arr = new double[count]; //TODO Look into using stackalloc when output is a single int
         
-        Predict(_ptr, inputs, length, arr, count);
+        Predict(Ptr, inputs, length, arr, count);
         return arr;
     }
 
-    public void Learn(FlattenedData data, int batchSize, int iterations)
+    public void Learn(FlattenedData data, int batchSize, int iterations, LearningState? state = null)
     {
-        Learn(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
+        var statePtr = state?.Ptr ?? IntPtr.Zero;
+        Learn(Ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
             batchSize, iterations);
     }
 
     public double GetCost(double[] inputs, double[] expected)
     {
         CheckTestDataBounds(inputs.Length, expected.Length);
-        return Cost(_ptr, inputs, inputs.Length, expected, expected.Length); 
+        return Cost(Ptr, inputs, inputs.Length, expected, expected.Length); 
     }
 
     public double GetCost(FlattenedData data)
     {
         CheckTestDataBounds(data.InputCutOff, data.ExpectedCutOff);
-        return MultiCost(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount());
+        return MultiCost(Ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount());
     }
     
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        Dispose(_ptr);
+        Dispose(Ptr);
     }
 
     private void CheckBounds(int layer, int input, int output)
@@ -202,7 +205,7 @@ public partial class NeuralNetwork : IDisposable
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Learn(IntPtr ptr, 
+    private static partial void Learn(IntPtr ptr, IntPtr learningState,
         [MarshalAs(UnmanagedType.LPArray)] double[] inputs, int inputCutOff, 
         [MarshalAs(UnmanagedType.LPArray)] double[] expected, 
         int expectedCutOff, int count, int batchSize, int iterations);
