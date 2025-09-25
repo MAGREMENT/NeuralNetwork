@@ -474,7 +474,7 @@ inline void iterative_learn(neural_network* network, test_data* data, learning_s
         state->learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * baseLearningRate;
     }
 
-    if (freeState) free_state(state, network);
+    if (freeState) free_state(state, network->count);
 }
 
 learning_state* alloc_state(neural_network* network, int batchSize) {
@@ -488,8 +488,8 @@ learning_state* alloc_state(neural_network* network, int batchSize) {
     return state;
 }
 
-void free_state(learning_state* state, neural_network* network) {
-    if (state->velocities != NULL) free_layer_data_array(state->velocities, network->count);
+void free_state(learning_state* state, int layerCount) {
+    if (state->velocities != NULL) free_layer_data_array(state->velocities, layerCount);
     free(state);
 }
 

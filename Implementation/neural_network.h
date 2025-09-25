@@ -99,7 +99,7 @@ void apply_params(neural_network* network, params params);
 void randomize(neural_network* network, double min, double max);
 
 learning_state* alloc_state(neural_network* network, int batchSize);
-void free_state(learning_state* state, neural_network* network);
+void free_state(learning_state* state, int layerCount);
 void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
 void iterative_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
 
