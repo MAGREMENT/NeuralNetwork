@@ -14,7 +14,56 @@ void cut_2D_test();
 
 int main() {
     //cut_2D_test();
-    unit_tests();
+    //unit_tests();
+
+    int numbers[] = {2, 3, 2};
+    neural_network* network = alloc_network(3, numbers);
+    set_all_weights_and_biases(network, 1, 1);
+
+    params params;
+    params.initialLearningRate = 1;
+    params.learningRateDecay = 0;
+    params.regularization = 0;
+    params.momentum = 0;
+    params.activationType = SIGMOID;
+    params.outputActivationType = SIGMOID;
+    params.costType = MEAN_SQUARED;
+    apply_params(network, params);
+
+    test_data d1;
+    d1.count = 3;
+
+    input_data* i = alloc_input_datas(2, 3);
+    input_data* e = alloc_input_datas(2, 3);
+
+    double iv1[] = {2, 2};
+    double iv2[] = {3, 1};
+    double iv3[] = {7, 7};
+    double ev1[] = {-2, -2};
+    double ev2[] = {-3, -1};
+    double ev3[] = {-7, -7};
+
+
+    i[0].count = 2;
+    i[0].values = iv1;
+    i[1].count = 2;
+    i[1].values = iv2;
+    i[2].count = 2;
+    i[2].values = iv3;
+    e[0].count = 2;
+    e[0].values = ev1;
+    e[1].count = 2;
+    e[1].values = ev2;
+    e[2].count = 2;
+    e[2].values = ev3;
+
+    d1.inputs = i;
+    d1.expected = e;
+
+    iterative_learn(network, &d1, NULL, 2, 5);
+
+    layer* l1 = &network->layers[0];
+    layer* l2 = &network->layers[1];
 
     return EXIT_SUCCESS;
 }
@@ -176,7 +225,7 @@ void learn_test() {
 
         double c = multi_cost(network, test);
         for(int i = 0; i < 1; i++) {
-            learn(network, test, full_batch(test->count), network->initialLearningRate / test->count, NULL);
+            learn(network, test, 0, test->count, network->initialLearningRate / test->count, NULL);
             double nCost = multi_cost(network, test);
 
             if(nCost > c + 1) {
@@ -496,7 +545,7 @@ void full_test() {
     neural_network* n2 = alloc_example_network_with_data(DEFAULT);
     n2->initialLearningRate = 0.001;
 
-    learning_state* state = alloc_state(n, 1);
+    learning_state* state = alloc_state(n);
     for (int i = 0; i < 100; i++) {
         iterative_learn(n2, &test, state, 1, 10);
     }
@@ -608,8 +657,8 @@ void learn_deterministic_test() {
         d1.inputs = &i1;
         d1.expected = &e1;
 
-        learn(n1, &d1, create_batch(0, 1, 1), 1, NULL);
-        learn(n2, &d1, create_batch(0, 1, 1), 1, NULL);
+        learn(n1, &d1, 0, 1, 1, NULL);
+        learn(n2, &d1, 0, 1, 1, NULL);
 
         are_networks_same(n1, n2);
 

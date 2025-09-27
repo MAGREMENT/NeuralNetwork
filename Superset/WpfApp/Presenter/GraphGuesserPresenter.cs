@@ -22,7 +22,7 @@ public class GraphGuesserPresenter : IDisposable
     public GraphGuesserPresenter(IGraphGuesserView view)
     {
         _network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _layers);
-        _state = new LearningState(_network, batchSize);
+        _state = new LearningState(_network);
         _view = view;
         _network.Randomize(0, 1);
     }

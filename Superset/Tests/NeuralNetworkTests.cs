@@ -100,10 +100,10 @@ public class NeuralNetworkTests
             network.Randomize(0, 1);
 
             const int batchSize = 50;
-            using var state = new LearningState(network, batchSize);
+            using var state = new LearningState(network);
             for (int i = 0; i < 5; i++)
             {
-                network.Learn(flattened, batchSize, 1000, state);
+                network.Learn(flattened, batchSize, 5000, state);
             }
 
             var accuracy = 0.0;

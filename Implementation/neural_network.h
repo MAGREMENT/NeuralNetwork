@@ -63,15 +63,9 @@ typedef struct test_result {
     double cost;
 } test_result;
 
-typedef struct batch {
-    int from;
-    int to;
-    int then;
-} batch;
-
 typedef struct learning_state {
     int current;
-    double learningRate;
+    int iterations;
     layer_data* velocities;
 } learning_state;
 
@@ -97,10 +91,11 @@ void set_cost_type(neural_network* network, int type);
 void apply_params(neural_network* network, params params);
 
 void randomize(neural_network* network, double min, double max);
+void set_all_weights_and_biases(neural_network* network, double weights, double biases);
 
-learning_state* alloc_state(neural_network* network, int batchSize);
+learning_state* alloc_state(neural_network* network);
 void free_state(learning_state* state, int layerCount);
-void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities);
+int learn(neural_network* network, test_data* data, int start, int batchSize, double learningRate, layer_data* velocities);
 void iterative_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
 
 input_data* alloc_predict(neural_network* network, input_data* data);
@@ -152,8 +147,5 @@ test_data* alloc_test_data(int count, int inputCount, int outputCount);
 test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 void free_test_data(test_data* data);
 test_result test_network(neural_network* network, test_data *test);
-
-batch create_batch(int current, int size, int max);
-batch full_batch(int max);
 
 #endif // NEURAL_NETWORK_H

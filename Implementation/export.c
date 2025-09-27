@@ -1,7 +1,5 @@
 #include "export.h"
 
-#include <stddef.h>
-
 #include "repository.h"
 #include "utils.h"
 
@@ -89,13 +87,13 @@ inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* 
 
 inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
     test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
-    double result = multi_cost(ptr, test);
+    const double result = multi_cost(ptr, test);
     free_test_data(test);
     return result;
 }
 
-inline learning_state* InitializeState(neural_network* ptr, int batchSize) {
-    return alloc_state(ptr, batchSize);
+inline learning_state* InitializeState(neural_network* ptr) {
+    return alloc_state(ptr);
 }
 
 inline void DisposeState(learning_state* ptr, int layerCount) {

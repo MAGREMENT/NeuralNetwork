@@ -111,6 +111,18 @@ inline void randomize(neural_network* network, double min, double max) {
     }
 }
 
+void set_all_weights_and_biases(neural_network* network, double weights, double biases) {
+    for(int n = 0; n < network->count; n++) {
+        for(int o = 0; o < network->layers[n].out_count; o++) {
+            for(int i = 0; i < network->layers[n].in_count; i++) {
+                network->layers[n].weights[i * network->layers[n].out_count + o] = weights;
+            }
+
+            network->layers[n].biases[o] = biases;
+        }
+    }
+}
+
 inline void free_layers(layer* layers, int count) {
     for(int i = 0; i < count; i++){
         free(layers[i].biases);
@@ -429,17 +441,15 @@ inline void update_gradients(const neural_network* network, const layer_data* gr
     free_back_data(data, network->count);
 }
 
-inline void learn(neural_network* network, test_data* data, batch batch, double learningRate, layer_data* velocities){
+inline int learn(neural_network* network, test_data* data, int start, int batchSize, double learningRate, layer_data* velocities){
     layer_data* gradients = alloc_layer_data_array(network, 0);
 
-    for(int i = batch.then; i < batch.to; i++){
-        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
+    for(int i = 0; i < batchSize; i++){
+        update_gradients(network, gradients, data->inputs[start], data->expected[start]);
+        start = (start + 1) % data->count;
     }
 
-    for(int i = 0; i < batch.then; i++) {
-        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
-    }
-
+    learningRate /= batchSize;
     if (velocities == NULL) {
         for(int i = 0; i < network->count; i++){
             apply_gradients(network->layers[i], gradients[i], learningRate);
@@ -453,33 +463,31 @@ inline void learn(neural_network* network, test_data* data, batch batch, double 
     }
 
     free_layer_data_array(gradients, network->count);
+    return start;
 }
 
 inline void iterative_learn(neural_network* network, test_data* data, learning_state* state,
     const int batchSize, const int iterations) {
 
     int freeState = false;
-    const double baseLearningRate = network->initialLearningRate / batchSize;
-
     if (state == NULL) {
-        state = alloc_state(network, batchSize);
+        state = alloc_state(network);
         freeState = true;
     }
 
-    for(int iteration = 0; iteration < iterations; iteration++) {
-        const batch b = create_batch(state->current, batchSize, data->count);
-        learn(network, data, b, state->learningRate, state->velocities);
+    for(int i = 0; i < iterations; i++) {
+        const double learningRate = 1.0 / (1.0 + network->learningRateDecay * state->iterations) * network->initialLearningRate;
 
-        state->current = b.then == 0 ? b.to : b.then;
-        state->learningRate = 1.0 / (1.0 + network->learningRateDecay * iteration) * baseLearningRate;
+        state->current = learn(network, data, state->current, batchSize, learningRate, state->velocities);
+        state->iterations += 1;
     }
 
     if (freeState) free_state(state, network->count);
 }
 
-learning_state* alloc_state(neural_network* network, int batchSize) {
+learning_state* alloc_state(neural_network* network) {
     learning_state* state = malloc(sizeof(learning_state));
-    state->learningRate = network->initialLearningRate / batchSize;
+    state->iterations = 0;
     state->current = 0;
     state->velocities = network->regularization == 0 && network->momentum == 0
         ? NULL
@@ -545,38 +553,6 @@ inline test_result test_network(neural_network* network, test_data *test) {
     test_result result;
     result.cost = multi_cost(network, test);
     result.accuracy = valid / test->count * 100;
-
-    return result;
-}
-
-inline batch create_batch(const int current, const int size, const int max) {
-    batch result;
-    result.from = current;
-
-    if(size == max) {
-        result.to = max;
-        result.then = current;
-        return result;
-    }
-
-    const int to = current + size;
-    if(to >= max) {
-        result.to = max;
-        result.then = to % max;
-    }
-    else {
-        result.to = to;
-        result.then = 0;
-    }
-
-    return result;
-}
-
-inline batch full_batch(const int max) {
-    batch result;
-    result.from = 0;
-    result.to = max;
-    result.then = 0;
 
     return result;
 }
