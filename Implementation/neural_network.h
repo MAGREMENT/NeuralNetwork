@@ -64,7 +64,6 @@ typedef struct test_result {
 } test_result;
 
 typedef struct learning_state {
-    int current;
     int iterations;
     layer_data* velocities;
 } learning_state;
@@ -95,8 +94,9 @@ void set_all_weights_and_biases(neural_network* network, double weights, double 
 
 learning_state* alloc_state(neural_network* network);
 void free_state(learning_state* state, int layerCount);
-int learn(neural_network* network, test_data* data, int start, int batchSize, double learningRate, layer_data* velocities);
-void iterative_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
+void learn(neural_network* network, test_data* data, int start, int batchSize, double learningRate, layer_data* velocities);
+void linear_batch_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
+void random_batch_focus_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int batchFocus, int iterations);
 
 input_data* alloc_predict(neural_network* network, input_data* data);
 void predict(neural_network* network, input_data* data, input_data* result);

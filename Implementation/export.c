@@ -71,7 +71,7 @@ inline void Randomize(neural_network* ptr, double min, double max) {
 inline void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int batchSize, int iterations) {
     test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
-    iterative_learn(ptr, test, state, batchSize, iterations);
+    linear_batch_learn(ptr, test, state, batchSize, iterations);
     free_test_data(test);
 }
 

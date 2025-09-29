@@ -3,6 +3,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 
@@ -12,6 +13,11 @@ inline void init_random() {
 
 inline double random(const double min, const double max) {
     return (double)rand() / (double)RAND_MAX * (max - min) + min;
+
+}
+
+inline int rand_i(const int max) {
+    return rand() % max;
 }
 
 inline int max_index(double values[], const int count) {
@@ -33,4 +39,11 @@ inline int deq(const double left, const double right, const double margin) {
 
 int def_deq(const double left, const double right) {
     return deq(left, right, 0.00001);
+}
+
+void list_remove(int* arr, int count, int index) {
+    index++;
+    for (; index < count; index++) {
+        arr[index - 1] = arr[index];
+    }
 }

@@ -16,7 +16,7 @@ int main() {
     //cut_2D_test();
     //unit_tests();
 
-    int numbers[] = {2, 3, 2};
+    int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
     set_all_weights_and_biases(network, 1, 1);
 
@@ -30,40 +30,11 @@ int main() {
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
 
-    test_data d1;
-    d1.count = 3;
+    test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    input_data* i = alloc_input_datas(2, 3);
-    input_data* e = alloc_input_datas(2, 3);
+    random_batch_focus_learn(network, data, NULL, 32, 2, 10000);
 
-    double iv1[] = {2, 2};
-    double iv2[] = {3, 1};
-    double iv3[] = {7, 7};
-    double ev1[] = {-2, -2};
-    double ev2[] = {-3, -1};
-    double ev3[] = {-7, -7};
-
-
-    i[0].count = 2;
-    i[0].values = iv1;
-    i[1].count = 2;
-    i[1].values = iv2;
-    i[2].count = 2;
-    i[2].values = iv3;
-    e[0].count = 2;
-    e[0].values = ev1;
-    e[1].count = 2;
-    e[1].values = ev2;
-    e[2].count = 2;
-    e[2].values = ev3;
-
-    d1.inputs = i;
-    d1.expected = e;
-
-    iterative_learn(network, &d1, NULL, 2, 5);
-
-    layer* l1 = &network->layers[0];
-    layer* l2 = &network->layers[1];
+    printf("%f", multi_cost(network, data));
 
     return EXIT_SUCCESS;
 }
@@ -132,7 +103,7 @@ void cut_2D_test() {
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    iterative_learn(network, test, NULL, 32, 1000);
+    linear_batch_learn(network, test, NULL, 32, 1000);
 
     free_network(network);
 }
@@ -399,22 +370,30 @@ void alloc_flattened_test_data_test() {
     free_test_data(data);
     data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    int numbers[] = {7, 4, 3};
-    neural_network* network = alloc_network(3, numbers);
-    params params;
-    params.initialLearningRate = 1;
-    params.learningRateDecay = 0;
-    params.regularization = 0.1;
-    params.momentum = 0.9;
-    params.activationType = SIGMOID;
-    params.outputActivationType = SIGMOID;
-    params.costType = MEAN_SQUARED;
-    apply_params(network, params);
-    randomize(network, 0, 1);
+    for(int i = 0; i < data->count; i++) {
+        int total = 0;
+        input_data current = data->inputs[i];
+        for(int j = 0; j < current.count; j++) {
+            total += (int)current.values[j];
+        }
 
-    iterative_learn(network, data, NULL, 50, 100);
+        double* ex = data->expected[i].values;
+        double in[3];
 
-    free_network(network);
+        if (total >= 4) in[0] = 1;
+        else in[0] = 0;
+        if (total == 2 || total == 3 || total == 6 || total == 7) in[1] = 1;
+        else in[1] = 0;
+        if (total % 2 == 1) in[2] = 1;
+        else in[2] = 0;
+
+        for(int j = 0; j < 3; j++) {
+            if (in[j] != ex[j]) {
+                printf("BAD\n");
+            }
+        }
+    }
+
     free_test_data(data);
     printf("alloc flattened test data OK!\n");
 }
@@ -540,14 +519,14 @@ void full_test() {
     free_network(n);
     n = alloc_example_network_with_data(DEFAULT);
     n->initialLearningRate = 0.001;
-    iterative_learn(n, &test, NULL, 1, 1000);
+    linear_batch_learn(n, &test, NULL, 1, 1000);
 
     neural_network* n2 = alloc_example_network_with_data(DEFAULT);
     n2->initialLearningRate = 0.001;
 
     learning_state* state = alloc_state(n);
     for (int i = 0; i < 100; i++) {
-        iterative_learn(n2, &test, state, 1, 10);
+        linear_batch_learn(n2, &test, state, 1, 10);
     }
     free_state(state, n->count);
 
@@ -662,8 +641,8 @@ void learn_deterministic_test() {
 
         are_networks_same(n1, n2);
 
-        iterative_learn(n1, &d1, NULL, 1, 100);
-        iterative_learn(n2, &d1, NULL, 1, 100);
+        linear_batch_learn(n1, &d1, NULL, 1, 100);
+        linear_batch_learn(n2, &d1, NULL, 1, 100);
 
         are_networks_same(n1, n2);
     }
