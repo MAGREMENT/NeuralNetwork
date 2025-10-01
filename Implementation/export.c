@@ -69,9 +69,9 @@ inline void Initialize(neural_network* ptr) {
 }
 
 inline void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
-        double* expected, int expectedCutoff, int count, int batchSize, int iterations) {
+        double* expected, int expectedCutoff, int count, int iterations) {
     test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
-    linear_batch_learn(ptr, test, state, batchSize, iterations);
+    iterative_learn(ptr, test, state, iterations);
     free_test_data(test);
 }
 

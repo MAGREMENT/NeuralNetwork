@@ -29,13 +29,15 @@ static int next(range_iterator* iterator) {
         if (iterator->current.to > state->size) iterator->current.to = state->size;
     }
 
-    return iterator->current.iteration < state->max_iterations;
+    return iterator->current.iteration <= state->max_iterations;
 }
 
 static void reset(range_iterator* iterator) {
+    mini_batch_iterator_state* state = iterator->state;
+
     iterator->current.iteration = 0;
     iterator->current.from = 0;
-    iterator->current.to = 0;
+    iterator->current.to = state->size;
 }
 
 inline range_iterator* constr_mini_batch_iterator(int size, int iterations, int batchSize) {
@@ -49,7 +51,7 @@ inline range_iterator* constr_mini_batch_iterator(int size, int iterations, int 
 
     it->current.iteration = 0;
     it->current.from = 0;
-    it->current.to = 0;
+    it->current.to = size;
 
     it->next = next;
     it->free = default_free_iterator;

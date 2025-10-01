@@ -11,7 +11,9 @@ typedef struct data_selector data_selector;
 struct data_selector {
     void* params;
     range_iterator* (*constr_iterator)(data_selector* sel, int dataSize, int iterations);
-    void free(data_selector* selector);
+    void (*free)(data_selector* selector);
 };
+
+data_selector* create_full_batch_selector();
 
 #endif //DATA_SELECTOR_H

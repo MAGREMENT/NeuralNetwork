@@ -22,7 +22,9 @@ add_executable(Test
         data_selector.c
         data_selector.h
         optimizer.c
-        optimizer.h)
+        optimizer.h
+        layer.c
+        layer.h)
 add_library(Export SHARED
         export.c
         neural_network.c
@@ -41,4 +43,6 @@ add_library(Export SHARED
         data_selector.c
         data_selector.h
         optimizer.c
-        optimizer.h)
+        optimizer.h
+        layer.c
+        layer.h)

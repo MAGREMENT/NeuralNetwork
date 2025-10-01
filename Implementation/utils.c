@@ -25,8 +25,6 @@ inline int rand_std_nrml_distribution() {
     return sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2);
 }
 
-
-
 inline int max_index(double values[], const int count) {
     double max = DBL_MIN;
     int index = -1;

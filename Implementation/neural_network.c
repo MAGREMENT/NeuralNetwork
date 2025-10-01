@@ -1,9 +1,6 @@
 #include <stdlib.h>
+
 #include "neural_network.h"
-
-#include <math.h>
-#include <string.h>
-
 #include "functions.h"
 #include "utils.h"
 
@@ -364,81 +361,6 @@ inline layer_data* alloc_layer_data_array(neural_network* network, int copyValue
     return result;
 }
 
-inline void free_layer_data_array(layer_data* gradients, const int count) {
-    for(int i = 0; i < count; i++){
-        free(gradients[i].biases);
-        free(gradients[i].weights);
-    }
-
-    free(gradients);
-}
-
-inline void apply_gradients(layer to, layer_data gradients, double learningRate){
-    for(int i = 0; i < to.in_count; i++){
-        for(int j = 0; j < to.out_count; j++){
-            const int index = i * to.out_count + j;
-            to.weights[index] -= gradients.weights[index] * learningRate;
-        }
-    }
-
-    for(int i = 0; i < to.out_count; i++){
-        to.biases[i] -= gradients.biases[i] * learningRate;
-    }
-}
-
-inline void apply_gradients_adam(layer to, layer_data gradients, layer_data avg_gradients,
-    layer_data avg_sqr_gradients, int iteration, double learningRate, double beta1, double beta2){
-
-    for(int i = 0; i < to.in_count; i++){
-        for(int j = 0; j < to.out_count; j++){
-            const int index = i * to.out_count + j;
-
-            const double g = gradients.weights[index];
-            avg_gradients.weights[index] = beta1 * avg_gradients.weights[index] + (1 - beta1) * g;
-            avg_sqr_gradients.weights[index] = beta2 * avg_gradients.weights[index] + (1 - beta2) * g * g;
-
-            const double m = avg_gradients.weights[index] / (1 - pow(beta1, iteration));
-            const double v = avg_sqr_gradients.weights[index] / (1 - pow(beta2, iteration));
-
-            to.weights[index] -= learningRate * m / (sqrt(v) + 0.00000001);
-        }
-    }
-
-    for(int o = 0; o < to.out_count; o++){
-
-        const double g = gradients.weights[o];
-        avg_gradients.biases[o] = beta1 * avg_gradients.biases[o] + (1 - beta1) * g;
-        avg_sqr_gradients.biases[o] = beta2 * avg_gradients.biases[o] + (1 - beta2) * g * g;
-
-        const double m = avg_gradients.biases[o] / (1 - pow(beta1, iteration));
-        const double v = avg_sqr_gradients.biases[o] / (1 - pow(beta2, iteration));
-
-        to.biases[o] -= learningRate * m / (sqrt(v) + 0.00000001);
-    }
-}
-
-inline void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
-                                            const double momentum, const double regularization){
-    const double weightDecay = 1 - regularization * learningRate;
-
-    for(int i = 0; i < to.in_count; i++){
-        for(int j = 0; j < to.out_count; j++){
-            const int index = i * to.out_count + j;
-            const double velocity = velocities.weights[index] * momentum - gradients.weights[index] * learningRate;
-
-            velocities.weights[index] = velocity;
-            to.weights[index] = to.weights[index] * weightDecay + velocity;
-        }
-    }
-
-    for(int i = 0; i < to.out_count; i++){
-        const double velocity = velocities.biases[i] * momentum - gradients.biases[i] * learningRate;
-
-        velocities.biases[i] = velocity;
-        to.biases[i] += velocity;
-    }
-}
-
 inline void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
@@ -495,8 +417,8 @@ inline void learn(neural_network* network, test_data* data, range range, double 
     }
 
     for (int l = 0; l < network->count; l++) {
-        network->optimizer->apply_gradients(network->optimizer, network->layers[l], gradients[l],
-            learningRate, optimizerState);
+        network->optimizer->apply_gradients(network->optimizer, optimizerState, network->layers[l], gradients[l],
+            learningRate);
     }
 
     free_layer_data_array(gradients, network->count);
@@ -522,7 +444,7 @@ void iterative_learn(neural_network* network, test_data* data, learning_state* s
 inline learning_state* alloc_state(neural_network* network) {
     learning_state* state = malloc(sizeof(learning_state));
     state->iteration = 0;
-    state->optimizerState = network->optimizer->createState();
+    state->optimizerState = network->optimizer->create_state(network->optimizer);
 
     return state;
 }

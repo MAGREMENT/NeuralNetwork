@@ -7,34 +7,24 @@
 #include <stdlib.h>
 #include "../iterator-util.h"
 
-typedef struct full_batch_iterator_state {
-    int started;
-    int max_iterations;
-} full_batch_iterator_state;
+
 
 static int next(range_iterator* iterator) {
-    full_batch_iterator_state* state = iterator->state;
-    if (!state->started) {
-        state->started = true;
-        return true;
-    }
+     const int max = *(int*)iterator->state;
 
     iterator->current.iteration++;
-    return iterator->current.iteration < state->max_iterations;
+    return iterator->current.iteration <= max;
 }
 
 static void reset(range_iterator* iterator) {
-    full_batch_iterator_state* state = iterator->state;
     iterator->current.iteration = 0;
-    state->started = false;
 }
 
 inline range_iterator* constr_full_batch_iterator(int size, int iterations) {
     range_iterator* it = malloc(sizeof(range_iterator));
-    full_batch_iterator_state* state = malloc(sizeof(full_batch_iterator_state));
+    int* state = malloc(sizeof(int));
 
-    state->started = false;
-    state->max_iterations = iterations;
+    *state = iterations;
     it->state = state;
 
     it->current.iteration = 0;

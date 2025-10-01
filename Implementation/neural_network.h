@@ -1,26 +1,14 @@
 #ifndef NEURAL_NETWORK_H
 #define NEURAL_NETWORK_H
+
 #include "data_selector.h"
+#include "layer.h"
 #include "learning_rate_sechduler.h"
 #include "optimizer.h"
 #include "Iterators/iterator.h"
 
-typedef struct layer {
-    int in_count;
-    int out_count;
-    double* weights;
-    double* biases;
-
-    double (*activation)(double, void*);
-    double (*activationDerivative)(double, void*);
-    void* (*processInputs)(double*, int);
-    void (*freeData)(void*);
-} layer;
-
 typedef struct params {
     double initialLearningRate;
-    int dataSelectionType;
-    int learningRateSchedulingType;
     int activationType;
     int outputActivationType;
     int costType;
@@ -52,11 +40,6 @@ typedef struct backpropagation_data {
     double* afterActivations;
     double* nodeValues;
 } backpropagation_data;
-
-typedef struct layer_data {
-    double* weights;
-    double* biases;
-} layer_data;
 
 typedef struct test_data {
     int count;
@@ -130,11 +113,7 @@ void continue_advance(layer layer, const backpropagation_data* data, int inputIn
  * @return
  */
 layer_data* alloc_layer_data_array(neural_network* network, int copyValues);
-void free_layer_data_array(layer_data* gradients, int count);
 
-void apply_gradients(layer to, layer_data gradients, double learningRate);
-void apply_gradients_with_velocities(layer to, layer_data gradients, layer_data velocities, double learningRate,
-    double momentum, double regularization);
 void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
     input_data expected);
 

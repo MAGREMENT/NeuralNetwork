@@ -3,10 +3,6 @@
 #include <stdlib.h>
 
 #include "neural_network.h"
-#include "generator.h"
-#include "functions.h"
-#include "utils.h"
-#include "repository.h"
 #include "big-array.c"
 
 void unit_tests();
@@ -22,20 +18,20 @@ int main() {
     neural_network* network = alloc_network(3, numbers);
 
     params params;
-    params.initialLearningRate = 10;
-    params.learningRateDecay = 0;
-    params.regularization = 0;
-    params.momentum = 0;
+    params.initialLearningRate = 1;
     params.activationType = SIGMOID;
     params.outputActivationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
     initialize(network);
 
+    network->data_selector = create_full_batch_selector();
+    network->optimizer = create_gradient_descent_optimizer();
+    network->scheduler = constr_constant_scheduler();
+
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    random_batch_focus_learn(network, data, NULL, 32, 10, 1000);
-    //linear_batch_learn(network, data, NULL, 32, 1000);
+    iterative_learn(network, data, NULL, 10);
 
     printf("%f\n", avg_cost(network, data));
 
@@ -60,14 +56,11 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-neural_network* alloc_example_network(int activation) {
+/*neural_network* alloc_example_network(int activation) {
     int numbers[] = {2, 3, 2};
     neural_network* network = alloc_network(3, numbers);
     params params;
     params.initialLearningRate = 1;
-    params.learningRateDecay = 0.02;
-    params.regularization = 0.1;
-    params.momentum = 0.9;
     params.activationType = activation;
     params.outputActivationType = activation;
     params.costType = MEAN_SQUARED;
@@ -124,7 +117,7 @@ void cut_2D_test() {
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
-    linear_batch_learn(network, test, NULL, 32, 1000);
+    iterative_learn(network, test, NULL, 1000);
 
     free_network(network);
 }
@@ -660,5 +653,5 @@ void unit_tests() {
     traverse_test();
     repository_test();
     alloc_flattened_test_data_test();
-}
+}*/
 

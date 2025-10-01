@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-inline neural_network* restore(const char* file, params* toFill){
+inline neural_network* restore(const char* file, params* toFill){ //TODO correct
     FILE* fptr = fopen(file, "rb");
 
     int size[1];
@@ -27,9 +27,6 @@ inline neural_network* restore(const char* file, params* toFill){
     double b1[4];
     fread(b1, sizeof(double), 4, fptr);
     p->initialLearningRate = b1[0];
-    p->learningRateDecay = b1[1];
-    p->regularization = b1[2];
-    p->momentum = b1[3];
     int b2[3];
     fread(b2, sizeof(int), 3, fptr);
     p->activationType = b2[0];
@@ -63,10 +60,8 @@ inline void save(const neural_network* network, const params* params, const char
     }
 
     if(params != NULL){
-        double ln[] = {params->initialLearningRate, params->learningRateDecay, params->regularization, params->momentum};
         int types[] = {params->activationType, params->outputActivationType, params->costType};
 
-        fwrite(ln, sizeof(double), 4, fptr);
         fwrite(types, sizeof(int), 3, fptr);
     }
 
