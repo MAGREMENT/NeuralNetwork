@@ -1,11 +1,16 @@
 #ifndef NEURAL_NETWORK_H
 #define NEURAL_NETWORK_H
+#include "data_selector.h"
+#include "learning_rate_sechduler.h"
+#include "optimizer.h"
+#include "Iterators/iterator.h"
 
 typedef struct layer {
     int in_count;
     int out_count;
     double* weights;
     double* biases;
+
     double (*activation)(double, void*);
     double (*activationDerivative)(double, void*);
     void* (*processInputs)(double*, int);
@@ -14,9 +19,8 @@ typedef struct layer {
 
 typedef struct params {
     double initialLearningRate;
-    double learningRateDecay;
-    double regularization;
-    double momentum;
+    int dataSelectionType;
+    int learningRateSchedulingType;
     int activationType;
     int outputActivationType;
     int costType;
@@ -25,15 +29,16 @@ typedef struct params {
 typedef struct neural_network {
     int count;
     layer* layers;
+    void (*initialization)(layer* layer);
 
-    double initialLearningRate;
-    double learningRateDecay;
-    double regularization;
-    double momentum;
+    double learningRate;
+    learning_rate_scheduler* scheduler;
+
+    data_selector* data_selector;
+    optimizer* optimizer;
 
     double (*cost)(double, double);
     double (*costDerivative)(double, double);
-    void (*initialization)(layer* layer);
 } neural_network;
 
 typedef struct input_data {
@@ -65,8 +70,8 @@ typedef struct test_result {
 } test_result;
 
 typedef struct learning_state {
-    int iterations;
-    layer_data* velocities;
+    int iteration;
+    void* optimizerState;
 } learning_state;
 
 enum activation_type {
@@ -94,10 +99,9 @@ void initialize(neural_network* network);
 void set_all_weights_and_biases(neural_network* network, double weights, double biases);
 
 learning_state* alloc_state(neural_network* network);
-void free_state(learning_state* state, int layerCount);
-void learn(neural_network* network, test_data* data, int start, int batchSize, double learningRate, layer_data* velocities);
-void linear_batch_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int iterations);
-void random_batch_focus_learn(neural_network* network, test_data* data, learning_state* state, int batchSize, int batchFocus, int iterations);
+void free_state(neural_network* network, learning_state* state);
+void learn(neural_network* network, test_data* data, range range, double learningRate, void* optimizerState);
+void iterative_learn(neural_network* network, test_data* data, learning_state* state, int iterations);
 
 input_data* alloc_predict(neural_network* network, input_data* data);
 void predict(neural_network* network, input_data* data, input_data* result);

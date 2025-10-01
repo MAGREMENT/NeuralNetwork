@@ -107,11 +107,7 @@ inline void set_cost_type(neural_network* network, int type) {
 }
 
 inline void apply_params(neural_network* network, params params){
-    network->initialLearningRate = params.initialLearningRate;
-    network->learningRateDecay = params.learningRateDecay;
-    network->momentum = params.momentum;
-    network->regularization = params.regularization;
-
+    network->learningRate = params.initialLearningRate;
     set_activation_type(network, params.activationType, params.outputActivationType);
     set_cost_type(network, params.costType);
 }
@@ -148,6 +144,10 @@ inline void free_layers(layer* layers, int count) {
 }
 
 inline void free_network(neural_network* network){
+    network->optimizer->free(network->optimizer);
+    network->scheduler->free(network->scheduler);
+    network->data_selector->free(network->data_selector);
+
     free_layers(network->layers, network->count);
     free(network);
 }
@@ -487,111 +487,48 @@ inline void update_gradients(const neural_network* network, const layer_data* gr
     free_back_data(data, network->count);
 }
 
-inline void learn(neural_network* network, test_data* data, int start, const int batchSize, double learningRate,
-    layer_data* velocities){
-
+inline void learn(neural_network* network, test_data* data, range range, double learningRate, void* optimizerState){
     layer_data* gradients = alloc_layer_data_array(network, 0);
 
-    int max = start + batchSize;
-    max = max > data->count ? data->count : max;
-    learningRate /= max - start;
-
-    for(; start < max; start++){
-        update_gradients(network, gradients, data->inputs[start], data->expected[start]);
+    for(int i = range.from; i < range.to; i++){
+        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
-    if (velocities == NULL) {
-        for(int i = 0; i < network->count; i++){
-            apply_gradients(network->layers[i], gradients[i], learningRate);
-        }
-    }
-    else {
-        for(int i = 0; i < network->count; i++){
-            apply_gradients_with_velocities(network->layers[i], gradients[i], velocities[i], learningRate,
-                network->momentum, network->regularization);
-        }
+    for (int l = 0; l < network->count; l++) {
+        network->optimizer->apply_gradients(network->optimizer, network->layers[l], gradients[l],
+            learningRate, optimizerState);
     }
 
     free_layer_data_array(gradients, network->count);
 }
 
-inline void linear_batch_learn(neural_network* network, test_data* data, learning_state* state,
-    const int batchSize, const int iterations) {
-
+void iterative_learn(neural_network* network, test_data* data, learning_state* state, int iterations) {
     int freeState = false;
     if (state == NULL) {
         state = alloc_state(network);
         freeState = true;
     }
 
-    for(int i = 0; i < iterations; i++) {
-        const double learningRate = 1.0 / (1.0 + network->learningRateDecay * state->iterations) * network->initialLearningRate;
-        int start = 0;
-
-        while (start < data->count) {
-            learn(network, data, start, batchSize, learningRate, state->velocities);
-            start += batchSize;
-        }
-
-        state->iterations += 1;
+    range_iterator* iterator = network->data_selector->constr_iterator(network->data_selector, data->count, iterations);
+    while (iterator->next(iterator)) {
+        const double learningRate = network->scheduler->schedule(network->scheduler, network->learningRate, iterator->current.iteration);
+        learn(network, data, iterator->current, learningRate, state->optimizerState);
     }
 
-    if (freeState) free_state(state, network->count);
+    iterator->free(iterator);
+    if (freeState) free_state(network, state);
 }
 
-void random_batch_focus_learn(neural_network* network, test_data* data, learning_state* state, const int batchSize,
-    const int batchFocus, const int iterations) {
-
-    int freeState = false;
-    if (state == NULL) {
-        state = alloc_state(network);
-        freeState = true;
-    }
-
-    const int batchCount = data->count / batchSize + (data->count % batchSize > 0 ? 1 : 0);
-    int* batchIndexes = malloc(sizeof(int) * batchCount);
-    int* list = malloc(sizeof(int) * batchCount);
-
-    for (int i = 0; i < batchCount; i++) {
-        batchIndexes[i] = i * batchSize;
-    }
-
-    for(int i = 0; i < iterations; i++) {
-        memcpy(list, batchIndexes, batchCount * sizeof(int));
-        const double learningRate = 1.0 / (1.0 + network->learningRateDecay * state->iterations) * network->initialLearningRate;
-
-        int count = batchCount;
-        while (count > 0) {
-            const int index = rand_i(count);
-
-            for (int f = 0; f < batchFocus; f++) {
-                learn(network, data, list[index], batchSize, learningRate, state->velocities);
-            }
-
-            list_remove(list, count, index);
-            count--;
-        }
-
-        state->iterations += 1;
-    }
-
-    free(batchIndexes);
-    free(list);
-    if (freeState) free_state(state, network->count);
-}
-
-learning_state* alloc_state(neural_network* network) {
+inline learning_state* alloc_state(neural_network* network) {
     learning_state* state = malloc(sizeof(learning_state));
-    state->iterations = 0;
-    state->velocities = network->regularization == 0 && network->momentum == 0
-        ? NULL
-        : alloc_layer_data_array(network, false);
+    state->iteration = 0;
+    state->optimizerState = network->optimizer->createState();
 
     return state;
 }
 
-void free_state(learning_state* state, int layerCount) {
-    if (state->velocities != NULL) free_layer_data_array(state->velocities, layerCount);
+inline void free_state(neural_network* network, learning_state* state) {
+    network->optimizer->free_state(state->optimizerState);
     free(state);
 }
 

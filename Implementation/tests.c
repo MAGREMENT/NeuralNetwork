@@ -217,7 +217,7 @@ void learn_test() {
 
         double cost = avg_cost(network, test);
         for(int i = 0; i < 1000; i++) {
-            learn(network, test, 0, test->count, network->initialLearningRate / test->count, NULL);
+            learn(network, test, 0, test->count, network->learningRate / test->count, NULL);
             double nCost = avg_cost(network, test);
 
             if(nCost > cost) {
@@ -276,7 +276,7 @@ void repository_test() {
         return;
     }
 
-    if(network->initialLearningRate != download->initialLearningRate) {
+    if(network->learningRate != download->learningRate) {
         printf("Different learning rate");
         return;
     }
@@ -496,13 +496,13 @@ void full_test() {
     full_test_value_check(gradients[0].biases[1], nv3);
     full_test_value_check(gradients[0].biases[2], nv4);
 
-    n->initialLearningRate = 0.001;
+    n->learningRate = 0.001;
     const double c1 = cost(n, &i, &e);
 
-    apply_gradients(n->layers[1], gradients[1], n->initialLearningRate);
-    apply_gradients(n->layers[0], gradients[0], n->initialLearningRate);
+    apply_gradients(n->layers[1], gradients[1], n->learningRate);
+    apply_gradients(n->layers[0], gradients[0], n->learningRate);
 
-    full_test_value_check(n->layers[0].weights[0], 0.5 - nv2 * 2 * n->initialLearningRate);
+    full_test_value_check(n->layers[0].weights[0], 0.5 - nv2 * 2 * n->learningRate);
 
     const double c2 = cost(n, &i, &e);
 
@@ -515,11 +515,11 @@ void full_test() {
 
     free_network(n);
     n = alloc_example_network_with_data(DEFAULT);
-    n->initialLearningRate = 0.001;
+    n->learningRate = 0.001;
     linear_batch_learn(n, &test, NULL, 1, 1000);
 
     neural_network* n2 = alloc_example_network_with_data(DEFAULT);
-    n2->initialLearningRate = 0.001;
+    n2->learningRate = 0.001;
 
     learning_state* state = alloc_state(n);
     for (int i = 0; i < 100; i++) {
@@ -614,8 +614,8 @@ void learn_deterministic_test() {
 
         neural_network* n1 = alloc_example_network_with_data(type);
         neural_network* n2 = alloc_example_network_with_data(type);
-        n1->initialLearningRate = 0.0001;
-        n2->initialLearningRate = 0.0001;
+        n1->learningRate = 0.0001;
+        n2->learningRate = 0.0001;
 
         test_data d1;
         d1.count = 1;
