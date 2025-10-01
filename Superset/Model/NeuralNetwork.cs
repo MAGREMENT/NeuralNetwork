@@ -11,7 +11,7 @@ public partial class NeuralNetwork : IDisposable
 
     public NeuralNetwork(NeuralNetworkParameters parameters, params int[] layers)
     {
-        Ptr = Initialize(layers.Length, layers);
+        Ptr = Create(layers.Length, layers);
         Length = GetCount(Ptr);
         
         _params = parameters;
@@ -23,6 +23,7 @@ public partial class NeuralNetwork : IDisposable
         Ptr = ptr;
         _params = parameters;
         ApplyParams(Ptr, parameters);
+        Initialize(Ptr);
     }
 
     public static NeuralNetwork Import(string file)
@@ -41,11 +42,6 @@ public partial class NeuralNetwork : IDisposable
     {
         action(ref _params);
         ApplyParams(Ptr, _params);
-    }
-
-    public void Randomize(double min, double max)
-    {
-        Randomize(Ptr, min, max);
     }
 
     public int GetInCount(int layer)
@@ -147,7 +143,7 @@ public partial class NeuralNetwork : IDisposable
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial IntPtr Initialize(int count, int[] layers);
+    private static partial IntPtr Create(int count, int[] layers);
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
@@ -201,7 +197,7 @@ public partial class NeuralNetwork : IDisposable
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Randomize(IntPtr ptr, double min, double max);
+    private static partial void Initialize(IntPtr ptr);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
@@ -236,7 +232,7 @@ public struct NeuralNetworkParameters
 
     public static NeuralNetworkParameters NoMomentumSigmoid { get; } = new()
     {
-        InitialLearningRate = 1,
+        InitialLearningRate = 10,
         LearningRateDecay = 0,
         Regularization = 0,
         Momentum = 0,

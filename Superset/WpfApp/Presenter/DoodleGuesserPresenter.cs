@@ -16,7 +16,6 @@ public class DoodleGuesserPresenter
     public DoodleGuesserPresenter(IDoodleGuesserView view)
     {
         _view = view;
-        _network.Randomize(0, 1);
     }
 
     public void Next()

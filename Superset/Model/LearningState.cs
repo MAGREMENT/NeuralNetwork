@@ -10,7 +10,7 @@ public partial class LearningState : IDisposable
 
     public LearningState(NeuralNetwork network)
     {
-        Ptr = InitializeState(network.Ptr);
+        Ptr = CreateState(network.Ptr);
         _layerCount = network.Length;
     }
 
@@ -21,7 +21,7 @@ public partial class LearningState : IDisposable
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial IntPtr InitializeState(IntPtr ptr);
+    private static partial IntPtr CreateState(IntPtr ptr);
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]

@@ -54,7 +54,6 @@ public class NeuralNetworkTests
     public void CostTest()
     {
         using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[0]);
-        network.Randomize(0, 1);
         
         Console.WriteLine(network.GetCost(new [] {1, 2.2}, new [] {1, 2.2}));
         
@@ -63,7 +62,6 @@ public class NeuralNetworkTests
         var flattened = FlattenedData.FromArrays(data);
         
         using var network2 = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[3]);
-        network2.Randomize(0, 1);
         Console.WriteLine(network2.GetCost(flattened));
     }
 
@@ -71,7 +69,6 @@ public class NeuralNetworkTests
     public void LearnFromLittleFlattenedTest()
     {
         using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[0]);
-        network.Randomize(0, 1);
 
         var f = new FlattenedData(new[] { 1, 2.2, 3, 4 }, 2, new[] { 1.1, 2, 3, 4, 5, 6 }, 3);
         network.Learn(f, 1, 1);
@@ -91,19 +88,18 @@ public class NeuralNetworkTests
     public void SimpleLearnTest()
     {
         var data = GenerateTestDataForSimpleLearnTest();
-        data.Shuffle(5);
+        //data.Shuffle(5);
         var flattened = FlattenedData.FromArrays(data);
 
         foreach (var config in _configs)
         {
             using var network = new NeuralNetwork(config.Item1, config.Item2);
-            network.Randomize(0, 1);
 
             const int batchSize = 32;
             using var state = new LearningState(network);
             for (int i = 0; i < 5; i++)
             {
-                network.Learn(flattened, batchSize, 40000, state);
+                network.Learn(flattened, batchSize, 1000);
             }
 
             var accuracy = 0.0;

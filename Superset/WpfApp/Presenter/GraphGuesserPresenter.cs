@@ -24,7 +24,6 @@ public class GraphGuesserPresenter : IDisposable
         _network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _layers);
         _state = new LearningState(_network);
         _view = view;
-        _network.Randomize(0, 1);
     }
 
     public void Start()
