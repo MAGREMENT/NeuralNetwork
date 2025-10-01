@@ -16,12 +16,13 @@ int main() {
     //cut_2D_test();
     //unit_tests();
 
+    //return EXIT_SUCCESS;
+
     int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
-    set_all_weights_and_biases(network, 1, 1);
 
     params params;
-    params.initialLearningRate = 1;
+    params.initialLearningRate = 10;
     params.learningRateDecay = 0;
     params.regularization = 0;
     params.momentum = 0;
@@ -29,12 +30,32 @@ int main() {
     params.outputActivationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
+    initialize(network);
 
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    random_batch_focus_learn(network, data, NULL, 32, 2, 10000);
+    random_batch_focus_learn(network, data, NULL, 32, 10, 1000);
+    //linear_batch_learn(network, data, NULL, 32, 1000);
 
-    printf("%f", multi_cost(network, data));
+    printf("%f\n", avg_cost(network, data));
+
+    double accuracy = 0;
+    for (int i = 0; i < data->count; i++) {
+        input_data result;
+        result.count = 3;
+        double val[3];
+        result.values = val;
+
+        predict(network, &data->inputs[i], &result);
+        int ok = true;
+        for (int j = 0; j < 3; j++) {
+            if (fabs(round(val[j] - data->expected[i].values[j])) > 0.1) ok = false;
+        }
+
+        if (ok) accuracy++;
+    }
+
+    printf("%f", accuracy / data->count * 100);
 
     return EXIT_SUCCESS;
 }
@@ -99,7 +120,7 @@ void test_and_print_network(neural_network* network, test_data* data, const int 
 void cut_2D_test() {
     neural_network* network = alloc_example_network(SIGMOID);
 
-    randomize(network, -1, 1);
+    initialize(network);
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
@@ -194,15 +215,17 @@ void learn_test() {
     for (int i = 0; i < 2; i++) {
         neural_network* network = networks[i];
 
-        double c = multi_cost(network, test);
-        for(int i = 0; i < 1; i++) {
+        double cost = avg_cost(network, test);
+        for(int i = 0; i < 1000; i++) {
             learn(network, test, 0, test->count, network->initialLearningRate / test->count, NULL);
-            double nCost = multi_cost(network, test);
+            double nCost = avg_cost(network, test);
 
-            if(nCost > c + 1) {
-                printf("new cost (%.5f) bigger by more than 1 than previous cost (%.5f) on iteration %d\n", nCost, cost, i);
+            if(nCost > cost) {
+                printf("new cost (%.5f) bigger than previous cost (%.5f) on iteration %d\n", nCost, cost, i);
                 return;
             }
+
+            cost = nCost;
         }
 
         free_network(network);
@@ -246,7 +269,7 @@ void repository_test() {
     apply_params(network, params);
 
     save(network, &params, filename);
-    neural_network* download = initialize(filename, NULL);
+    neural_network* download = restore(filename, NULL);
 
     if(network->count != download->count) {
         printf("Different network count");
@@ -321,32 +344,6 @@ void repository_test() {
     free_network(download);
     remove(filename);
     printf("repository test OK!\n");
-}
-
-void randomize_test() {
-    neural_network* network = alloc_example_network(SIGMOID);
-    randomize(network, 0, 1);
-
-    for(int l = 0; l < network->count; l++) {
-        for(int o = 0; o < network->layers[l].out_count; o++) {
-            for(int i = 0; i < network->layers[l].in_count; i++) {
-                const double v = network->layers[l].weights[i * network->layers[l].out_count + o];
-                if(v < 0 || v > 1) {
-                    printf("Incorrect weight value at layer %d : %.4f", l, v);
-                    return;
-                }
-            }
-
-            const double n = network->layers[l].biases[o];
-            if(n < 0 || n > 1) {
-                printf("Incorrect bias value at layer %d : %.4f", l, n);
-                return;
-            }
-        }
-    }
-
-    free_network(network);
-    printf("randomize test OK!\n");
 }
 
 void alloc_flattened_test_data_test() {
@@ -569,7 +566,7 @@ void predict_test() {
     params.outputActivationType = SIGMOID;
     params.costType = MEAN_SQUARED;
     apply_params(network, params);
-    randomize(network, 0, 1);
+    initialize(network);
 
     double iv[] = {1, 0, 1, 1, 1, 0, 0};
     input_data i;
@@ -662,7 +659,6 @@ void unit_tests() {
     cost_test();
     traverse_test();
     repository_test();
-    randomize_test();
     alloc_flattened_test_data_test();
 }
 

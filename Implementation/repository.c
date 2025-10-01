@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-inline neural_network* initialize(const char* file, params* toFill){
+inline neural_network* restore(const char* file, params* toFill){
     FILE* fptr = fopen(file, "rb");
 
     int size[1];

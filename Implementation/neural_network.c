@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "neural_network.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "functions.h"
@@ -33,42 +34,56 @@ inline void set_activation_type(neural_network* network, int type, int outputTyp
                 network->layers[i].activationDerivative = derivative_default_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = random_initialization;
             break;
             case SIGMOID :
                 network->layers[i].activation = sigmoid_activation;
                 network->layers[i].activationDerivative = derivative_sigmoid_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = xavier_initialization;
             break;
             case TANH :
                 network->layers[i].activation = tanh_activation;
                 network->layers[i].activationDerivative = derivative_tanh_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = xavier_initialization;
             break;
             case RELU :
                 network->layers[i].activation = relu_activation;
                 network->layers[i].activationDerivative = derivative_relu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = he_initialization;
             break;
             case SILU :
                 network->layers[i].activation = silu_activation;
                 network->layers[i].activationDerivative = derivative_silu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = random_initialization;
             break;
             case SOFTMAX :
                 network->layers[i].activation = softmax_activation;
                 network->layers[i].activationDerivative = derivative_softmax_activation;
                 network->layers[i].processInputs = softmax_process_inputs;
                 network->layers[i].freeData = softmax_free_data;
+
+                if (i == 0) network->initialization = random_initialization;
             break;
             default:
                 network->layers[i].activation = NULL;
                 network->layers[i].activationDerivative = NULL;
                 network->layers[i].processInputs = NULL;
                 network->layers[i].freeData = NULL;
+
+                if (i == 0) network->initialization = NULL;
             break;
         }
     }
@@ -101,14 +116,12 @@ inline void apply_params(neural_network* network, params params){
     set_cost_type(network, params.costType);
 }
 
-inline void randomize(neural_network* network, double min, double max) {
-    for(int n = 0; n < network->count; n++) {
-        for(int o = 0; o < network->layers[n].out_count; o++) {
-            for(int i = 0; i < network->layers[n].in_count; i++) {
-                network->layers[n].weights[i * network->layers[n].out_count + o] = random(min, max);
-            }
+inline void initialize(neural_network* network) {
+    for (int l = 0; l < network->count; l++) {
+        network->initialization(&network->layers[l]);
 
-            network->layers[n].biases[o] = random(min, max);
+        for (int o = 0; o < network->layers[l].out_count; o++) {
+            network->layers[l].biases[o] = 0.0;
         }
     }
 }
@@ -320,13 +333,13 @@ inline double cost(neural_network* network, input_data* data, input_data* expect
     return cost;
 }
 
-inline double multi_cost(neural_network* network, test_data* data) {
+inline double avg_cost(neural_network* network, test_data* data) {
     double c = 0;
     for(int i = 0; i < data->count; i++) {
         c += cost(network, &data->inputs[i], &data->expected[i]);
     }
 
-    return c;
+    return c / data->count;
 }
 
 inline layer_data* alloc_layer_data_array(neural_network* network, int copyValues) {
@@ -370,6 +383,37 @@ inline void apply_gradients(layer to, layer_data gradients, double learningRate)
 
     for(int i = 0; i < to.out_count; i++){
         to.biases[i] -= gradients.biases[i] * learningRate;
+    }
+}
+
+inline void apply_gradients_adam(layer to, layer_data gradients, layer_data avg_gradients,
+    layer_data avg_sqr_gradients, int iteration, double learningRate, double beta1, double beta2){
+
+    for(int i = 0; i < to.in_count; i++){
+        for(int j = 0; j < to.out_count; j++){
+            const int index = i * to.out_count + j;
+
+            const double g = gradients.weights[index];
+            avg_gradients.weights[index] = beta1 * avg_gradients.weights[index] + (1 - beta1) * g;
+            avg_sqr_gradients.weights[index] = beta2 * avg_gradients.weights[index] + (1 - beta2) * g * g;
+
+            const double m = avg_gradients.weights[index] / (1 - pow(beta1, iteration));
+            const double v = avg_sqr_gradients.weights[index] / (1 - pow(beta2, iteration));
+
+            to.weights[index] -= learningRate * m / (sqrt(v) + 0.00000001);
+        }
+    }
+
+    for(int o = 0; o < to.out_count; o++){
+
+        const double g = gradients.weights[o];
+        avg_gradients.biases[o] = beta1 * avg_gradients.biases[o] + (1 - beta1) * g;
+        avg_sqr_gradients.biases[o] = beta2 * avg_gradients.biases[o] + (1 - beta2) * g * g;
+
+        const double m = avg_gradients.biases[o] / (1 - pow(beta1, iteration));
+        const double v = avg_sqr_gradients.biases[o] / (1 - pow(beta2, iteration));
+
+        to.biases[o] -= learningRate * m / (sqrt(v) + 0.00000001);
     }
 }
 
@@ -601,7 +645,7 @@ inline test_result test_network(neural_network* network, test_data *test) {
     }
 
     test_result result;
-    result.cost = multi_cost(network, test);
+    result.cost = avg_cost(network, test);
     result.accuracy = valid / test->count * 100;
 
     return result;

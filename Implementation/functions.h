@@ -1,6 +1,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#include "neural_network.h"
+
 double default_activation(double input, void* processedData);
 double derivative_default_activation(double input, void* processedData);
 void* default_process_inputs(double* inputs, int count);
@@ -31,6 +33,10 @@ double derivative_mean_square_cost(double predicted, double expected);
 
 double cross_entropy_cost(double predicted, double expected);
 double derivative_cross_entropy_cost(double predicted, double expected);
+
+void random_initialization(layer* layer);
+void he_initialization(layer* layer);
+void xavier_initialization(layer* layer);
 
 int diagonal_cut(double x, double y);
 int parable_10_cut(double x, double y);

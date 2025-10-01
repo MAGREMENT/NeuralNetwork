@@ -33,6 +33,7 @@ typedef struct neural_network {
 
     double (*cost)(double, double);
     double (*costDerivative)(double, double);
+    void (*initialization)(layer* layer);
 } neural_network;
 
 typedef struct input_data {
@@ -89,7 +90,7 @@ void set_activation_type(neural_network* network, int type, int outputType);
 void set_cost_type(neural_network* network, int type);
 void apply_params(neural_network* network, params params);
 
-void randomize(neural_network* network, double min, double max);
+void initialize(neural_network* network);
 void set_all_weights_and_biases(neural_network* network, double weights, double biases);
 
 learning_state* alloc_state(neural_network* network);
@@ -110,7 +111,7 @@ void predict(neural_network* network, input_data* data, input_data* result);
 void traverse(const neural_network* network, input_data* data, backpropagation_data* result);
 backpropagation_data* alloc_traverse(const neural_network* network, input_data* data);
 double cost(neural_network* network, input_data* data, input_data* expected);
-double multi_cost(neural_network* network, test_data* data);
+double avg_cost(neural_network* network, test_data* data);
 
 void set_layer(layer layer, const double* weights, const double* biases);
 void free_layers(layer* layers, int count);

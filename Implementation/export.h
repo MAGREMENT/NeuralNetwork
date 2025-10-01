@@ -9,7 +9,7 @@
   #define DLL_EXPORT
 #endif
 
-DLL_EXPORT neural_network* Initialize(int count, int numbers[]);
+DLL_EXPORT neural_network* Create(int count, int numbers[]);
 DLL_EXPORT void Dispose(neural_network* ptr);
 DLL_EXPORT void ApplyParams(neural_network* ptr, params p);
 DLL_EXPORT int GetCount(const neural_network* ptr);
@@ -22,12 +22,12 @@ DLL_EXPORT double GetBias(neural_network* ptr, int layer, int output);
 DLL_EXPORT void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount);
 DLL_EXPORT neural_network* FromFile(char file[], params* toFill);
 DLL_EXPORT void Save(neural_network* ptr, params p, char file[]);
-DLL_EXPORT void Randomize(neural_network* ptr, double min, double max);
+DLL_EXPORT void Initialize(neural_network* ptr);
 DLL_EXPORT void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int batchSize, int iterations);
 DLL_EXPORT double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount);
 DLL_EXPORT double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
-DLL_EXPORT learning_state* InitializeState(neural_network* ptr);
+DLL_EXPORT learning_state* CreateState(neural_network* ptr);
 DLL_EXPORT void DisposeState(learning_state* ptr, int layerCount);
 
 #endif //EXPORT_H

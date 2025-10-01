@@ -3,7 +3,7 @@
 #include "repository.h"
 #include "utils.h"
 
-inline neural_network* Initialize(int count, int numbers[]) {
+inline neural_network* Create(int count, int numbers[]) {
     return alloc_network(count, numbers);
 }
 
@@ -56,16 +56,16 @@ inline void Predict(neural_network* ptr, double inputs[], int inCount, double ou
 }
 
 inline neural_network* FromFile(char file[], params* toFill) {
-    return initialize(file, toFill);
+    return restore(file, toFill);
 }
 
 inline void Save(neural_network* ptr, params p, char file[]) {
     save(ptr, &p, file);
 }
 
-inline void Randomize(neural_network* ptr, double min, double max) {
+inline void Initialize(neural_network* ptr) {
     init_random();
-    randomize(ptr, min, max);
+    initialize(ptr);
 }
 
 inline void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
@@ -87,12 +87,12 @@ inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* 
 
 inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
     test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
-    const double result = multi_cost(ptr, test);
+    const double result = avg_cost(ptr, test);
     free_test_data(test);
     return result;
 }
 
-inline learning_state* InitializeState(neural_network* ptr) {
+inline learning_state* CreateState(neural_network* ptr) {
     return alloc_state(ptr);
 }
 

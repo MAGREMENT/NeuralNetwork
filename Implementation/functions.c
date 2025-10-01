@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "neural_network.h"
+#include "utils.h"
 
 inline double default_activation(double input, void* processedData){
     return input;
@@ -102,6 +103,29 @@ inline double cross_entropy_cost(double predicted, double expected) {
 inline double derivative_cross_entropy_cost(double predicted, double expected) {
     if (predicted == 0 || predicted == 1) return 0;
     return (expected - predicted) / (predicted * (predicted - 1));
+}
+
+inline void random_initialization(layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    for (int i = 0; i < total; i++) {
+        layer->weights[i] = rand_std_nrml_distribution() * 0.01;
+    }
+}
+
+inline void he_initialization(layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    const double scale = sqrt(2.0 / layer->in_count);
+    for (int i = 0; i < total; i++) {
+        layer->weights[i] = rand_std_nrml_distribution() * scale;
+    }
+}
+
+inline void xavier_initialization(layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    const double scale = sqrt(1.0 / layer->in_count);
+    for (int i = 0; i < total; i++) {
+        layer->weights[i] = rand_std_nrml_distribution() * scale;
+    }
 }
 
 //Cut Functions---------------------------------------------------------------------------------------------------------
