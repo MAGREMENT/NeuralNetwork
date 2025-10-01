@@ -14,11 +14,11 @@ int main() {
 
     //return EXIT_SUCCESS;
 
-    int numbers[] = {7, 4, 3};
+    const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
 
     params params;
-    params.initialLearningRate = 1;
+    params.initialLearningRate = 10;
     params.activationType = SIGMOID;
     params.outputActivationType = SIGMOID;
     params.costType = MEAN_SQUARED;
@@ -26,12 +26,15 @@ int main() {
     initialize(network);
 
     network->data_selector = create_full_batch_selector();
-    network->optimizer = create_gradient_descent_optimizer();
+    network->optimizer = create_adam_optimizer(0.9, 0.999); //TODO FIX
+    //network->optimizer = create_nesterov_optimizer(0.9);
+    //network->optimizer = create_momentum_gradient_descent_optimizer(0.9);
+    //network->optimizer = create_gradient_descent_optimizer();
     network->scheduler = constr_constant_scheduler();
 
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    iterative_learn(network, data, NULL, 10);
+    iterative_learn(network, data, NULL, 100);
 
     printf("%f\n", avg_cost(network, data));
 

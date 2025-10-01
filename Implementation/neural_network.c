@@ -169,7 +169,7 @@ inline input_data* alloc_input_data(int count){
     return result;
 }
 
-inline input_data* alloc_input_datas(int innerCount, int count){
+inline input_data* alloc_input_data_array(int innerCount, int count){
     input_data* result = malloc(sizeof(input_data) * count);
 
     for (int i = 0; i < count; i++) {
@@ -184,18 +184,12 @@ inline void free_input_data(input_data* data){
     free(data);
 }
 
-void free_input_datas(input_data* data, int count) {
+void free_input_data_array(input_data* data, int count) {
     for (int i = 0; i < count; i++) {
         free(data[i].values);
     }
 
     free(data);
-}
-
-inline void set_input_data(input_data data, const double values[]){
-    for(int i = 0; i < data.count; i++){
-        data.values[i] = values[i];
-    }
 }
 
 inline backpropagation_data* alloc_back_data(const neural_network* network) {
@@ -339,28 +333,6 @@ inline double avg_cost(neural_network* network, test_data* data) {
     return c / data->count;
 }
 
-inline layer_data* alloc_layer_data_array(neural_network* network, int copyValues) {
-    layer_data* result = malloc(network->count * sizeof(layer_data));
-
-    for(int n = 0; n < network->count; n++) {
-        const int in = network->layers[n].in_count;
-        const int out = network->layers[n].out_count;
-
-        result[n].biases = malloc(out * sizeof(double));
-        result[n].weights = malloc(in * out * sizeof(double));
-
-        for(int o = 0; o < out; o++) {
-            for(int i = 0; i < in; i++) {
-                result[n].weights[i * out + o] = copyValues ? network->layers[n].weights[i * out + o] : 0;
-            }
-
-            result[n].biases[o] = copyValues ? network->layers[n].biases[0] : 0;
-        }
-    }
-
-    return result;
-}
-
 inline void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
@@ -409,21 +381,20 @@ inline void update_gradients(const neural_network* network, const layer_data* gr
     free_back_data(data, network->count);
 }
 
-inline void learn(neural_network* network, test_data* data, range range, double learningRate, void* optimizerState){
-    layer_data* gradients = alloc_layer_data_array(network, 0);
+inline void learn(neural_network* network, test_data* data, range range, const double learningRate, void* optimizerState){
+    layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
 
     for(int i = range.from; i < range.to; i++){
         update_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
-    for (int l = 0; l < network->count; l++) {
-        network->optimizer->apply_gradients(network->optimizer, optimizerState, network->layers[l], gradients[l],
-            learningRate);
-    }
+    network->optimizer->apply_gradients(network->optimizer, optimizerState, network->layers, gradients,
+            network->count, range.iteration, learningRate / (range.to - range.from));
 
     free_layer_data_array(gradients, network->count);
 }
 
+//TODO iteration start value when using state fix
 void iterative_learn(neural_network* network, test_data* data, learning_state* state, int iterations) {
     int freeState = false;
     if (state == NULL) {
@@ -435,6 +406,7 @@ void iterative_learn(neural_network* network, test_data* data, learning_state* s
     while (iterator->next(iterator)) {
         const double learningRate = network->scheduler->schedule(network->scheduler, network->learningRate, iterator->current.iteration);
         learn(network, data, iterator->current, learningRate, state->optimizerState);
+        state->iteration = iterator->current.iteration;
     }
 
     iterator->free(iterator);
@@ -444,13 +416,13 @@ void iterative_learn(neural_network* network, test_data* data, learning_state* s
 inline learning_state* alloc_state(neural_network* network) {
     learning_state* state = malloc(sizeof(learning_state));
     state->iteration = 0;
-    state->optimizerState = network->optimizer->create_state(network->optimizer);
+    state->optimizerState = network->optimizer->create_state(network->optimizer, network->layers, network->count);
 
     return state;
 }
 
 inline void free_state(neural_network* network, learning_state* state) {
-    network->optimizer->free_state(state->optimizerState);
+    network->optimizer->free_state(state->optimizerState, network->count);
     free(state);
 }
 
@@ -461,8 +433,8 @@ inline int is_valid(input_data* output, input_data* expected) {
 inline test_data* alloc_test_data(const int count, const int inputCount, const int outputCount) {
     test_data* result = malloc(sizeof(test_data));
     result->count = count;
-    result->inputs = alloc_input_datas(inputCount, count);
-    result->expected = alloc_input_datas(outputCount, count);
+    result->inputs = alloc_input_data_array(inputCount, count);
+    result->expected = alloc_input_data_array(outputCount, count);
 
     return result;
 }
@@ -490,8 +462,8 @@ inline test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, dou
 }
 
 inline void free_test_data(test_data* data){
-    free_input_datas(data->inputs, data->count);
-    free_input_datas(data->expected, data->count);
+    free_input_data_array(data->inputs, data->count);
+    free_input_data_array(data->expected, data->count);
     free(data);
 }
 

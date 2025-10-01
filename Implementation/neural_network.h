@@ -106,22 +106,13 @@ void forward(layer layer, input_data input, input_data* result);
 void first_advance(layer layer, const backpropagation_data* data, const input_data* input);
 void continue_advance(layer layer, const backpropagation_data* data, int inputIndex);
 
-/**
- * Allocates an array of layer data corresponding to the neural network
- * @param network
- * @param copyValues true if the values are copies of neural network weights and biases
- * @return
- */
-layer_data* alloc_layer_data_array(neural_network* network, int copyValues);
-
 void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
     input_data expected);
 
 input_data* alloc_input_data(int count);
-input_data* alloc_input_datas(int innerCount, int count);
+input_data* alloc_input_data_array(int innerCount, int count);
 void free_input_data(input_data* data);
-void free_input_datas(input_data* data, int count);
-void set_input_data(input_data data, const double values[]);
+void free_input_data_array(input_data* data, int count);
 int is_valid(input_data* output, input_data* expected);
 
 backpropagation_data* alloc_back_data(const neural_network* network);
