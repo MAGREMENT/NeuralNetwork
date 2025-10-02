@@ -8,6 +8,7 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     neural_network* result = malloc(sizeof(neural_network));
     result->count = count - 1;
     result->layers = malloc(result->count * sizeof(layer));
+    result->shuffleDataOnIteration = false;
 
     for(int i = 1; i < count; i++){
         const int in = numbers[i - 1];
@@ -394,7 +395,6 @@ inline void learn(neural_network* network, test_data* data, range range, const d
     free_layer_data_array(gradients, network->count);
 }
 
-//TODO iteration start value when using state fix
 void iterative_learn(neural_network* network, test_data* data, learning_state* state, int iterations) {
     int freeState = false;
     if (state == NULL) {
@@ -404,13 +404,16 @@ void iterative_learn(neural_network* network, test_data* data, learning_state* s
 
     range_iterator* iterator = network->data_selector->constr_iterator(network->data_selector, data->count, iterations);
     while (iterator->next(iterator)) {
-        const double learningRate = network->scheduler->schedule(network->scheduler, network->learningRate, iterator->current.iteration);
+        const double learningRate = network->scheduler->schedule(network->scheduler,
+            network->learningRate, iterator->current.iteration + state->iteration);
+        if (network->shuffleDataOnIteration) shuffle_test_data(data, 1);
+
         learn(network, data, iterator->current, learningRate, state->optimizerState);
-        state->iteration = iterator->current.iteration;
     }
 
     iterator->free(iterator);
     if (freeState) free_state(network, state);
+    else state->iteration += iterations;
 }
 
 inline learning_state* alloc_state(neural_network* network) {
@@ -465,6 +468,22 @@ inline void free_test_data(test_data* data){
     free_input_data_array(data->inputs, data->count);
     free_input_data_array(data->expected, data->count);
     free(data);
+}
+
+void shuffle_test_data(test_data *test, int count) {
+    for (int c = 0; c < count; c++) {
+        for (int i = 0; i < test->count; i++) {
+            const int other = rand_i(test->count);
+
+            input_data buffer = test->inputs[i];
+            test->inputs[i] = test->inputs[other];
+            test->inputs[other] = buffer;
+
+            buffer = test->expected[i];
+            test->expected[i] = test->expected[other];
+            test->expected[other] = buffer;
+        }
+    }
 }
 
 inline test_result test_network(neural_network* network, test_data *test) {

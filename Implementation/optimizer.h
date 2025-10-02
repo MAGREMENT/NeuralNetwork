@@ -21,6 +21,7 @@ struct optimizer {
 optimizer* create_gradient_descent_optimizer();
 optimizer* create_momentum_gradient_descent_optimizer(double momentum);
 optimizer* create_nesterov_optimizer(double momentum);
+optimizer* create_rmsprop_optimizer(double decay);
 optimizer* create_adam_optimizer(double beta1, double beta2);
 
 #endif //OPTIMIZER_H

@@ -110,7 +110,7 @@ static void apply_gradient_nesterov(double* v, double* p, const double* g, const
 static void apply_gradients_nesterov(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
         int iteration, double learningRate) {
     const double momentum = *(double*) opt->params;
-    const layer_data* v = state;
+    layer_data* v = state;
 
     for (int l = 0; l < layerCount; l++) {
         const int inCount = layers[l].in_count;
@@ -141,6 +141,47 @@ inline optimizer* create_nesterov_optimizer(const double momentum) {
     return opt;
 }
 
+static void apply_gradient_rmsprop(double* v, double* p, const double* g, const int index, const double decay, const double lr) {
+    const double velocity = v[index] * decay + g[index] * g[index] * (1 - decay);
+
+    v[index] = velocity;
+    p[index] -= lr * g[index] / (sqrt(velocity) + EPSILON);
+}
+
+static void apply_gradients_rmsprop(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
+        int iteration, double learningRate) {
+    const double decay = *(double*) opt->params;
+    layer_data* v = state;
+
+    for (int l = 0; l < layerCount; l++) {
+        const int inCount = layers[l].in_count;
+        const int outCount = layers[l].out_count;
+
+        for(int o = 0; o < outCount; o++){
+            for(int i = 0; i < inCount; i++){
+                const int index = i * outCount + o;
+                apply_gradient_rmsprop(v[l].weights, layers[l].weights, gradients[l].weights, index, decay, learningRate);
+            }
+
+            apply_gradient_rmsprop(v[l].biases, layers[l].biases, gradients[l].biases, o, decay, learningRate);
+        }
+    }
+}
+
+optimizer* create_rmsprop_optimizer(double decay) {
+    optimizer* opt = malloc(sizeof(optimizer));
+    double* p = malloc(sizeof(double));
+    *p = decay;
+
+    opt->params = p;
+    opt->create_state = create_momentum_state;
+    opt->free_state = free_momentum_state;
+    opt->apply_gradients = apply_gradients_rmsprop;
+    opt->free = free_opt;
+
+    return opt;
+}
+
 static void apply_gradient_adam(double* v1, double* v2, double* p, const double* g, const int index,
     const double beta1, const double beta2, const int iteration, const double lr) {
 
@@ -157,8 +198,8 @@ static void apply_gradient_adam(double* v1, double* v2, double* p, const double*
 static void apply_gradients_adam(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
         int iteration, const double learningRate) {
     double* betas = opt->params;
-    const layer_data* v1 = state;
-    const layer_data* v2 = &v1[layerCount];
+    layer_data* v1 = state;
+    layer_data* v2 = &v1[layerCount];
 
     for (int l = 0; l < layerCount; l++) {
         const int inCount = layers[l].in_count;

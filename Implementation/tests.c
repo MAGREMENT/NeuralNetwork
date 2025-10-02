@@ -16,6 +16,7 @@ int main() {
 
     const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
+    //network->shuffleDataOnIteration = true;
 
     params params;
     params.initialLearningRate = 10;
@@ -26,10 +27,14 @@ int main() {
     initialize(network);
 
     network->data_selector = create_full_batch_selector();
-    network->optimizer = create_adam_optimizer(0.9, 0.999); //TODO FIX
-    //network->optimizer = create_nesterov_optimizer(0.9);
+    //network->data_selector = create_mini_batch_selector(32);
+
+    //network->optimizer = create_adam_optimizer(0.9, 0.999);
+    //network->optimizer = create_rmsprop_optimizer(0.9);
+    network->optimizer = create_nesterov_optimizer(0.9);
     //network->optimizer = create_momentum_gradient_descent_optimizer(0.9);
     //network->optimizer = create_gradient_descent_optimizer();
+
     network->scheduler = constr_constant_scheduler();
 
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);

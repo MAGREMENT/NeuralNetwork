@@ -15,5 +15,6 @@ struct data_selector {
 };
 
 data_selector* create_full_batch_selector();
+data_selector* create_mini_batch_selector(int batchSize);
 
 #endif //DATA_SELECTOR_H

@@ -22,6 +22,7 @@ typedef struct neural_network {
     double learningRate;
     learning_rate_scheduler* scheduler;
 
+    int shuffleDataOnIteration;
     data_selector* data_selector;
     optimizer* optimizer;
 
@@ -121,6 +122,8 @@ void free_back_data(backpropagation_data* data, int count);
 test_data* alloc_test_data(int count, int inputCount, int outputCount);
 test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 void free_test_data(test_data* data);
+
+void shuffle_test_data(test_data *test, int count);
 test_result test_network(neural_network* network, test_data *test);
 
 #endif // NEURAL_NETWORK_H
