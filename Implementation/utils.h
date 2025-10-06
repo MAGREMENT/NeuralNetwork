@@ -12,5 +12,6 @@ int deq(double left, double right, double margin);
 //Default double equals
 int def_deq(double left, double right);
 void list_remove(int* arr, int count, int index);
+char* alloc_seq_to_str(double* values, int count);
 
 #endif //UTILS_H
