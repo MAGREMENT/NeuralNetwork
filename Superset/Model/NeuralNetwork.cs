@@ -4,44 +4,30 @@ namespace Model;
 
 public partial class NeuralNetwork : IDisposable
 {
-    private NeuralNetworkParameters _params;
-
     internal IntPtr Ptr { get; }
     public int Length { get; }
 
-    public NeuralNetwork(NeuralNetworkParameters parameters, params int[] layers)
+    public NeuralNetwork(params int[] layers)
     {
         Ptr = Create(layers.Length, layers);
         Length = GetCount(Ptr);
-        
-        _params = parameters;
-        ApplyParams(Ptr, _params);
+        Initialize(Ptr);
     }
 
-    private NeuralNetwork(IntPtr ptr, NeuralNetworkParameters parameters)
+    private NeuralNetwork(IntPtr ptr)
     {
         Ptr = ptr;
-        _params = parameters;
-        ApplyParams(Ptr, parameters);
-        Initialize(Ptr);
     }
 
     public static NeuralNetwork Import(string file)
     {
-        var p = new NeuralNetworkParameters();
-        var ptr = FromFile(file, ref p);
-        return new NeuralNetwork(ptr, p);
+        var ptr = FromFile(file);
+        return new NeuralNetwork(ptr);
     }
 
     public void Save(string file)
     {
-        Save(Ptr, _params, file);
-    }
-
-    public void ChangeParameters(EditParams action)
-    {
-        action(ref _params);
-        ApplyParams(Ptr, _params);
+        Save(Ptr, file);
     }
 
     public int GetInCount(int layer)
@@ -90,6 +76,11 @@ public partial class NeuralNetwork : IDisposable
         return GetBias(Ptr, layer, output);
     }
 
+    public void SetAllWeightsAndBiases(double weights, double biases)
+    {
+        SetAllWeightsAndBiases(Ptr, weights, biases);
+    }
+
     public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
     
     public double[] Predict(double[] inputs, int length)
@@ -104,11 +95,11 @@ public partial class NeuralNetwork : IDisposable
         return arr;
     }
 
-    public void Learn(FlattenedData data, int batchSize, int iterations, LearningState? state = null)
+    public void Learn(FlattenedData data, int iterations, LearningState? state = null)
     {
         var statePtr = state?.Ptr ?? IntPtr.Zero;
         Learn(Ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
-            batchSize, iterations);
+            iterations);
     }
 
     public double GetCost(double[] inputs, double[] expected)
@@ -151,10 +142,6 @@ public partial class NeuralNetwork : IDisposable
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void ApplyParams(IntPtr ptr, NeuralNetworkParameters parameters);
-
-    [LibraryImport("libExport.dll")]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial int GetCount(IntPtr ptr);
     
     [LibraryImport("libExport.dll")]
@@ -180,20 +167,24 @@ public partial class NeuralNetwork : IDisposable
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial double GetBias(IntPtr ptr, int layer, int output);
+
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial double SetAllWeightsAndBiases(IntPtr ptr, double weights, double biases);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void Predict(IntPtr ptr, 
-        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] input, int inCount,
-        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] double[] output, int outCount);
+        [In, Out, MarshalAs(UnmanagedType.LPArray)] double[] input, int inCount,
+        [In, Out, MarshalAs(UnmanagedType.LPArray)] double[] output, int outCount);
 
     [LibraryImport("libExport.dll", StringMarshalling = StringMarshalling.Utf8)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial IntPtr FromFile(string file, ref NeuralNetworkParameters parameters);
+    private static partial IntPtr FromFile(string file);
     
     [LibraryImport("libExport.dll", StringMarshalling = StringMarshalling.Utf8)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Save(IntPtr ptr, NeuralNetworkParameters parameters, string file);
+    private static partial void Save(IntPtr ptr, string file);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
@@ -203,8 +194,8 @@ public partial class NeuralNetwork : IDisposable
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void Learn(IntPtr ptr, IntPtr learningState,
         [MarshalAs(UnmanagedType.LPArray)] double[] inputs, int inputCutOff, 
-        [MarshalAs(UnmanagedType.LPArray)] double[] expected, 
-        int expectedCutOff, int count, int batchSize, int iterations);
+        [MarshalAs(UnmanagedType.LPArray)] double[] expected, int expectedCutOff, 
+        int count, int iterations);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
@@ -215,53 +206,6 @@ public partial class NeuralNetwork : IDisposable
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial double MultiCost(IntPtr ptr, double[] inputs, int inputCutOff, double[] expected,
         int expectedCutOff, int count);
-}
-
-public delegate void EditParams(ref NeuralNetworkParameters p);
-
-[StructLayout(LayoutKind.Sequential)]
-public struct NeuralNetworkParameters
-{
-    public double InitialLearningRate;
-    public double LearningRateDecay;
-    public double Regularization;
-    public double Momentum;
-    public int ActivationType;
-    public int OutputActivationType;
-    public int CostType;
-
-    public static NeuralNetworkParameters NoMomentumSigmoid { get; } = new()
-    {
-        InitialLearningRate = 10,
-        LearningRateDecay = 0,
-        Regularization = 0,
-        Momentum = 0,
-        ActivationType = Model.ActivationType.SIGMOID,
-        OutputActivationType = Model.ActivationType.SIGMOID,
-        CostType = Model.CostType.MEAN_SQUARED
-    };
-    
-    public static NeuralNetworkParameters MomentumSigmoid { get; } = new()
-    {
-        InitialLearningRate = 1,
-        LearningRateDecay = 0,
-        Regularization = 0.1,
-        Momentum = 0.9,
-        ActivationType = Model.ActivationType.SIGMOID,
-        OutputActivationType = Model.ActivationType.SIGMOID,
-        CostType = Model.CostType.MEAN_SQUARED
-    };
-    
-    public static NeuralNetworkParameters MomentumRelUSoftmax { get; } = new()
-    {
-        InitialLearningRate = 0.005,
-        LearningRateDecay = 0.075,
-        Regularization = 0.1,
-        Momentum = 0.9,
-        ActivationType = Model.ActivationType.RELU,
-        OutputActivationType = Model.ActivationType.SOFTMAX,
-        CostType = Model.CostType.CROSS_ENTROPY
-    };
 }
 
 public static class ActivationType

@@ -1,9 +1,12 @@
 #include "neural_network.h"
 #include "repository.h"
+
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-inline neural_network* restore(const char* file, params* toFill){ //TODO correct
+inline neural_network* restore(const char* file){
     FILE* fptr = fopen(file, "rb");
 
     int size[1];
@@ -21,24 +24,10 @@ inline neural_network* restore(const char* file, params* toFill){ //TODO correct
         fread(result->layers[i].biases, sizeof(double), result->layers[i].out_count, fptr);
     }
 
-    params buff;
-    params* p = toFill == NULL ? &buff : toFill;
-
-    double b1[4];
-    fread(b1, sizeof(double), 4, fptr);
-    p->initialLearningRate = b1[0];
-    int b2[3];
-    fread(b2, sizeof(int), 3, fptr);
-    p->activationType = b2[0];
-    p->outputActivationType = b2[1];
-    p->costType = b2[2];
-
-    apply_params(result, *p);
-    fclose(fptr);
     return result;
 }
 
-inline void save(const neural_network* network, const params* params, const char* file){
+inline void save(const neural_network* network, const char* file){
     FILE* fptr = fopen(file, "wb");
 
     int n = network->count + 1;
@@ -59,11 +48,25 @@ inline void save(const neural_network* network, const params* params, const char
         fwrite(network->layers[i].biases, sizeof(double), network->layers[i].out_count, fptr);
     }
 
-    if(params != NULL){
-        int types[] = {params->activationType, params->outputActivationType, params->costType};
-
-        fwrite(types, sizeof(int), 3, fptr);
-    }
-
     fclose(fptr);
+}
+
+inline void flog(char format[], ...) {
+    va_list args;
+    va_start(args, format);
+    const int size = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+
+    if (size < 0) return;
+
+    char* buffer = malloc((size + 1) * sizeof(char));
+    va_start(args, format);
+    vsnprintf(buffer, size + 1, format, args);
+    va_end(args);
+
+    FILE* fptr = fopen("log.txt", "a");
+    fwrite(buffer, sizeof(char), size, fptr);
+    fputc('\n', fptr);
+    fclose(fptr);
+    free(buffer);
 }

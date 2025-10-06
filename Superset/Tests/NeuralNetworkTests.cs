@@ -18,7 +18,7 @@ public class NeuralNetworkTests
     {
         foreach (var n in _testing)
         {
-            using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, n);
+            using var network = new NeuralNetwork(n);
             Assert.That(network.Length, Is.EqualTo(n.Length - 1));
             for (int i = 1; i < n.Length; i++)
             {
@@ -31,7 +31,7 @@ public class NeuralNetworkTests
     [Test]
     public void WeightsAndBiasesTest()
     {
-        using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[0]);
+        using var network = new NeuralNetwork(_testing[0]);
         const double w = 0.5;
 
         network.SetWeight(0, 1, 1, w);
@@ -43,7 +43,7 @@ public class NeuralNetworkTests
     {
         foreach (var n in _testing)
         {
-            using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, n);
+            using var network = new NeuralNetwork(n);
             var input = new double[n[0]];
             var output = network.Predict(input);
             Assert.That(output.Length, Is.EqualTo(n[^1]));
@@ -53,7 +53,7 @@ public class NeuralNetworkTests
     [Test]
     public void CostTest()
     {
-        using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[0]);
+        using var network = new NeuralNetwork(_testing[0]);
         
         Console.WriteLine(network.GetCost(new [] {1, 2.2}, new [] {1, 2.2}));
         
@@ -61,45 +61,65 @@ public class NeuralNetworkTests
         data.Shuffle(5);
         var flattened = FlattenedData.FromArrays(data);
         
-        using var network2 = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[3]);
+        using var network2 = new NeuralNetwork(_testing[3]);
         Console.WriteLine(network2.GetCost(flattened));
+    }
+
+    [Test]
+    public void TestSetAllWeightsAndBiases()
+    {
+        foreach (var t in _testing)
+        {
+            using var n = new NeuralNetwork(t);
+            const double w = 2.5;
+            const double b = 3.4;
+            n.SetAllWeightsAndBiases(w, b);
+
+            for (int l = 0; l < n.Length; l++)
+            {
+                for (int o = 0; o < n.GetOutCount(l); o++)
+                {
+                    for (int i = 0; i < n.GetInCount(l); i++)
+                    {
+                        Assert.That(n.GetWeight(l, i, o), Is.EqualTo(w));
+                    }
+                    
+                    Assert.That(n.GetBias(l, o), Is.EqualTo(b));
+                }
+            }
+        }
     }
 
     [Test]
     public void LearnFromLittleFlattenedTest()
     {
-        using var network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _testing[0]);
+        using var network = new NeuralNetwork(_testing[0]);
 
         var f = new FlattenedData(new[] { 1, 2.2, 3, 4 }, 2, new[] { 1.1, 2, 3, 4, 5, 6 }, 3);
-        network.Learn(f, 1, 1);
+        network.Learn(f, 1);
     }
 
     #region SimpleLearnTest
 
-    private static readonly (NeuralNetworkParameters, int[], string)[] _configs =
+    private static readonly (int[], string)[] _configs =
     {
-        (NeuralNetworkParameters.NoMomentumSigmoid, _testing[3], "NoMomentumSigmoid"),
-        (NeuralNetworkParameters.MomentumSigmoid, _testing[3], "MomentumSigmoid"),
-        (NeuralNetworkParameters.NoMomentumSigmoid, _testing[4], "NoMomentumSigmoid"),
-        (NeuralNetworkParameters.MomentumSigmoid, _testing[4], "MomentumSigmoid")
+        (_testing[3], "NoMomentumSigmoid"),
     };
 
     [Test]
     public void SimpleLearnTest()
     {
         var data = GenerateTestDataForSimpleLearnTest();
-        //data.Shuffle(5);
         var flattened = FlattenedData.FromArrays(data);
 
         foreach (var config in _configs)
         {
-            using var network = new NeuralNetwork(config.Item1, config.Item2);
-
-            const int batchSize = 32;
+            using var network = new NeuralNetwork(config.Item1);
+            
             using var state = new LearningState(network);
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 1; i++)
             {
-                network.Learn(flattened, batchSize, 1000);
+                network.Learn(flattened, 1000);
             }
 
             var accuracy = 0.0;
@@ -118,8 +138,19 @@ public class NeuralNetworkTests
             accuracy = accuracy / data.Length * 100;
             var cost = network.GetCost(flattened);
             
-            Console.WriteLine($"{config.Item3} - {string.Join(",", config.Item2)} :: Accuracy : {accuracy}% - Cost : {cost}");
+            Console.WriteLine($"{config.Item2} - {string.Join(",", config.Item1)} :: Accuracy : {accuracy}% - Cost : {cost}");
         }
+    }
+
+    [Test]
+    public void SimpleCostTest()
+    {
+        var data = GenerateTestDataForSimpleLearnTest();
+        var flattened = FlattenedData.FromArrays(data);
+        
+        using var network = new NeuralNetwork(_configs[0].Item1);
+        network.SetAllWeightsAndBiases(1, 1);
+        Console.WriteLine(network.GetCost(flattened));
     }
 
     private (double[], double[])[] GenerateTestDataForSimpleLearnTest()

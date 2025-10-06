@@ -7,13 +7,6 @@
 #include "optimizer.h"
 #include "Iterators/iterator.h"
 
-typedef struct params {
-    double initialLearningRate;
-    int activationType;
-    int outputActivationType;
-    int costType;
-} params ;
-
 typedef struct neural_network {
     int count;
     layer* layers;
@@ -73,11 +66,11 @@ enum cost_type {
 };
 
 neural_network* alloc_network(int count, const int numbers[]);
+void apply_default_params(neural_network* network);
 void free_network(neural_network* network);
 
 void set_activation_type(neural_network* network, int type, int outputType);
 void set_cost_type(neural_network* network, int type);
-void apply_params(neural_network* network, params params);
 
 void initialize(neural_network* network);
 void set_all_weights_and_biases(neural_network* network, double weights, double biases);

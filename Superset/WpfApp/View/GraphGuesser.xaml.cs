@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 using Model;
 using WpfApp.Presenter;
 
@@ -114,7 +113,7 @@ public partial class GraphGuesser : IGraphGuesserView
 
     public void SetCost(double v)
     {
-        Dispatcher.Invoke(() => CostBlock.Text = v.ToString("0.00", CultureInfo.CreateSpecificCulture("en-US")));
+        Dispatcher.Invoke(() => CostBlock.Text = v.ToString("0.000000", CultureInfo.CreateSpecificCulture("en-US")));
     }
 
     private void Learn(object sender, RoutedEventArgs e)

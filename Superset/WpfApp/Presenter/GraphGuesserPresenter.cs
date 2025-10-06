@@ -5,8 +5,7 @@ namespace WpfApp.Presenter;
 public class GraphGuesserPresenter : IDisposable 
 {
     private readonly IGraphGuesserView _view;
-
-    private const int batchSize = 32;
+    
     private static readonly int[] _layers = { 2, 3, 2 };
     private readonly NeuralNetwork _network;
     private readonly LearningState _state;
@@ -21,7 +20,7 @@ public class GraphGuesserPresenter : IDisposable
 
     public GraphGuesserPresenter(IGraphGuesserView view)
     {
-        _network = new NeuralNetwork(NeuralNetworkParameters.NoMomentumSigmoid, _layers);
+        _network = new NeuralNetwork(_layers);
         _state = new LearningState(_network);
         _view = view;
     }
@@ -57,7 +56,7 @@ public class GraphGuesserPresenter : IDisposable
         {
             while (_running)
             {
-                _network.Learn(GetFlattenedData(), batchSize, 100, _state);
+                _network.Learn(GetFlattenedData(), 100, _state);
         
                 _view.SetCost(_network.GetCost(GetFlattenedData()));
                 UpdateWeightsAndBiases();

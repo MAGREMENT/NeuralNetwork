@@ -1,7 +1,8 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-neural_network* restore(const char* file, params* toFill);
-void save(const neural_network* network, const params* params, const char* file);
+neural_network* restore(const char* file);
+void save(const neural_network* network, const char* file);
+void flog(char format[], ...);
 
 #endif // REPOSITORY_H

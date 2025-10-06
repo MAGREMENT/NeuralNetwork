@@ -1,18 +1,21 @@
 #include "export.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "repository.h"
 #include "utils.h"
 
+#define LOG true
+
 inline neural_network* Create(int count, int numbers[]) {
-    return alloc_network(count, numbers);
+    auto network = alloc_network(count, numbers);
+    apply_default_params(network);
+    return network;
 }
 
 inline void Dispose(neural_network* ptr) {
     free_network(ptr);
-}
-
-inline void ApplyParams(neural_network* ptr, params p) {
-    apply_params(ptr, p);
 }
 
 inline int GetCount(const neural_network* ptr) {
@@ -43,6 +46,10 @@ inline double GetBias(neural_network* ptr, int layer, int output) {
     return ptr->layers[layer].biases[output];
 }
 
+inline void SetAllWeightsAndBiases(neural_network* ptr, double weights, double biases) {
+    set_all_weights_and_biases(ptr, weights, biases);
+}
+
 inline void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount) {
     input_data data;
     data.count = inCount;
@@ -55,12 +62,12 @@ inline void Predict(neural_network* ptr, double inputs[], int inCount, double ou
     predict(ptr, &data, &predicted);
 }
 
-inline neural_network* FromFile(char file[], params* toFill) {
-    return restore(file, toFill);
+inline neural_network* FromFile(char file[]) {
+    return restore(file);
 }
 
-inline void Save(neural_network* ptr, params p, char file[]) {
-    save(ptr, &p, file);
+inline void Save(neural_network* ptr, char file[]) {
+    save(ptr, file);
 }
 
 inline void Initialize(neural_network* ptr) {
@@ -70,6 +77,22 @@ inline void Initialize(neural_network* ptr) {
 
 inline void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int iterations) {
+#if LOG
+    char* in_seq = alloc_seq_to_str(inputs, inputCutoff * count);
+    char* ex_seq = alloc_seq_to_str(expected, expectedCutoff * count);
+
+    flog("Learn called : \n"
+        "Inputs : %s\n"
+        "InputCutOff : %i\n"
+        "Expected : %s\n"
+        "ExpectedCutOff : %i\n"
+        "Count : %i\n"
+        "Iterations : %i\n", in_seq, inputCutoff, ex_seq, expectedCutoff, count, iterations);
+
+    free(in_seq);
+    free(ex_seq);
+#endif
+
     test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
     iterative_learn(ptr, test, state, iterations);
     free_test_data(test);
@@ -82,6 +105,8 @@ inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* 
     e.count = expectedCount;
     e.values = expected;
 
+    printf("%i", inputCount);
+    fflush(stdout);
     return cost(ptr, &i, &e);
 }
 
@@ -96,6 +121,6 @@ inline learning_state* CreateState(neural_network* ptr) {
     return alloc_state(ptr);
 }
 
-inline void DisposeState(learning_state* ptr, int layerCount) {
-    free_state(ptr, layerCount);
+inline void DisposeState(neural_network* ptr, learning_state* state) {
+    free_state(ptr, state);
 }

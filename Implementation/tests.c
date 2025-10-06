@@ -4,6 +4,10 @@
 
 #include "neural_network.h"
 #include "big-array.c"
+#include "functions.h"
+#include "generator.h"
+#include "repository.h"
+#include "utils.h"
 
 void unit_tests();
 void cut_2D_test();
@@ -14,30 +18,14 @@ int main() {
 
     //return EXIT_SUCCESS;
 
-    const int numbers[] = {7, 4, 3};
+    const int numbers[] = {2, 3, 2};
     neural_network* network = alloc_network(3, numbers);
-    //network->shuffleDataOnIteration = true;
+    apply_default_params(network);
 
-    params params;
-    params.initialLearningRate = 10;
-    params.activationType = SIGMOID;
-    params.outputActivationType = SIGMOID;
-    params.costType = MEAN_SQUARED;
-    apply_params(network, params);
+    test_data* data = positive_generate_for_2D(1, 20, 2, parable_10_cut);
+    //test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
+
     initialize(network);
-
-    network->data_selector = create_full_batch_selector();
-    //network->data_selector = create_mini_batch_selector(32);
-
-    //network->optimizer = create_adam_optimizer(0.9, 0.999);
-    //network->optimizer = create_rmsprop_optimizer(0.9);
-    network->optimizer = create_nesterov_optimizer(0.9);
-    //network->optimizer = create_momentum_gradient_descent_optimizer(0.9);
-    //network->optimizer = create_gradient_descent_optimizer();
-
-    network->scheduler = constr_constant_scheduler();
-
-    test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
     iterative_learn(network, data, NULL, 100);
 
@@ -53,13 +41,15 @@ int main() {
         predict(network, &data->inputs[i], &result);
         int ok = true;
         for (int j = 0; j < 3; j++) {
-            if (fabs(round(val[j] - data->expected[i].values[j])) > 0.1) ok = false;
+            if (fabs(round(val[j]) - data->expected[i].values[j]) > 0.1) ok = false;
         }
 
         if (ok) accuracy++;
     }
 
     printf("%f", accuracy / data->count * 100);
+
+    free_network(network);
 
     return EXIT_SUCCESS;
 }

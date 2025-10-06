@@ -22,7 +22,7 @@ typedef struct layer_data {
     double* biases;
 } layer_data;
 
-layer_data* alloc_layer_data_array(layer* layers, const int layerCount, const int copyValues);
+layer_data* alloc_layer_data_array(layer* layers, int layerCount, int copyValues);
 void free_layer_data_array(layer_data* layers, int count);
 
 #endif //LAYER_H

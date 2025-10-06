@@ -8,7 +8,6 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     neural_network* result = malloc(sizeof(neural_network));
     result->count = count - 1;
     result->layers = malloc(result->count * sizeof(layer));
-    result->shuffleDataOnIteration = false;
 
     for(int i = 1; i < count; i++){
         const int in = numbers[i - 1];
@@ -21,6 +20,18 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     }
 
     return result;
+}
+
+void apply_default_params(neural_network* network) {
+    network->shuffleDataOnIteration = false;
+    network->learningRate = 1;
+
+    set_activation_type(network, SIGMOID, SIGMOID);
+    set_cost_type(network, MEAN_SQUARED);
+
+    network->data_selector = create_full_batch_selector();
+    network->optimizer = create_nesterov_optimizer(0.9);
+    network->scheduler = constr_constant_scheduler();
 }
 
 inline void set_activation_type(neural_network* network, int type, int outputType) {
@@ -102,12 +113,6 @@ inline void set_cost_type(neural_network* network, int type) {
             network->costDerivative = NULL;
         break;
     }
-}
-
-inline void apply_params(neural_network* network, params params){
-    network->learningRate = params.initialLearningRate;
-    set_activation_type(network, params.activationType, params.outputActivationType);
-    set_cost_type(network, params.costType);
 }
 
 inline void initialize(neural_network* network) {
@@ -326,6 +331,8 @@ inline double cost(neural_network* network, input_data* data, input_data* expect
 }
 
 inline double avg_cost(neural_network* network, test_data* data) {
+    if (data->count == 0) return 0;
+
     double c = 0;
     for(int i = 0; i < data->count; i++) {
         c += cost(network, &data->inputs[i], &data->expected[i]);

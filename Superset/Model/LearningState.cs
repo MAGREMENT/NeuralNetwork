@@ -4,19 +4,19 @@ namespace Model;
 
 public partial class LearningState : IDisposable
 {
-    private readonly int _layerCount;
+    private readonly NeuralNetwork _network;
     
     internal IntPtr Ptr { get; }
 
     public LearningState(NeuralNetwork network)
     {
         Ptr = CreateState(network.Ptr);
-        _layerCount = network.Length;
+        _network = network;
     }
 
     public void Dispose()
     {
-        DisposeState(Ptr, _layerCount);
+        DisposeState(_network.Ptr, Ptr);
     }
     
     [LibraryImport("libExport.dll")]
@@ -25,5 +25,5 @@ public partial class LearningState : IDisposable
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void DisposeState(IntPtr ptr, int layerCount);
+    private static partial void DisposeState(IntPtr ptr, IntPtr state);
 }
