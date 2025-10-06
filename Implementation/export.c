@@ -10,7 +10,7 @@
 
 inline neural_network* Create(int count, int numbers[]) {
     auto network = alloc_network(count, numbers);
-    apply_default_params(network);
+    apply_default_hyper_params(network);
     return network;
 }
 

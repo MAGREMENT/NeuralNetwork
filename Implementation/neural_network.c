@@ -22,17 +22,7 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     return result;
 }
 
-void apply_default_params(neural_network* network) {
-    network->shuffleDataOnIteration = false;
-    network->learningRate = 1;
 
-    set_activation_type(network, SIGMOID, SIGMOID);
-    set_cost_type(network, MEAN_SQUARED);
-
-    network->data_selector = create_full_batch_selector();
-    network->optimizer = create_nesterov_optimizer(0.9);
-    network->scheduler = constr_constant_scheduler();
-}
 
 inline void set_activation_type(neural_network* network, int type, int outputType) {
     for(int i = 0; i < network->count; i++) {

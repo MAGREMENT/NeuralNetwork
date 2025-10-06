@@ -66,7 +66,7 @@ enum cost_type {
 };
 
 neural_network* alloc_network(int count, const int numbers[]);
-void apply_default_params(neural_network* network);
+void apply_default_hyper_params(neural_network* network);
 void free_network(neural_network* network);
 
 void set_activation_type(neural_network* network, int type, int outputType);

@@ -20,7 +20,7 @@ int main() {
 
     const int numbers[] = {2, 3, 2};
     neural_network* network = alloc_network(3, numbers);
-    apply_default_params(network);
+    apply_default_hyper_params(network);
 
     test_data* data = positive_generate_for_2D(1, 20, 2, parable_10_cut);
     //test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);

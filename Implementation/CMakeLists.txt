@@ -24,7 +24,9 @@ add_executable(Test
         optimizer.c
         optimizer.h
         layer.c
-        layer.h)
+        layer.h
+        hyper_parameters.c
+        hyper_parameters.h)
 add_library(Export SHARED
         export.c
         neural_network.c
@@ -45,4 +47,6 @@ add_library(Export SHARED
         optimizer.c
         optimizer.h
         layer.c
-        layer.h)
+        layer.h
+        hyper_parameters.c
+        hyper_parameters.h)
