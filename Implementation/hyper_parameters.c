@@ -29,7 +29,7 @@ static int def_c() {
 }
 
 static data_selector* def_ds() {
-    return create_full_batch_selector();
+    return create_mini_batch_selector(32);
 }
 
 static optimizer* def_opt() {
@@ -47,9 +47,9 @@ inline void apply_default_hyper_params(neural_network* network) {
     set_activation_type(network, def_a(), def_oa());
     set_cost_type(network, def_c());
 
-    network->data_selector = def_ds();
-    network->optimizer = def_opt();
-    network->scheduler = def_lrs();
+    set_optimizer(network, def_opt());
+    set_data_selector(network, def_ds());
+    set_scheduler(network, def_lrs());
 }
 
 void apply_hyper_params(neural_network* network, yaml_hyper_parameter* list, int count) {
@@ -65,13 +65,13 @@ void apply_hyper_params(neural_network* network, yaml_hyper_parameter* list, int
     int i = 0;
     while (i < count) {
         yaml_hyper_parameter curr = list[i];
-        switch (curr.name) {
+        /*switch (curr.name) {
             case "shuffleDataOnIteration" :
                 sdoi = atoi(curr.value);
                 break;
             //TODO continue
             default: break;
-        }
+        }*/
 
         i += 1;
     }
@@ -80,7 +80,7 @@ void apply_hyper_params(neural_network* network, yaml_hyper_parameter* list, int
     network->learningRate = lr;
     set_activation_type(network, a, oa);
     set_cost_type(network, c);
-    network->data_selector = ds == NULL ? def_ds() : ds;
-    network->optimizer = opt == NULL ? def_opt() : opt;
-    network->scheduler = lrs == NULL ? def_lrs() : lrs;
+    set_optimizer(network, opt == NULL ? def_opt() : opt);
+    set_data_selector(network, ds == NULL ? def_ds() : ds);
+    set_scheduler(network, lrs == NULL ? def_lrs() : lrs);
 }

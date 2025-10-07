@@ -71,6 +71,9 @@ void free_network(neural_network* network);
 
 void set_activation_type(neural_network* network, int type, int outputType);
 void set_cost_type(neural_network* network, int type);
+void set_optimizer(neural_network* n, optimizer* opt);
+void set_data_selector(neural_network* n, data_selector* ds);
+void set_scheduler(neural_network* n, learning_rate_scheduler* lrs);
 
 void initialize(neural_network* network);
 void set_all_weights_and_biases(neural_network* network, double weights, double biases);

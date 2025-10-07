@@ -1,10 +1,21 @@
 namespace Model;
 
-public readonly struct GuessingPoint(double x, double y, int output)
+public readonly struct GuessingPoint
 {
-    public readonly double X = x;
-    public readonly double Y = y;
-    public readonly int Output = output;
+    public readonly double[] Values;
+    public readonly int Output;
+
+    public GuessingPoint(double[] values, int output)
+    {
+        Values = values;
+        Output = output;
+    }
+
+    public GuessingPoint(double x, double y, int output)
+    {
+        Values = new[] { x, y };
+        Output = output;
+    }
 
     public static IEnumerable<GuessingPoint> GenerateRandom(GenerateOutput generateFunc, BoundingBox box, int count)
     {
@@ -16,6 +27,17 @@ public readonly struct GuessingPoint(double x, double y, int output)
 
             yield return new GuessingPoint(x, y, generateFunc(x, y));
         }
+    }
+    
+    public static double GetNetworkAccuracy(NeuralNetwork network, IReadOnlyList<GuessingPoint> points)
+    {
+        var total = 0;
+        foreach (var p in points)
+        {
+            if (network.Predict(p.Values).IndexOfHighestValue() == p.Output) total++;
+        }
+
+        return (double)total / points.Count * 100;
     }
 }
 

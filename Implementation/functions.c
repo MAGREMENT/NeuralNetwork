@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "functions.h"
 
+#include <float.h>
 #include <stdlib.h>
 
 #include "neural_network.h"
@@ -126,6 +127,49 @@ inline void xavier_initialization(layer* layer) {
     for (int i = 0; i < total; i++) {
         layer->weights[i] = rand_std_nrml_distribution() * scale;
     }
+}
+
+inline void standardize(test_data* data) {
+    //TODO
+}
+
+inline void min_max_scale(test_data* data) {
+    if (data->count == 0) return;
+
+    const int size = data->inputs[0].count;
+    double* min = malloc(sizeof(double) * size);
+    double* max = malloc(sizeof(double) * size);
+
+    for (int i = 0; i < size; i++) {
+        min[i] = DBL_MAX;
+        max[i] = DBL_MIN;
+    }
+
+    for (int i = 0; i < data->count; i++) {
+        input_data curr = data->inputs[i];
+        if (curr.count != size) {
+            free(min);
+            free(max);
+            return;
+        }
+
+        for (int j = 0; j < size; j++) {
+            if (curr.values[j] < min[j]) min[j] = curr.values[j];
+            if (curr.values[j] > max[j]) max[j] = curr.values[j];
+        }
+    }
+
+    for (int i = 0; i < data->count; i++) {
+        input_data curr = data->inputs[i];
+
+        for (int j = 0; j < size; j++) {
+            if (max[j] - min[j] == 0) curr.values[j] = 0;
+            curr.values[j] = (curr.values[j] - min[j]) / (max[j] - min[j]);
+        }
+    }
+
+    free(min);
+    free(max);
 }
 
 //Cut Functions---------------------------------------------------------------------------------------------------------

@@ -9,6 +9,10 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     result->count = count - 1;
     result->layers = malloc(result->count * sizeof(layer));
 
+    result->optimizer = NULL;
+    result->data_selector = NULL;
+    result->scheduler = NULL;
+
     for(int i = 1; i < count; i++){
         const int in = numbers[i - 1];
         const int out = numbers[i];
@@ -21,8 +25,6 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
 
     return result;
 }
-
-
 
 inline void set_activation_type(neural_network* network, int type, int outputType) {
     for(int i = 0; i < network->count; i++) {
@@ -103,6 +105,21 @@ inline void set_cost_type(neural_network* network, int type) {
             network->costDerivative = NULL;
         break;
     }
+}
+
+void set_optimizer(neural_network* n, optimizer* opt) {
+    if (n->optimizer != NULL) n->optimizer->free(n->optimizer);
+    n->optimizer = opt;
+}
+
+void set_data_selector(neural_network* n, data_selector* ds) {
+    if (n->data_selector != NULL) n->data_selector->free(n->data_selector);
+    n->data_selector = ds;
+}
+
+void set_scheduler(neural_network* n, learning_rate_scheduler* lrs) {
+    if (n->scheduler != NULL) n->scheduler->free(n->scheduler);
+    n->scheduler = lrs;
 }
 
 inline void initialize(neural_network* network) {
@@ -400,10 +417,15 @@ void iterative_learn(neural_network* network, test_data* data, learning_state* s
     }
 
     range_iterator* iterator = network->data_selector->constr_iterator(network->data_selector, data->count, iterations);
+    int lastIteration = state->iteration;
     while (iterator->next(iterator)) {
-        const double learningRate = network->scheduler->schedule(network->scheduler,
-            network->learningRate, iterator->current.iteration + state->iteration);
-        if (network->shuffleDataOnIteration) shuffle_test_data(data, 1);
+        const int currentIteration = iterator->current.iteration + state->iteration;
+        const double learningRate = network->scheduler->schedule(network->scheduler, network->learningRate, currentIteration);
+
+        if (network->shuffleDataOnIteration && currentIteration != lastIteration) {
+            shuffle_test_data(data, 1);
+            lastIteration = currentIteration;
+        }
 
         learn(network, data, iterator->current, learningRate, state->optimizerState);
     }

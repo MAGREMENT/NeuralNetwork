@@ -91,12 +91,31 @@ public class NeuralNetworkTests
     }
 
     [Test]
-    public void LearnFromLittleFlattenedTest()
+    public void LearnFromLittleFlattenedTest() //TODO fix (problem with mini batch data selector)
     {
         using var network = new NeuralNetwork(_testing[0]);
+        //network.SetDataSelectorFullBatch();
 
-        var f = new FlattenedData(new[] { 1, 2.2, 3, 4 }, 2, new[] { 1.1, 2, 3, 4, 5, 6 }, 3);
+        var f = new FlattenedData(new[] { 1, 2.2, 3, 4 }, 2, new[] { 1.1, 2, 3, 4 }, 2);
+        var cost = network.GetCost(f);
         network.Learn(f, 1);
+        Assert.That(network.GetCost(f), Is.LessThan(cost));
+    }
+
+    [Test]
+    public void GuessingPointLearnTest()
+    {
+        var points = GuessingPoint.GenerateRandom((x, y) => y > -0.05 * x * x + 1.5 * x + 3 ? 1 : 0, 
+            new BoundingBox(0, 10, 0, 10), 200).ToArray();
+        Console.WriteLine("0 Value Point Count : " + points.Count(p => p.Output == 0));
+        Console.WriteLine("1 Value Point Count : " + points.Count(p => p.Output == 1));
+        var flattened = FlattenedData.FromGuessingPoints(points, 2);
+
+        using var network = new NeuralNetwork(2, 3, 2);
+        network.Learn(flattened, 100);
+
+        Console.WriteLine(network.GetCost(flattened));
+        Console.WriteLine(GuessingPoint.GetNetworkAccuracy(network, points));
     }
 
     #region SimpleLearnTest

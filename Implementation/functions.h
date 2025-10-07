@@ -3,6 +3,8 @@
 
 #include "neural_network.h"
 
+//Activation
+
 double default_activation(double input, void* processedData);
 double derivative_default_activation(double input, void* processedData);
 void* default_process_inputs(double* inputs, int count);
@@ -25,8 +27,7 @@ double derivative_softmax_activation(double input, void* processedData);
 void* softmax_process_inputs(double* inputs, int count);
 void softmax_free_data(void* data);
 
-double cube_activation(double input, void* processedData);
-double derivative_cube_activation(double input, void* processedData);
+//Cost (Loss)
 
 double mean_square_cost(double predicted, double expected);
 double derivative_mean_square_cost(double predicted, double expected);
@@ -34,9 +35,16 @@ double derivative_mean_square_cost(double predicted, double expected);
 double cross_entropy_cost(double predicted, double expected);
 double derivative_cross_entropy_cost(double predicted, double expected);
 
+//Initialization
+
 void random_initialization(layer* layer);
 void he_initialization(layer* layer);
 void xavier_initialization(layer* layer);
+
+//Normalization
+
+void standardize(test_data* data);
+void min_max_scale(test_data* data);
 
 int diagonal_cut(double x, double y);
 int parable_10_cut(double x, double y);

@@ -81,6 +81,17 @@ public partial class NeuralNetwork : IDisposable
         SetAllWeightsAndBiases(Ptr, weights, biases);
     }
 
+    public double GetLearningRate() => GetLearningRate(Ptr);
+    public void SetLearningRate(double lr) => SetLearningRate(Ptr, lr);
+    public int GetShuffleDataOnIteration() => GetShuffleDataOnIteration(Ptr);
+    public void SetShuffleDataOnIteration(int sdoi) => SetShuffleDataOnIteration(Ptr, sdoi);
+    public void SetOptimizerGradientDescent() => SetOptimizerGradientDescent(Ptr);
+    public void SetOptimizerMomentum(double momentum) => SetOptimizerMomentum(Ptr, momentum);
+    public void SetOptimizerNesterov(double decay) => SetOptimizerNesterov(Ptr, decay);
+    public void SetOptimizerAdam(double delta1, double delta2) => SetOptimizerAdam(Ptr, delta1, delta2);
+    public void SetDataSelectorFullBatch() => SetDataSelectorFullBatch(Ptr);
+    public void SetDataSelectorMiniBatch(int batchSize) => SetDataSelectorMiniBatch(Ptr, batchSize);
+
     public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
     
     public double[] Predict(double[] inputs, int length)
@@ -97,8 +108,11 @@ public partial class NeuralNetwork : IDisposable
 
     public void Learn(FlattenedData data, int iterations, LearningState? state = null)
     {
+        var count = data.GetCount();
+        if (count == 0) return;
+        
         var statePtr = state?.Ptr ?? IntPtr.Zero;
-        Learn(Ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount(),
+        Learn(Ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count,
             iterations);
     }
 
@@ -170,7 +184,47 @@ public partial class NeuralNetwork : IDisposable
 
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial double SetAllWeightsAndBiases(IntPtr ptr, double weights, double biases);
+    private static partial void SetAllWeightsAndBiases(IntPtr ptr, double weights, double biases);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial double GetLearningRate(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetLearningRate(IntPtr ptr, double lr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial int GetShuffleDataOnIteration(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetShuffleDataOnIteration(IntPtr ptr, int sdoi);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetOptimizerGradientDescent(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetOptimizerMomentum(IntPtr ptr, double momentum);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetOptimizerNesterov(IntPtr ptr, double decay);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetOptimizerAdam(IntPtr ptr, double delta1, double delta2);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetDataSelectorFullBatch(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetDataSelectorMiniBatch(IntPtr ptr, int batchSize);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]

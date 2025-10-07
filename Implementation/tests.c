@@ -22,8 +22,10 @@ int main() {
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
 
-    test_data* data = positive_generate_for_2D(1, 20, 2, parable_10_cut);
+    test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     //test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
+
+    min_max_scale(data);
 
     initialize(network);
 

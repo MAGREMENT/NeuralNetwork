@@ -19,6 +19,16 @@ DLL_EXPORT double GetWeight(neural_network* ptr, int layer, int input, int outpu
 DLL_EXPORT void SetBias(neural_network* ptr, int layer, int output, double value);
 DLL_EXPORT double GetBias(neural_network* ptr, int layer, int output);
 DLL_EXPORT void SetAllWeightsAndBiases(neural_network* ptr, double weights, double biases);
+DLL_EXPORT double GetLearningRate(neural_network* n);
+DLL_EXPORT void SetLearningRate(neural_network* n, double lr);
+DLL_EXPORT int GetShuffleDataOnIteration(neural_network* n);
+DLL_EXPORT void SetShuffleDataOnIteration(neural_network* n, int sdoi);
+DLL_EXPORT void SetOptimizerGradientDescent(neural_network* n);
+DLL_EXPORT void SetOptimizerMomentum(neural_network* n, double momentum);
+DLL_EXPORT void SetOptimizerNesterov(neural_network* n, double decay);
+DLL_EXPORT void SetOptimizerAdam(neural_network* n, double delta1, double delta2);
+DLL_EXPORT void SetDataSelectorFullBatch(neural_network* n);
+DLL_EXPORT void SetDataSelectorMiniBatch(neural_network* n, int batchSize);
 DLL_EXPORT void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount);
 DLL_EXPORT neural_network* FromFile(char file[]);
 DLL_EXPORT void Save(neural_network* ptr, char file[]);

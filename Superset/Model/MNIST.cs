@@ -2,7 +2,7 @@
 
 public static class MNIST
 {
-    public static IReadOnlyList<(int, double[])> Read(string labelsFiles, string imagesFile, int limit = int.MaxValue)
+    public static IReadOnlyList<GuessingPoint> Read(string labelsFiles, string imagesFile, int limit = int.MaxValue)
     {
         using var labelsStream = new FileStream(labelsFiles, new FileStreamOptions
         {
@@ -34,7 +34,7 @@ public static class MNIST
         var cols = GetFlippedInt(imagesHeader, 12);
         var total = rows * cols;
         
-        var result = new (int, double[])[count];
+        var result = new GuessingPoint[count];
         for(int i = 0; i < count; i++)
         {
             var labelBuffer = new byte[1];
@@ -53,32 +53,10 @@ public static class MNIST
                 arr[j] = imageBuffer[j] / 255.0;
             }
 
-            result[i] = (label, arr);
+            result[i] = new GuessingPoint(arr, label);
         }
         
         return result;
-    }
-
-    public static FlattenedData FlattenForNeuralNetwork(IReadOnlyList<(int, double[])> data)
-    {
-        var imgSize = data[0].Item2.Length;
-        var inputs = new double[data.Count * imgSize];
-        var expected = new double[10 * data.Count];
-
-        for (int i = 0; i < data.Count; i++)
-        {
-            var value = data[i].Item1;
-            expected[i * 10 + value] = 1;
-
-            var img = data[i].Item2;
-            var start = imgSize * i;
-            for (int j = 0; j < imgSize; j++)
-            {
-                inputs[start + j] = img[j];
-            }
-        }
-
-        return new FlattenedData(inputs, imgSize, expected, 10);
     }
     
     private static int GetFlippedInt(Span<byte> span, int from)

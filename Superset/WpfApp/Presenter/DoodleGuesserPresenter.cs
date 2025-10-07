@@ -7,10 +7,10 @@ public class DoodleGuesserPresenter
     private readonly IDoodleGuesserView _view;
     
     private readonly Doodle _doodle = new(28, 28);
-    private readonly IReadOnlyList<(int, double[])> dataSet = MNIST.Read(
+    private readonly IReadOnlyList<GuessingPoint> dataSet = MNIST.Read(
         "mnist-data/t10k-labels.idx1-ubyte", 
         "mnist-data/t10k-images.idx3-ubyte", 100);
-    private readonly NeuralNetwork _network = new(784, 200, 100, 9);
+    private readonly NeuralNetwork _network = new(784, 200, 100, 10);
     private int _index = -1;
 
     public DoodleGuesserPresenter(IDoodleGuesserView view)
@@ -23,8 +23,8 @@ public class DoodleGuesserPresenter
         if (_index >= dataSet.Count - 1) return;
         _index++;
         
-        _doodle.SetData(dataSet[_index].Item2);
-        _view.SetDoodleData(dataSet[_index].Item2.To2D(28, 28));
+        _doodle.SetData(dataSet[_index].Values);
+        _view.SetDoodleData(dataSet[_index].Values.To2D(28, 28));
         Predict();
     }
 
@@ -33,8 +33,8 @@ public class DoodleGuesserPresenter
         if (_index <= 0) return;
         _index--;
 
-        _doodle.SetData(dataSet[_index].Item2);
-        _view.SetDoodleData(dataSet[_index].Item2.To2D(28, 28));
+        _doodle.SetData(dataSet[_index].Values);
+        _view.SetDoodleData(dataSet[_index].Values.To2D(28, 28));
         Predict();
     }
 

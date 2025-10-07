@@ -19,12 +19,29 @@ public class MNISTReaderTests
     {
         var data = MNIST.Read(
             @"mnist-data\t10k-labels.idx1-ubyte", 
-            @"mnist-data\t10k-images.idx3-ubyte", 3);
+            @"mnist-data\t10k-images.idx3-ubyte");
 
-        var result = MNIST.FlattenForNeuralNetwork(data);
-        for (int i = 0; i < 3; i++)
+        var result = FlattenedData.FromGuessingPoints(data, 10);
+        for (int i = 0; i < data.Count; i++)
         {
-            Assert.That(result.Expected[i * 10 + data[i].Item1], Is.EqualTo(1));
+            Assert.That(result.Expected[i * 10 + data[i].Output], Is.EqualTo(1));
         }
+    }
+
+    [Test]
+    public void LearnTest()
+    {
+        using var n = new NeuralNetwork(784, 200, 100, 10);
+        n.SetDataSelectorFullBatch();
+        
+        var data = MNIST.Read(
+            @"mnist-data\t10k-labels.idx1-ubyte", 
+            @"mnist-data\t10k-images.idx3-ubyte", 1000);
+        var flattened = FlattenedData.FromGuessingPoints(data, 10);
+        Console.WriteLine(n.GetCost(flattened));
+        Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
+        n.Learn(flattened, 10);
+        Console.WriteLine(n.GetCost(flattened));
+        Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
     }
 }

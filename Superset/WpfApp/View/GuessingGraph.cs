@@ -71,7 +71,7 @@ public class GuessingGraph : FrameworkElement
         
         foreach (var point in _points)
         {
-            var p = new Point(point.X  * _scaleX + offset + width, ActualHeight - point.Y * _scaleY - offset - width);
+            var p = new Point(point.Values[0] * _scaleX + offset + width, ActualHeight - point.Values[1] * _scaleY - offset - width);
             context.DrawEllipse(GetBrush(point.Output), null, p, radius, radius);
         }
     }

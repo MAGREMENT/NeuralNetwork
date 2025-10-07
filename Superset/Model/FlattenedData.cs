@@ -9,6 +9,8 @@ public class FlattenedData(double[] inputs, int inputCutOff, double[] expected, 
 
     public int GetCount() => Inputs.Length / InputCutOff;
 
+    public static FlattenedData Empty() => new(Array.Empty<double>(), 0, Array.Empty<double>(), 0);
+
     public static FlattenedData FromArrays(IReadOnlyList<(double[], double[])> arrays)
     {
         var cutOff1 = arrays[0].Item1.Length;
@@ -37,22 +39,29 @@ public class FlattenedData(double[] inputs, int inputCutOff, double[] expected, 
 
     public static FlattenedData FromGuessingPoints(IReadOnlyList<GuessingPoint> points, int outputValueCount)
     {
-        var inputs = new double[points.Count * 2];
+        if (points.Count == 0) return Empty();
+
+        var inSize = points[0].Values.Length;
+        var inputs = new double[points.Count * inSize];
         var expected = new double[points.Count * outputValueCount];
 
         for (int i = 0; i < points.Count; i++)
         {
-            var p = points[i];
-            inputs[i * 2] = p.X;
-            inputs[i * 2 + 1] = p.Y;
-
-            var start = i * outputValueCount;
-            for (int j = 0; j < outputValueCount; j++)
-            {
-                if (j == p.Output) expected[start + j] = 1;
+            if (points[i].Values.Length != inSize) throw new Exception("Not consistent data");
+            
+            var start = i * inSize;
+            for (int j = 0; j < inSize; j++)
+            { 
+                inputs[start + j] = points[i].Values[j];
             }
+
+            var value = points[i].Output;
+            if (value >= outputValueCount || value < 0) throw new Exception("GuessingPoint Value not in scope");
+            
+            start = i * outputValueCount;
+            expected[start + value] = 1;
         }
 
-        return new FlattenedData(inputs, 2, expected, outputValueCount);
+        return new FlattenedData(inputs, inSize, expected, outputValueCount);
     }
 }

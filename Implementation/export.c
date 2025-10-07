@@ -50,6 +50,46 @@ inline void SetAllWeightsAndBiases(neural_network* ptr, double weights, double b
     set_all_weights_and_biases(ptr, weights, biases);
 }
 
+inline double GetLearningRate(neural_network* n) {
+    return n->learningRate;
+}
+
+inline void SetLearningRate(neural_network* n, double lr) {
+    n->learningRate = lr;
+}
+
+inline int GetShuffleDataOnIteration(neural_network* n) {
+    return n->shuffleDataOnIteration;
+}
+
+inline void SetShuffleDataOnIteration(neural_network* n, int sdoi) {
+    n->shuffleDataOnIteration = sdoi;
+}
+
+inline void SetOptimizerGradientDescent(neural_network* n) {
+    set_optimizer(n, create_gradient_descent_optimizer());
+}
+
+inline void SetOptimizerMomentum(neural_network* n, double momentum) {
+    set_optimizer(n, create_momentum_gradient_descent_optimizer(momentum));
+}
+
+inline void SetOptimizerNesterov(neural_network* n, double decay) {
+    set_optimizer(n, create_nesterov_optimizer(decay));
+}
+
+inline void SetOptimizerAdam(neural_network* n, double delta1, double delta2) {
+    set_optimizer(n, create_adam_optimizer(delta1, delta2));
+}
+
+inline void SetDataSelectorFullBatch(neural_network* n) {
+    set_data_selector(n, create_full_batch_selector());
+}
+
+inline void SetDataSelectorMiniBatch(neural_network* n, int batchSize) {
+    set_data_selector(n, create_mini_batch_selector(batchSize));
+}
+
 inline void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount) {
     input_data data;
     data.count = inCount;
