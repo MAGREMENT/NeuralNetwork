@@ -56,8 +56,9 @@ enum activation_type {
     SIGMOID,
     TANH,
     RELU,
+    LEAKY_RELU,
     SILU,
-    SOFTMAX
+    SOFTMAX,
 };
 
 enum cost_type {

@@ -28,7 +28,7 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
 
 inline void set_activation_type(neural_network* network, int type, int outputType) {
     for(int i = 0; i < network->count; i++) {
-        const int t = i == network->count - 1 ? type : outputType;
+        const int t = i == network->count - 1 ? outputType : type;
         switch (t) {
             case DEFAULT :
                 network->layers[i].activation = default_activation;
@@ -57,6 +57,14 @@ inline void set_activation_type(neural_network* network, int type, int outputTyp
             case RELU :
                 network->layers[i].activation = relu_activation;
                 network->layers[i].activationDerivative = derivative_relu_activation;
+                network->layers[i].processInputs = default_process_inputs;
+                network->layers[i].freeData = default_free_data;
+
+                if (i == 0) network->initialization = he_initialization;
+            break;
+            case LEAKY_RELU :
+                network->layers[i].activation = leaky_relu_activation;
+                network->layers[i].activationDerivative = derivative_leaky_relu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
 

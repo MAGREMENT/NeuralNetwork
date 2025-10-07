@@ -124,8 +124,11 @@ public partial class NeuralNetwork : IDisposable
 
     public double GetCost(FlattenedData data)
     {
+        var count = data.GetCount();
+        if (count == 0) return 0;
+        
         CheckTestDataBounds(data.InputCutOff, data.ExpectedCutOff);
-        return MultiCost(Ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, data.GetCount());
+        return MultiCost(Ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count);
     }
     
     public void Dispose()

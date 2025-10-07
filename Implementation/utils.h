@@ -5,7 +5,7 @@
 void init_random();
 double rand_d(double min, double max);
 int rand_i(int max);
-int rand_std_nrml_distribution();
+double rand_std_nrml_distribution();
 int max_index(double values[], int count);
 //Double equals
 int deq(double left, double right, double margin);

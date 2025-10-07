@@ -8,6 +8,8 @@
 #include "neural_network.h"
 #include "utils.h"
 
+#define LEAK 0.01
+
 inline double default_activation(double input, void* processedData){
     return input;
 }
@@ -50,6 +52,14 @@ inline double relu_activation(const double input, void* processedData) {
 
 inline double derivative_relu_activation(double input, void* processedData) {
     return input > 0 ? 1 : 0;
+}
+
+inline double leaky_relu_activation(double input, void* processedData) {
+    return input > 0 ? input : LEAK * input;
+}
+
+inline double derivative_leaky_relu_activation(double input, void* processedData) {
+    return input > 0 ? 1 : LEAK;
 }
 
 inline double silu_activation(double input, void* processedData) {
@@ -130,7 +140,57 @@ inline void xavier_initialization(layer* layer) {
 }
 
 inline void standardize(test_data* data) {
-    //TODO
+    if (data->count == 0) return;
+    const int size = data->inputs[0].count;
+    double* mean = malloc(sizeof(double) * size);
+    double* std = malloc(sizeof(double) * size);
+
+    for (int i = 0; i < size; i++) {
+        mean[i] = 0;
+        std[i] = 0;
+    }
+
+    for (int i = 0; i < data->count; i++) {
+        input_data curr = data->inputs[i];
+        if (curr.count != size) {
+            free(mean);
+            free(std);
+            return;
+        }
+
+        for (int j = 0; j < size; j++) {
+            mean[j] += curr.values[j];
+        }
+    }
+
+    for (int i = 0; i < size; i++) {
+        mean[i] /= data->count;
+    }
+
+    for (int i = 0; i < data->count; i++) {
+        input_data curr = data->inputs[i];
+
+        for (int j = 0; j < size; j++) {
+            const double a = curr.values[j] - mean[j];
+            std[j] += a * a;
+        }
+    }
+
+    for (int i = 0; i < size; i++) {
+        std[i] = sqrt(std[i] / data->count);
+    }
+
+    for (int i = 0; i < data->count; i++) {
+        input_data curr = data->inputs[i];
+
+        for (int j = 0; j < size; j++) {
+            if (std[j] == 0) curr.values[j] = 0;
+            else curr.values[j] = (curr.values[j] - mean[j]) / std[j];
+        }
+    }
+
+    free(mean);
+    free(std);
 }
 
 inline void min_max_scale(test_data* data) {
@@ -164,7 +224,7 @@ inline void min_max_scale(test_data* data) {
 
         for (int j = 0; j < size; j++) {
             if (max[j] - min[j] == 0) curr.values[j] = 0;
-            curr.values[j] = (curr.values[j] - min[j]) / (max[j] - min[j]);
+            else curr.values[j] = (curr.values[j] - min[j]) / (max[j] - min[j]);
         }
     }
 

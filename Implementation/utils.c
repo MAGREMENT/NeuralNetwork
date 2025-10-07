@@ -20,7 +20,7 @@ inline int rand_i(const int max) {
     return rand() % max;
 }
 
-inline int rand_std_nrml_distribution() {
+inline double rand_std_nrml_distribution() {
     const double u1 = (rand() + 1.0) / (RAND_MAX + 2.0);  // avoid log(0)
     const double u2 = (rand() + 1.0) / (RAND_MAX + 2.0);
     return sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2);

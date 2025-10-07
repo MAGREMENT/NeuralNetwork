@@ -29,7 +29,7 @@ static int def_c() {
 }
 
 static data_selector* def_ds() {
-    return create_mini_batch_selector(32);
+    return create_full_batch_selector();
 }
 
 static optimizer* def_opt() {

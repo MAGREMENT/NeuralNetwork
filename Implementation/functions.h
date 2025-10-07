@@ -19,6 +19,9 @@ double derivative_tanh_activation(double input, void* processedData);
 double relu_activation(double input, void* processedData);
 double derivative_relu_activation(double input, void* processedData);
 
+double leaky_relu_activation(double input, void* processedData);
+double derivative_leaky_relu_activation(double input, void* processedData);
+
 double silu_activation(double input, void* processedData);
 double derivative_silu_activation(double input, void* processedData);
 

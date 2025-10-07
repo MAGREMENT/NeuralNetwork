@@ -36,11 +36,11 @@ public class MNISTReaderTests
         
         var data = MNIST.Read(
             @"mnist-data\t10k-labels.idx1-ubyte", 
-            @"mnist-data\t10k-images.idx3-ubyte", 1000);
+            @"mnist-data\t10k-images.idx3-ubyte");
         var flattened = FlattenedData.FromGuessingPoints(data, 10);
         Console.WriteLine(n.GetCost(flattened));
         Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
-        n.Learn(flattened, 10);
+        n.Learn(flattened, 3);
         Console.WriteLine(n.GetCost(flattened));
         Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
     }

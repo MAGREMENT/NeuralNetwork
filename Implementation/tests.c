@@ -18,18 +18,20 @@ int main() {
 
     //return EXIT_SUCCESS;
 
-    const int numbers[] = {2, 3, 2};
+    const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
+    set_activation_type(network, LEAKY_RELU, LEAKY_RELU);
+    network->learningRate = 0.01;
 
-    test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
-    //test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
+    //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
+    test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
 
-    min_max_scale(data);
+    standardize(data);
 
     initialize(network);
 
-    iterative_learn(network, data, NULL, 100);
+    iterative_learn(network, data, NULL, 1000);
 
     printf("%f\n", avg_cost(network, data));
 

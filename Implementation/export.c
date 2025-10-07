@@ -66,6 +66,14 @@ inline void SetShuffleDataOnIteration(neural_network* n, int sdoi) {
     n->shuffleDataOnIteration = sdoi;
 }
 
+inline void SetActivationType(neural_network* n, int type, int outputType) {
+    set_activation_type(n, type, outputType);
+}
+
+inline void SetCostType(neural_network* n, int type) {
+    set_cost_type(n, type);
+}
+
 inline void SetOptimizerGradientDescent(neural_network* n) {
     set_optimizer(n, create_gradient_descent_optimizer());
 }
