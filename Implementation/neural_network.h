@@ -115,7 +115,7 @@ void forward(layer layer, input_data input, input_data* result);
 void first_advance(layer layer, const backpropagation_data* data, const input_data* input);
 void continue_advance(layer layer, const backpropagation_data* data, int inputIndex);
 
-void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
+void add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
     input_data expected);
 
 input_data* alloc_input_data(int count);

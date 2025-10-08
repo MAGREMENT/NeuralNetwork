@@ -359,7 +359,7 @@ inline double avg_cost(neural_network* network, test_data* data) {
     return c / data->count;
 }
 
-inline void update_gradients(const neural_network* network, const layer_data* gradients, input_data input,
+inline void add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
     backpropagation_data* data = alloc_traverse(network, &input);
@@ -407,15 +407,31 @@ inline void update_gradients(const neural_network* network, const layer_data* gr
     free_back_data(data, network->count);
 }
 
+static void normalize_gradients(neural_network* network, layer_data* gradients, int dataCount) {
+    for (int l = 0; l < network->count; l++) {
+        const int oc = network->layers[l].out_count;
+        const int ic = network->layers[l].in_count;
+        for (int o = 0; o < oc; o++) {
+            for (int i = 0; i < ic; i++) {
+                gradients[l].weights[i * oc + o] /= dataCount;
+            }
+
+            gradients[l].biases[o] /= dataCount;
+        }
+    }
+}
+
 inline void learn(neural_network* network, test_data* data, range range, const double learningRate, void* optimizerState){
     layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
 
     for(int i = range.from; i < range.to; i++){
-        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
+        add_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
+    normalize_gradients(network, gradients, range.to - range.from);
+
     network->optimizer->apply_gradients(network->optimizer, optimizerState, network->layers, gradients,
-            network->count, range.iteration, learningRate / (range.to - range.from));
+            network->count, range.iteration, learningRate);
 
     free_layer_data_array(gradients, network->count);
 }
@@ -565,8 +581,10 @@ inline gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* networ
     layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
 
     for(int i = 0; i < data->count; i++){
-        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
+        add_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
+
+    normalize_gradients(network, gradients, data->count);
 
     for (int l = 0; l < network->count; l++) {
         const int out_count = network->layers[l].out_count;

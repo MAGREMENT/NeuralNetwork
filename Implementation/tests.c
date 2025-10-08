@@ -31,6 +31,12 @@ int main() {
 
     initialize(network);
 
+    gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, 1, 10);
+    for (int i = 0; i < diag->count; i++) {
+        printf("%d gradients more than %d and less than %d\n",
+            diag->scales[i].count, diag->scales[i].lower, diag->scales[i].upper);
+    }
+
     iterative_learn(network, data, NULL, 100);
 
     printf("%f\n", avg_cost(network, data));
@@ -53,11 +59,7 @@ int main() {
 
     printf("%f\n", accuracy / data->count * 100);
 
-    gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, 1, 10);
-    for (int i = 0; i < diag->count; i++) {
-        printf("%d gradients more than %d and less than %d\n",
-            diag->scales[i].count, diag->scales[i].lower, diag->scales[i].upper);
-    }
+
 
     free_gradient_diagnostic(diag);
     free_network(network);
