@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 
@@ -47,11 +48,20 @@ int def_deq(const double left, const double right) {
     return deq(left, right, 0.00001);
 }
 
-void list_remove(int* arr, int count, int index) {
-    index++;
-    for (; index < count; index++) {
-        arr[index - 1] = arr[index];
-    }
+void list_remove(void* arr, size_t size, int count, int index) {
+    char* base = arr;
+    char* dest = base + index * size;
+    char* src = base + (index + 1) * size;
+
+    memmove(dest, src, (count - index - 1) * size);
+}
+
+void* list_grow(void* arr, size_t size, int currentCount, int wantedCount) {
+    void* result = malloc(size * wantedCount);
+    memcpy(result, arr, size * currentCount);
+    if (arr != NULL) free(arr);
+
+    return result;
 }
 
 char* alloc_seq_to_str(double* values, int count) {

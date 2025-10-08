@@ -1,6 +1,9 @@
 #include <stdlib.h>
 
 #include "neural_network.h"
+
+#include <math.h>
+
 #include "functions.h"
 #include "utils.h"
 
@@ -526,4 +529,66 @@ inline test_result test_network(neural_network* network, test_data *test) {
     result.accuracy = valid / test->count * 100;
 
     return result;
+}
+
+static void process_gradient_stat(gradient_diagnostic* diag, double value, int vanishingBound,
+        int explodingBound) {
+    value = fabs(value);
+    const int x = floor(log(value) / log(10));
+
+    for (int i = 0; i < diag->count; i++) {
+        if (diag->scales[i].lower <= x && diag->scales[i].upper > x) {
+            diag->scales[i].count++;
+            return;
+        }
+    }
+
+    diag->scales = list_grow(diag->scales, sizeof(gradient_scale), diag->count, diag->count + 1);
+    diag->count += 1;
+
+    const int ind = diag->count - 1;
+    diag->scales[ind].count = 1;
+    diag->scales[ind].upper = x + 1;
+    diag->scales[ind].lower = x;
+}
+
+static int compare_grad_scale(void* s1, void* s2) {
+    return ((gradient_scale*)s2)->lower - ((gradient_scale*)s1)->lower;
+}
+
+inline gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* network, test_data* data, int vanishingBound,
+        int explodingBound) {
+    gradient_diagnostic* diag = malloc(sizeof(gradient_diagnostic));
+    diag->count = 0;
+    diag->scales = NULL;
+
+    layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
+
+    for(int i = 0; i < data->count; i++){
+        update_gradients(network, gradients, data->inputs[i], data->expected[i]);
+    }
+
+    for (int l = 0; l < network->count; l++) {
+        const int out_count = network->layers[l].out_count;
+        const int in_count = network->layers[l].in_count;
+
+        for (int o = 0; o < in_count; o++) {
+            for (int i = 0; i < in_count; i++) {
+                const int index = i * out_count + in_count;
+                process_gradient_stat(diag, gradients[l].weights[index], vanishingBound, explodingBound);
+            }
+
+            process_gradient_stat(diag, gradients[l].biases[o], vanishingBound, explodingBound);
+        }
+    }
+
+    free_layer_data_array(gradients, network->count);
+
+    qsort(diag->scales, diag->count, sizeof(gradient_scale), compare_grad_scale);
+    return diag;
+}
+
+inline void free_gradient_diagnostic(gradient_diagnostic* diag) {
+    free(diag->scales);
+    free(diag);
 }

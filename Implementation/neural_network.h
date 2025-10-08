@@ -51,6 +51,17 @@ typedef struct learning_state {
     void* optimizerState;
 } learning_state;
 
+typedef struct gradient_scale {
+    int lower;
+    int upper;
+    int count;
+} gradient_scale;
+
+typedef struct gradient_diagnostic {
+    gradient_scale* scales;
+    int count;
+} gradient_diagnostic;
+
 enum activation_type {
     DEFAULT,
     SIGMOID,
@@ -122,5 +133,9 @@ void free_test_data(test_data* data);
 
 void shuffle_test_data(test_data *test, int count);
 test_result test_network(neural_network* network, test_data *test);
+
+gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* network, test_data* data, int vanishingBound,
+    int explodingBound);
+void free_gradient_diagnostic(gradient_diagnostic* diag);
 
 #endif // NEURAL_NETWORK_H
