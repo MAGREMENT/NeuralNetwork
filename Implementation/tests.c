@@ -21,8 +21,8 @@ int main() {
     const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    set_activation_type(network, SIGMOID, SIGMOID);
-    network->learningRate = 10;
+    set_activation_type(network, LEAKY_RELU, LEAKY_RELU);
+    network->learningRate = 0.01;
 
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
@@ -31,11 +31,8 @@ int main() {
 
     initialize(network);
 
-    gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, 1, 10);
-    for (int i = 0; i < diag->count; i++) {
-        printf("%d gradients more than %d and less than %d\n",
-            diag->scales[i].count, diag->scales[i].lower, diag->scales[i].upper);
-    }
+    gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
+    print_diagnostic(network, diag);
 
     iterative_learn(network, data, NULL, 100);
 
@@ -59,7 +56,9 @@ int main() {
 
     printf("%f\n", accuracy / data->count * 100);
 
-
+    free_gradient_diagnostic(diag);
+    diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
+    print_diagnostic(network, diag);
 
     free_gradient_diagnostic(diag);
     free_network(network);

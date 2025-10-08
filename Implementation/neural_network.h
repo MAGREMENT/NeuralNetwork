@@ -57,9 +57,26 @@ typedef struct gradient_scale {
     int count;
 } gradient_scale;
 
+typedef struct weight_scale {
+    int layer;
+    int in;
+    int out;
+    int scale;
+} weight_scale;
+
+typedef struct bias_scale {
+    int layer;
+    int out;
+    int scale;
+} bias_scale;
+
 typedef struct gradient_diagnostic {
     gradient_scale* scales;
-    int count;
+    int scaleCount;
+    weight_scale* criticalWeights;
+    int cwCount;
+    bias_scale* criticalBiases;
+    int cbCount;
 } gradient_diagnostic;
 
 enum activation_type {
@@ -137,5 +154,6 @@ test_result test_network(neural_network* network, test_data *test);
 gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* network, test_data* data, int vanishingBound,
     int explodingBound);
 void free_gradient_diagnostic(gradient_diagnostic* diag);
+void print_diagnostic(neural_network* network, gradient_diagnostic* diag);
 
 #endif // NEURAL_NETWORK_H
