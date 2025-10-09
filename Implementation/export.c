@@ -66,6 +66,14 @@ inline void SetShuffleDataOnIteration(neural_network* n, int sdoi) {
     n->shuffleDataOnIteration = sdoi;
 }
 
+inline int GetThreadCount(neural_network* n) {
+    return n->threadCount;
+}
+
+inline void SetThreadCount(neural_network* n, int th) {
+    n->threadCount = th;
+}
+
 inline void SetActivationType(neural_network* n, int type, int outputType) {
     set_activation_type(n, type, outputType);
 }

@@ -85,6 +85,8 @@ public partial class NeuralNetwork : IDisposable
     public void SetLearningRate(double lr) => SetLearningRate(Ptr, lr);
     public int GetShuffleDataOnIteration() => GetShuffleDataOnIteration(Ptr);
     public void SetShuffleDataOnIteration(int sdoi) => SetShuffleDataOnIteration(Ptr, sdoi);
+    public int GetThreadCount() => GetThreadCount(Ptr);
+    public void SetThreadCount(int count) => SetThreadCount(Ptr, count);
     public void SetOptimizerGradientDescent() => SetOptimizerGradientDescent(Ptr);
     public void SetOptimizerMomentum(double momentum) => SetOptimizerMomentum(Ptr, momentum);
     public void SetOptimizerNesterov(double decay) => SetOptimizerNesterov(Ptr, decay);
@@ -204,6 +206,14 @@ public partial class NeuralNetwork : IDisposable
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void SetShuffleDataOnIteration(IntPtr ptr, int sdoi);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial int GetThreadCount(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetThreadCount(IntPtr ptr, int th);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]

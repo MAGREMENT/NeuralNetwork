@@ -23,6 +23,8 @@ DLL_EXPORT double GetLearningRate(neural_network* n);
 DLL_EXPORT void SetLearningRate(neural_network* n, double lr);
 DLL_EXPORT int GetShuffleDataOnIteration(neural_network* n);
 DLL_EXPORT void SetShuffleDataOnIteration(neural_network* n, int sdoi);
+DLL_EXPORT int GetThreadCount(neural_network* n);
+DLL_EXPORT void SetThreadCount(neural_network* n, int th);
 DLL_EXPORT void SetActivationType(neural_network* n, int type, int outputType);
 DLL_EXPORT void SetCostType(neural_network* n, int type);
 DLL_EXPORT void SetOptimizerGradientDescent(neural_network* n);

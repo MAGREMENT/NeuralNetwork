@@ -33,6 +33,7 @@ public class MNISTReaderTests
     {
         using var n = new NeuralNetwork(784, 200, 100, 10);
         n.SetDataSelectorFullBatch();
+        n.SetThreadCount(4);
         
         var data = MNIST.Read(
             @"mnist-data\t10k-labels.idx1-ubyte", 
