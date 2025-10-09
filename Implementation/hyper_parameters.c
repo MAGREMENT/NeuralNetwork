@@ -16,6 +16,10 @@ static double def_lr() {
     return 1;
 }
 
+static int def_tc() {
+    return 1;
+}
+
 static int def_a() {
     return SIGMOID;
 }
@@ -43,6 +47,7 @@ static learning_rate_scheduler* def_lrs() {
 inline void apply_default_hyper_params(neural_network* network) {
     network->shuffleDataOnIteration = def_sdoi();
     network->learningRate = def_lr();
+    network->threadCount = def_tc();
 
     set_activation_type(network, def_a(), def_oa());
     set_cost_type(network, def_c());
@@ -55,6 +60,7 @@ inline void apply_default_hyper_params(neural_network* network) {
 void apply_hyper_params(neural_network* network, yaml_hyper_parameter* list, int count) {
     int sdoi = def_sdoi();
     double lr = def_lr();
+    int tc = def_tc();
     int a = def_a();
     int oa = def_oa();
     int c = def_c();
@@ -78,6 +84,7 @@ void apply_hyper_params(neural_network* network, yaml_hyper_parameter* list, int
 
     network->shuffleDataOnIteration = sdoi;
     network->learningRate = lr;
+    network->threadCount = def_tc();
     set_activation_type(network, a, oa);
     set_cost_type(network, c);
     set_optimizer(network, opt == NULL ? def_opt() : opt);

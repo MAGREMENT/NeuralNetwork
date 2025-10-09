@@ -1,13 +1,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "neural_network.h"
 #include "big-array.c"
 #include "functions.h"
-#include "generator.h"
-#include "repository.h"
-#include "utils.h"
 
 void unit_tests();
 void cut_2D_test();
@@ -18,11 +16,14 @@ int main() {
 
     //return EXIT_SUCCESS;
 
+    clock_t start = clock();
+
     const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    set_activation_type(network, LEAKY_RELU, LEAKY_RELU);
-    network->learningRate = 0.01;
+    set_activation_type(network, SIGMOID, SIGMOID);
+    network->learningRate = 10;
+    network->threadCount = 1;
 
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     test_data* data = alloc_flattened_test_data(big_arr1, 7, big_arr2, 3, 128);
@@ -34,7 +35,7 @@ int main() {
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    iterative_learn(network, data, NULL, 100);
+    iterative_learn(network, data, NULL, 10000);
 
     printf("%f\n", avg_cost(network, data));
 
@@ -63,6 +64,10 @@ int main() {
     free_gradient_diagnostic(diag);
     free_network(network);
     free_test_data(data);
+
+    clock_t end = clock();
+
+    printf("Time : %fs", (double)(end - start) / CLOCKS_PER_SEC);
 
     return EXIT_SUCCESS;
 }

@@ -16,6 +16,7 @@ typedef struct neural_network {
     learning_rate_scheduler* scheduler;
 
     int shuffleDataOnIteration;
+    int threadCount;
     data_selector* data_selector;
     optimizer* optimizer;
 
@@ -134,6 +135,8 @@ void continue_advance(layer layer, const backpropagation_data* data, int inputIn
 
 void add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
     input_data expected);
+void async_add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
+    input_data expected, void* criticalSection);
 
 input_data* alloc_input_data(int count);
 input_data* alloc_input_data_array(int innerCount, int count);

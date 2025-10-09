@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "functions.h"
+#include "multi-threading.h"
 #include "utils.h"
 
 inline neural_network* alloc_network(const int count, const int numbers[]){
@@ -360,56 +361,87 @@ inline double avg_cost(neural_network* network, test_data* data) {
     return c / data->count;
 }
 
+static void setup_nv(const backpropagation_data* data,
+        const neural_network* network, const layer_data* gradients, input_data input,
+        const input_data expected) {
+
+    const int lastIndex = network->count - 1;
+
+    for(int l = lastIndex; l >= 0; l--) {
+        void* d = network->layers[l].processInputs(data[l].weightedInputs, network->layers[l].out_count);
+
+        if(l == lastIndex) {
+            for(int i = 0; i < expected.count; i++){
+                const double costDerivative = network->costDerivative(data[l].afterActivations[i], expected.values[i]);
+                const double activationDerivative = network->layers[l].activationDerivative(data[l].weightedInputs[i], d);
+                data[l].nodeValues[i] = activationDerivative * costDerivative;
+            }
+        }
+        else {
+            const int out = network->layers[l + 1].out_count;
+            for(int i = 0; i < network->layers[l].out_count; i++) {
+                double value = 0;
+                for(int o = 0; o < out; o++) {
+                    const double w = network->layers[l + 1].weights[i * out + o];
+                    const double nv = data[l + 1].nodeValues[o];
+                    value += nv * w;
+                }
+
+                data[l].nodeValues[i] = value * network->layers[l].activationDerivative(data[l].weightedInputs[i], d);
+            }
+        }
+
+        network->layers[l].freeData(d);
+    }
+}
+
+static void add_gradients_from_nv(const backpropagation_data* data,
+        const neural_network* network, const layer_data* gradients, input_data input) {
+
+    const int lastIndex = network->count - 1;
+
+    for(int l = lastIndex; l >= 0; l--) {
+        const layer current = network->layers[l];
+        for(int o = 0; o < current.out_count; o++) {
+            const double nv = data[l].nodeValues[o];
+
+            for(int i = 0; i < current.in_count; i++) {
+                const double a = l == 0 ? input.values[i] : data[l - 1].afterActivations[i];
+                const double g = nv * a;
+                gradients[l].weights[i * current.out_count + o] += g;
+            }
+
+            gradients[l].biases[o] += nv;
+        }
+    }
+}
+
 inline void add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
         const input_data expected) {
 
     backpropagation_data* data = alloc_traverse(network, &input);
-    const int lastIndex = network->count - 1;
 
-    for(int n = lastIndex; n >= 0; n--) {
-        void* d = network->layers[n].processInputs(data[n].weightedInputs, network->layers[n].out_count);
-
-        if(n == lastIndex) {
-            for(int i = 0; i < expected.count; i++){
-                const double costDerivative = network->costDerivative(data[n].afterActivations[i], expected.values[i]);
-                const double activationDerivative = network->layers[n].activationDerivative(data[n].weightedInputs[i], d);
-                data[n].nodeValues[i] = activationDerivative * costDerivative;
-            }
-        }
-        else {
-            const int out = network->layers[n + 1].out_count;
-            for(int i = 0; i < network->layers[n].out_count; i++) {
-                double value = 0;
-                for(int o = 0; o < out; o++) {
-                    const double w = network->layers[n + 1].weights[i * out + o];
-                    const double nv = data[n + 1].nodeValues[o];
-                    value += nv * w;
-                }
-
-                data[n].nodeValues[i] = value * network->layers[n].activationDerivative(data[n].weightedInputs[i], d);
-            }
-        }
-
-        network->layers[n].freeData(d);
-
-        const layer current = network->layers[n];
-        for(int o = 0; o < current.out_count; o++) {
-            const double nv = data[n].nodeValues[o];
-
-            for(int i = 0; i < current.in_count; i++) {
-                const double a = n == 0 ? input.values[i] : data[n - 1].afterActivations[i];
-                const double g = nv * a;
-                gradients[n].weights[i * current.out_count + o] += g;
-            }
-
-            gradients[n].biases[o] += nv;
-        }
-    }
+    setup_nv(data, network, gradients, input, expected);
+    add_gradients_from_nv(data, network, gradients, input);
 
     free_back_data(data, network->count);
 }
 
-static void normalize_gradients(neural_network* network, layer_data* gradients, int dataCount) {
+void async_add_gradients(const neural_network* network, const layer_data* gradients, input_data input,
+    input_data expected, void* criticalSection) {
+
+    backpropagation_data* data = alloc_traverse(network, &input);
+
+    setup_nv(data, network, gradients, input, expected);
+
+    enter_critical_section(criticalSection);
+    add_gradients_from_nv(data, network, gradients, input);
+    exit_critical_section(criticalSection);
+
+    free_back_data(data, network->count);
+}
+
+static void average_gradients(neural_network* network, layer_data* gradients, int dataCount) {
     for (int l = 0; l < network->count; l++) {
         const int oc = network->layers[l].out_count;
         const int ic = network->layers[l].in_count;
@@ -423,14 +455,53 @@ static void normalize_gradients(neural_network* network, layer_data* gradients, 
     }
 }
 
-inline void learn(neural_network* network, test_data* data, range range, const double learningRate, void* optimizerState){
-    layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
+typedef struct async_gradient_computation {
+    neural_network* network;
+    layer_data* gradients;
+    test_data* data;
+    range range;
+    void* section;
+} async_gradient_computation;
 
-    for(int i = range.from; i < range.to; i++){
-        add_gradients(network, gradients, data->inputs[i], data->expected[i]);
+static void add_gradients_parallel(void* params, parallel_thread_info threadInfo) {
+    async_gradient_computation* agc = params;
+
+    const int delta = (agc->range.to - agc->range.from) / threadInfo.total;
+    const int start = delta * threadInfo.index;
+    int end = start + delta;
+    if (threadInfo.index == threadInfo.total - 1) {
+        end += (agc->range.to - agc->range.from) % threadInfo.total;
     }
 
-    normalize_gradients(network, gradients, range.to - range.from);
+    for (int i = start; i < end; i++) {
+        async_add_gradients(agc->network, agc->gradients, agc->data->inputs[i], agc->data->expected[i], agc->section);
+    }
+}
+
+inline void learn(neural_network* network, test_data* data, range range, const double learningRate,
+        void* optimizerState){
+    layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
+
+    if (network->threadCount <= 1) {
+        for(int i = range.from; i < range.to; i++){
+            add_gradients(network, gradients, data->inputs[i], data->expected[i]);
+        }
+    }
+    else {
+        void* cs = alloc_critical_section();
+        async_gradient_computation params;
+
+        params.network = network;
+        params.gradients = gradients;
+        params.data = data;
+        params.range = range;
+        params.section = cs;
+
+        exec_parallel(add_gradients_parallel, &params, network->threadCount);
+        free_critical_section(cs);
+    }
+
+    average_gradients(network, gradients, range.to - range.from);
 
     network->optimizer->apply_gradients(network->optimizer, optimizerState, network->layers, gradients,
             network->count, range.iteration, learningRate);
@@ -593,7 +664,7 @@ inline gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* networ
         add_gradients(network, gradients, data->inputs[i], data->expected[i]);
     }
 
-    normalize_gradients(network, gradients, data->count);
+    average_gradients(network, gradients, data->count);
 
     for (int l = 0; l < network->count; l++) {
         const int out_count = network->layers[l].out_count;
