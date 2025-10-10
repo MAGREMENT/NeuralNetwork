@@ -35,8 +35,14 @@ void softmax_free_data(void* data);
 double mean_square_cost(double predicted, double expected);
 double derivative_mean_square_cost(double predicted, double expected);
 
-double cross_entropy_cost(double predicted, double expected);
-double derivative_cross_entropy_cost(double predicted, double expected);
+double mean_absolute_cost(double predicted, double expected);
+double derivative_mean_absolute_cost(double predicted, double expected);
+
+double mean_log_cosh_cost(double predicted, double expected);
+double derivative_mean_log_cosh_cost(double predicted, double expected);
+
+double binary_cross_entropy_cost(double predicted, double expected);
+double derivative_binary_cross_entropy_cost(double predicted, double expected);
 
 //Initialization
 

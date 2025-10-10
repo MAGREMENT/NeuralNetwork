@@ -32,9 +32,10 @@ typedef struct parallel_handler {
     parallel_thread_info threadInfo;
 } parallel_handler;
 
-static void exec_parallel_handler(LPVOID param) {
+static DWORD exec_parallel_handler(LPVOID param) {
     parallel_handler* ph = param;
     ph->func(ph->params, ph->threadInfo);
+    return 0;
 }
 
 void exec_parallel(void(*func)(void* params, parallel_thread_info threadInfo), void* params, int threadCount) {

@@ -17,6 +17,15 @@ public readonly struct GuessingPoint
         Output = output;
     }
 
+    public static IEnumerable<GuessingPoint> FromFlattenedData(FlattenedData data)
+    {
+        for (int i = 0; i < data.GetCount(); i++)
+        {
+            yield return new GuessingPoint(data.Inputs.Copy(i * data.InputCutOff, (i + 1) * data.InputCutOff),
+                data.Expected.IndexOfHighestValue(i * data.ExpectedCutOff, (i + 1) * data.ExpectedCutOff));
+        }
+    }
+
     public static IEnumerable<GuessingPoint> GenerateRandom(GenerateOutput generateFunc, BoundingBox box, int count)
     {
         var random = new Random();

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "functions.h"
 #include "repository.h"
 #include "utils.h"
 
@@ -149,9 +150,9 @@ inline void Learn(neural_network* ptr, learning_state* state, double* inputs, in
     free(ex_seq);
 #endif
 
-    test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    test_data* test = alloc_transfer_flattened_data(inputs, inputCutoff, expected, expectedCutoff, count);
     iterative_learn(ptr, test, state, iterations);
-    free_test_data(test);
+    free_transferred_flattened_data(test);
 }
 
 inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* expected, int expectedCount) {
@@ -167,9 +168,9 @@ inline double Cost(neural_network* ptr, double* inputs, int inputCount, double* 
 }
 
 inline double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
-    test_data* test = alloc_flattened_test_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    test_data* test = alloc_transfer_flattened_data(inputs, inputCutoff, expected, expectedCutoff, count);
     const double result = avg_cost(ptr, test);
-    free_test_data(test);
+    free_transferred_flattened_data(test);
     return result;
 }
 
@@ -179,4 +180,16 @@ inline learning_state* CreateState(neural_network* ptr) {
 
 inline void DisposeState(neural_network* ptr, learning_state* state) {
     free_state(ptr, state);
+}
+
+void Standardize(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
+    test_data* data = alloc_transfer_flattened_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    standardize(data);
+    free_transferred_flattened_data(data);
+}
+
+void MinMaxScale(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
+    test_data* data = alloc_transfer_flattened_data(inputs, inputCutoff, expected, expectedCutoff, count);
+    min_max_scale(data);
+    free_transferred_flattened_data(data);
 }

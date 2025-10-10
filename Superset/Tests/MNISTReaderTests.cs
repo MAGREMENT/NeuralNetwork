@@ -34,14 +34,15 @@ public class MNISTReaderTests
         using var n = new NeuralNetwork(784, 200, 100, 10);
         n.SetDataSelectorFullBatch();
         n.SetThreadCount(4);
+        n.SetActivationType(ActivationType.RELU, ActivationType.SOFTMAX);
         
         var data = MNIST.Read(
             @"mnist-data\t10k-labels.idx1-ubyte", 
-            @"mnist-data\t10k-images.idx3-ubyte");
+            @"mnist-data\t10k-images.idx3-ubyte", 1000);
         var flattened = FlattenedData.FromGuessingPoints(data, 10);
         Console.WriteLine(n.GetCost(flattened));
         Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
-        n.Learn(flattened, 3);
+        n.Learn(flattened, 30);
         Console.WriteLine(n.GetCost(flattened));
         Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
     }

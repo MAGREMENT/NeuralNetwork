@@ -9,6 +9,7 @@
 #include "utils.h"
 
 #define LEAK 0.01
+#define CLAMP 1e-12
 
 inline double default_activation(double input, void* processedData){
     return input;
@@ -98,21 +99,41 @@ void softmax_free_data(void* data) {
 
 inline double mean_square_cost(double predicted, double expected){
     const double error = predicted - expected;
-    return 0.5 * error * error;
+    return error * error;
 }
 
 inline double derivative_mean_square_cost(double predicted, double expected){
-    return predicted - expected;
+    return 2 * (predicted - expected);
 }
 
-inline double cross_entropy_cost(double predicted, double expected) {
-    const double v = expected >= 1 ? predicted : 1 - predicted;
-    if (v <= 0) return 0;
+inline double mean_absolute_cost(double predicted, double expected) {
+    return fabs(predicted - expected);
+}
+
+inline double derivative_mean_absolute_cost(double predicted, double expected) {
+    double mean = predicted - expected;
+    if (mean > 0) return 1;
+    if (mean < 0) return -1;
+    return 0;
+}
+
+inline double mean_log_cosh_cost(double predicted, double expected) {
+    return log(cosh(predicted - expected));
+}
+
+inline double derivative_mean_log_cosh_cost(double predicted, double expected) {
+    return tanh(predicted - expected);
+}
+
+inline double binary_cross_entropy_cost(double predicted, double expected) {
+    double v = expected >= 1 ? predicted : 1 - predicted;
+    if (v <= 0) v = CLAMP;
     return -log(v);
 }
 
-inline double derivative_cross_entropy_cost(double predicted, double expected) {
-    if (predicted == 0 || predicted == 1) return 0;
+inline double derivative_binary_cross_entropy_cost(double predicted, double expected) {
+    if (predicted == 0) predicted = CLAMP;
+    else if (predicted == 1) predicted = 1 - CLAMP;
     return (expected - predicted) / (predicted * (predicted - 1));
 }
 

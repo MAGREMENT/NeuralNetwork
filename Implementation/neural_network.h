@@ -92,7 +92,9 @@ enum activation_type {
 
 enum cost_type {
     MEAN_SQUARED,
-    CROSS_ENTROPY
+    MEAN_ABSOLUTE,
+    MEAN_LOG_COSH,
+    BINARY_CROSS_ENTROPY
 };
 
 neural_network* alloc_network(int count, const int numbers[]);
@@ -148,8 +150,9 @@ backpropagation_data* alloc_back_data(const neural_network* network);
 void free_back_data(backpropagation_data* data, int count);
 
 test_data* alloc_test_data(int count, int inputCount, int outputCount);
-test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 void free_test_data(test_data* data);
+test_data* alloc_transfer_flattened_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
+void free_transferred_flattened_data(test_data* data);
 
 void shuffle_test_data(test_data *test, int count);
 test_result test_network(neural_network* network, test_data *test);

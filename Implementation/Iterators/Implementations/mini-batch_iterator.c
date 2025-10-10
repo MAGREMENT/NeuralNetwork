@@ -19,15 +19,16 @@ static int next(range_iterator* iterator) {
 
     if (iterator->current.to >= state->size) {
         iterator->current.iteration++;
-        if (iterator->current.iteration >= state->max_iterations) return false;
+        if (iterator->current.iteration > state->max_iterations) return false;
 
         iterator->current.from = 0;
         iterator->current.to = state->batch_size;
     } else {
         iterator->current.from = iterator->current.to;
         iterator->current.to += state->batch_size;
-        if (iterator->current.to > state->size) iterator->current.to = state->size;
     }
+
+    if (iterator->current.to > state->size) iterator->current.to = state->size;
 
     return iterator->current.iteration <= state->max_iterations;
 }

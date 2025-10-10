@@ -7,7 +7,11 @@ public class FlattenedData(double[] inputs, int inputCutOff, double[] expected, 
     public readonly double[] Expected = expected;
     public readonly int ExpectedCutOff = expectedCutOff;
 
-    public int GetCount() => Inputs.Length / InputCutOff;
+    public int GetCount()
+    {
+        if (InputCutOff == 0) return 0;
+        return Inputs.Length / InputCutOff;
+    }
 
     public static FlattenedData Empty() => new(Array.Empty<double>(), 0, Array.Empty<double>(), 0);
 

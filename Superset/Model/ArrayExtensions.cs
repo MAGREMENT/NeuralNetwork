@@ -10,6 +10,13 @@ public static class ArrayExtensions
         arr.CopyTo(result, 0);
         return result;
     }
+    
+    public static T[] Copy<T>(this T[] arr, int from, int to)
+    {
+        var result = new T[to - from];
+        Array.Copy(arr, from, result, 0, result.Length);
+        return result;
+    }
 
     public static T[,] To2D<T>(this T[] arr, int width, int height)
     {
@@ -50,6 +57,26 @@ public static class ArrayExtensions
             {
                 ind = i;
                 max = arr[i];
+            }
+        }
+
+        return ind;
+    }
+    
+    public static int IndexOfHighestValue(this double[] arr, int from, int to)
+    {
+        var length = to - from;
+        if (length == 0) return -1;
+
+        var max = arr[from];
+        var ind = 0;
+
+        for (int i = 1; i < length; i++)
+        {
+            if (arr[from + i] > max)
+            {
+                ind = i;
+                max = arr[from + i];
             }
         }
 

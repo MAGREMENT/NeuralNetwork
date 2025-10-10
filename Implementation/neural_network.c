@@ -109,9 +109,17 @@ inline void set_cost_type(neural_network* network, int type) {
             network->cost = mean_square_cost;
             network->costDerivative = derivative_mean_square_cost;
         break;
-        case CROSS_ENTROPY:
-            network->cost = cross_entropy_cost;
-            network->costDerivative = derivative_cross_entropy_cost;
+        case MEAN_ABSOLUTE:
+            network->cost = mean_absolute_cost;
+            network->costDerivative = derivative_mean_absolute_cost;
+        break;
+        case MEAN_LOG_COSH:
+            network->cost = mean_log_cosh_cost;
+            network->costDerivative = derivative_mean_log_cosh_cost;
+        break;
+        case BINARY_CROSS_ENTROPY:
+            network->cost = binary_cross_entropy_cost;
+            network->costDerivative = derivative_binary_cross_entropy_cost;
         break;
         default:
             network->cost = NULL;
@@ -167,9 +175,9 @@ inline void free_layers(layer* layers, int count) {
 }
 
 inline void free_network(neural_network* network){
-    network->optimizer->free(network->optimizer);
-    network->scheduler->free(network->scheduler);
-    network->data_selector->free(network->data_selector);
+    if (network->optimizer != NULL) network->optimizer->free(network->optimizer);
+    if (network->scheduler != NULL) network->scheduler->free(network->scheduler);
+    if (network->data_selector != NULL) network->data_selector->free(network->data_selector);
 
     free_layers(network->layers, network->count);
     free(network);
@@ -561,26 +569,27 @@ inline test_data* alloc_test_data(const int count, const int inputCount, const i
     return result;
 }
 
-inline test_data* alloc_flattened_test_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
-    test_data* test = alloc_test_data(count, inputCutoff, expectedCutoff);
+inline test_data* alloc_transfer_flattened_data(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count) {
+    test_data* test = malloc(sizeof(test_data));
+    test->count = count;
+    test->inputs = malloc(sizeof(input_data) * count);
+    test->expected = malloc(sizeof(input_data) * count);
 
     for (int i = 0; i < count; i++) {
-        int start = inputCutoff * i;
         test->inputs[i].count = inputCutoff;
+        test->inputs[i].values = inputs + inputCutoff * i;
 
-        for (int j = 0; j < inputCutoff; j++) {
-            test->inputs[i].values[j] = inputs[start + j];
-        }
-
-        start = expectedCutoff * i;
         test->expected[i].count = expectedCutoff;
-
-        for (int j = 0; j < expectedCutoff; j++) {
-            test->expected[i].values[j] = expected[start + j];
-        }
+        test->expected[i].values = expected + expectedCutoff * i;
     }
 
     return test;
+}
+
+inline void free_transferred_flattened_data(test_data* data) {
+    free(data->inputs);
+    free(data->expected);
+    free(data);
 }
 
 inline void free_test_data(test_data* data){

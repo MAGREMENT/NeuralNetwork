@@ -43,5 +43,7 @@ DLL_EXPORT double Cost(neural_network* ptr, double* inputs, int inputCount, doub
 DLL_EXPORT double MultiCost(neural_network* ptr, double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 DLL_EXPORT learning_state* CreateState(neural_network* ptr);
 DLL_EXPORT void DisposeState(neural_network* ptr, learning_state* state);
+DLL_EXPORT void Standardize(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
+DLL_EXPORT void MinMaxScale(double* inputs, int inputCutoff, double* expected, int expectedCutoff, int count);
 
 #endif //EXPORT_H

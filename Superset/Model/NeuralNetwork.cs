@@ -94,6 +94,16 @@ public partial class NeuralNetwork : IDisposable
     public void SetDataSelectorFullBatch() => SetDataSelectorFullBatch(Ptr);
     public void SetDataSelectorMiniBatch(int batchSize) => SetDataSelectorMiniBatch(Ptr, batchSize);
 
+    public void SetActivationType(ActivationType type, ActivationType outputType)
+    {
+        SetActivationType(Ptr, (int)type, (int)outputType);
+    }
+    
+    public void SetCostType(CostType type)
+    {
+        SetCostType(Ptr, (int)type);
+    }
+
     public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
     
     public double[] Predict(double[] inputs, int length)
@@ -217,6 +227,14 @@ public partial class NeuralNetwork : IDisposable
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetActivationType(IntPtr ptr, int type, int outputType);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetCostType(IntPtr ptr, int type);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void SetOptimizerGradientDescent(IntPtr ptr);
     
     [LibraryImport("libExport.dll")]
@@ -275,18 +293,19 @@ public partial class NeuralNetwork : IDisposable
         int expectedCutOff, int count);
 }
 
-public static class ActivationType
+public enum ActivationType
 {
-    public const int DEFAULT = 0;
-    public const int SIGMOID = 1;
-    public const int TANH = 2;
-    public const int RELU = 3;
-    public const int SILU = 4;
-    public const int SOFTMAX = 5;
+    DEFAULT,
+    SIGMOID,
+    TANH,
+    RELU,
+    LEAKY_RELU,
+    SILU,
+    SOFTMAX,
 }
 
-public static class CostType
+public enum CostType
 {
-    public const int MEAN_SQUARED = 0;
-    public const int CROSS_ENTROPY = 1;
+    MEAN_SQUARED,
+    CROSS_ENTROPY
 }

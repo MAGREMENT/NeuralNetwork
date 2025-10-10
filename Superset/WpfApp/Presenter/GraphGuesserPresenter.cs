@@ -101,7 +101,9 @@ public class GraphGuesserPresenter : IDisposable
 
     private FlattenedData GetFlattenedData()
     {
-        return FlattenedData.FromGuessingPoints(_points, 2);
+        var f = FlattenedData.FromGuessingPoints(_points, 2);
+        Normalization.Standardize(f);
+        return f;
     }
 
     private static int GenerateSinusOutput(double x, double y)
