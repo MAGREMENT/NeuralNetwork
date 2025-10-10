@@ -40,64 +40,56 @@ inline void set_activation_type(neural_network* network, int type, int outputTyp
                 network->layers[i].activationDerivative = derivative_default_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = random_initialization;
+                network->layers[i].initialization = random_initialization;
             break;
             case SIGMOID :
                 network->layers[i].activation = sigmoid_activation;
                 network->layers[i].activationDerivative = derivative_sigmoid_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = xavier_initialization;
+                network->layers[i].initialization = xavier_initialization;
             break;
             case TANH :
                 network->layers[i].activation = tanh_activation;
                 network->layers[i].activationDerivative = derivative_tanh_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = xavier_initialization;
+                network->layers[i].initialization = xavier_initialization;
             break;
             case RELU :
                 network->layers[i].activation = relu_activation;
                 network->layers[i].activationDerivative = derivative_relu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = he_initialization;
+                network->layers[i].initialization = he_initialization;
             break;
             case LEAKY_RELU :
                 network->layers[i].activation = leaky_relu_activation;
                 network->layers[i].activationDerivative = derivative_leaky_relu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = he_initialization;
+                network->layers[i].initialization = he_initialization;
             break;
             case SILU :
                 network->layers[i].activation = silu_activation;
                 network->layers[i].activationDerivative = derivative_silu_activation;
                 network->layers[i].processInputs = default_process_inputs;
                 network->layers[i].freeData = default_free_data;
-
-                if (i == 0) network->initialization = random_initialization;
+                network->layers[i].initialization = random_initialization;
             break;
             case SOFTMAX :
                 network->layers[i].activation = softmax_activation;
                 network->layers[i].activationDerivative = derivative_softmax_activation;
                 network->layers[i].processInputs = softmax_process_inputs;
                 network->layers[i].freeData = softmax_free_data;
-
-                if (i == 0) network->initialization = random_initialization;
+                network->layers[i].initialization = random_initialization;
             break;
             default:
                 network->layers[i].activation = NULL;
                 network->layers[i].activationDerivative = NULL;
                 network->layers[i].processInputs = NULL;
                 network->layers[i].freeData = NULL;
-
-                if (i == 0) network->initialization = NULL;
+                network->layers[i].initialization = NULL;
             break;
         }
     }
@@ -145,7 +137,7 @@ void set_scheduler(neural_network* n, learning_rate_scheduler* lrs) {
 
 inline void initialize(neural_network* network) {
     for (int l = 0; l < network->count; l++) {
-        network->initialization(&network->layers[l]);
+        network->layers[l].initialization(&network->layers[l]);
 
         for (int o = 0; o < network->layers[l].out_count; o++) {
             network->layers[l].biases[o] = 0.0;

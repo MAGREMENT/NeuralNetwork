@@ -37,7 +37,7 @@ int main() {
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    iterative_learn(network, data, NULL, 100);
+    iterative_learn(network, data, NULL, 1000);
 
     printf("%f\n", avg_cost(network, data));
 

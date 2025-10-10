@@ -10,7 +10,6 @@
 typedef struct neural_network {
     int count;
     layer* layers;
-    void (*initialization)(layer* layer);
 
     double learningRate;
     learning_rate_scheduler* scheduler;

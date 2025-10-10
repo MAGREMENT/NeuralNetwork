@@ -11,7 +11,7 @@ public partial class NeuralNetwork : IDisposable
     {
         Ptr = Create(layers.Length, layers);
         Length = GetCount(Ptr);
-        Initialize(Ptr);
+        InitializeWeightsAndBiases();
     }
 
     private NeuralNetwork(IntPtr ptr)
@@ -28,6 +28,11 @@ public partial class NeuralNetwork : IDisposable
     public void Save(string file)
     {
         Save(Ptr, file);
+    }
+
+    public void InitializeWeightsAndBiases()
+    {
+        Initialize(Ptr);
     }
 
     public int GetInCount(int layer)
@@ -307,5 +312,7 @@ public enum ActivationType
 public enum CostType
 {
     MEAN_SQUARED,
-    CROSS_ENTROPY
+    MEAN_ABSOLUTE,
+    MEAN_LOG_COSH,
+    BINARY_CROSS_ENTROPY
 }

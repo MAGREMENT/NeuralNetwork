@@ -5,17 +5,20 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-typedef struct layer {
+typedef struct layer layer;
+
+struct layer {
     int in_count;
     int out_count;
     double* weights;
     double* biases;
 
+    void (*initialization)(layer* layer);
     double (*activation)(double, void*);
     double (*activationDerivative)(double, void*);
     void* (*processInputs)(double*, int);
     void (*freeData)(void*);
-} layer;
+};
 
 typedef struct layer_data {
     double* weights;
