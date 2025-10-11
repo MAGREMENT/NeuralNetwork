@@ -21,6 +21,7 @@ inline learning_rate_scheduler* constr_constant_scheduler() {
 
     sch->free = free;
     sch->schedule = constant_schedule;
+    sch->alloc_to_hyper = NULL;
 
     return sch;
 }
@@ -44,6 +45,8 @@ static double iteration_schedule(learning_rate_scheduler* sch, const double lear
 inline learning_rate_scheduler* constr_iteration_decay_scheduler(const double decay) {
     learning_rate_scheduler* sch = constr_single_double_param_scheduler(decay);
     sch->schedule = iteration_schedule;
+    sch->alloc_to_hyper = NULL;
+
     return sch;
 }
 
@@ -55,6 +58,8 @@ static double exponential_schedule(learning_rate_scheduler* sch, const double le
 inline learning_rate_scheduler* constr_exponential_decay_scheduler(const double decay) {
     learning_rate_scheduler* sch = constr_single_double_param_scheduler(decay);
     sch->schedule = exponential_schedule;
+    sch->alloc_to_hyper = NULL;
+
     return sch;
 }
 
@@ -66,6 +71,8 @@ static double inverse_schedule(learning_rate_scheduler* sch, const double learni
 inline learning_rate_scheduler* constr_inverse_decay_scheduler(const double decay) {
     learning_rate_scheduler* sch = constr_single_double_param_scheduler(decay);
     sch->schedule = inverse_schedule;
+    sch->alloc_to_hyper = NULL;
+
     return sch;
 }
 
@@ -88,6 +95,7 @@ learning_rate_scheduler* constr_cosine_decay_scheduler(const double endingLr, co
     sch->params = params;
     sch->free = free_default_scheduler;
     sch->schedule = cosine_schedule;
+    sch->alloc_to_hyper = NULL;
 
     return sch;
 }

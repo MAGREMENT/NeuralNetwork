@@ -56,14 +56,6 @@ void list_remove(void* arr, size_t size, int count, int index) {
     memmove(dest, src, (count - index - 1) * size);
 }
 
-void* list_grow(void* arr, size_t size, int currentCount, int wantedCount) {
-    void* result = malloc(size * wantedCount);
-    memcpy(result, arr, size * currentCount);
-    if (arr != NULL) free(arr);
-
-    return result;
-}
-
 char* alloc_seq_to_str(double* values, int count) {
     int size = 0;
     for (int i = 0; i < count; i++) {

@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 inline neural_network* restore(const char* file){
     FILE* fptr = fopen(file, "rb");

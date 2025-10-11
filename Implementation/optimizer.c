@@ -5,8 +5,11 @@
 #include "optimizer.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "hyper_parameters.h"
 
 #define EPSILON 1e-8
 
@@ -35,6 +38,12 @@ static void do_nothing(void* state, int layerCount) {
 
 }
 
+static s_arr* gd_to_hyper(optimizer* opt, int startIndentation) {
+    s_arr* result = alloc_s_arr(sizeof(yaml_line), 1);
+    l_set(result, yaml_line, 0, constr_yl(startIndentation, "optimizer", "gd"));
+    return result;
+}
+
 inline optimizer* create_gradient_descent_optimizer() {
     optimizer* opt = malloc(sizeof(optimizer));
 
@@ -42,6 +51,7 @@ inline optimizer* create_gradient_descent_optimizer() {
     opt->free_state = do_nothing;
     opt->apply_gradients = apply_gradients;
     opt->free = free;
+    opt->alloc_to_hyper = gd_to_hyper;
 
     return opt;
 }
@@ -86,6 +96,14 @@ static void free_opt(optimizer* opt) {
     free(opt);
 }
 
+static s_arr* mgd_to_hyper(optimizer* opt, int startIndentation) {
+    s_arr* result = alloc_s_arr(sizeof(yaml_line), 3);
+    l_set(result, yaml_line, 0, constr_yl(startIndentation, "optimizer", ""));
+    l_set(result, yaml_line, 1, constr_yl(startIndentation + 1, "type", "mgd"));
+    l_set(result, yaml_line, 2, constr_d_yl(startIndentation + 1, "momentum", ((double*)opt->params)[0]));
+    return result;
+}
+
 inline optimizer* create_momentum_gradient_descent_optimizer(const double momentum) {
     optimizer* opt = malloc(sizeof(optimizer));
     double* p = malloc(sizeof(double));
@@ -96,6 +114,7 @@ inline optimizer* create_momentum_gradient_descent_optimizer(const double moment
     opt->free_state = free_momentum_state;
     opt->apply_gradients = apply_gradients_momentum;
     opt->free = free_opt;
+    opt->alloc_to_hyper = mgd_to_hyper;
 
     return opt;
 }
@@ -127,6 +146,14 @@ static void apply_gradients_nesterov(optimizer* opt, void* state, layer* layers,
     }
 }
 
+static s_arr* nesterov_to_hyper(optimizer* opt, int startIndentation) {
+    s_arr* result = alloc_s_arr(sizeof(yaml_line), 3);
+    l_set(result, yaml_line, 0, constr_yl(startIndentation, "optimizer", ""));
+    l_set(result, yaml_line, 1, constr_yl(startIndentation + 1, "type", "nesterov"));
+    l_set(result, yaml_line, 2, constr_d_yl(startIndentation + 1, "momentum", ((double*)opt->params)[0]));
+    return result;
+}
+
 inline optimizer* create_nesterov_optimizer(const double momentum) {
     optimizer* opt = malloc(sizeof(optimizer));
     double* p = malloc(sizeof(double));
@@ -137,6 +164,7 @@ inline optimizer* create_nesterov_optimizer(const double momentum) {
     opt->free_state = free_momentum_state;
     opt->apply_gradients = apply_gradients_nesterov;
     opt->free = free_opt;
+    opt->alloc_to_hyper = nesterov_to_hyper;
 
     return opt;
 }
@@ -178,6 +206,7 @@ optimizer* create_rmsprop_optimizer(double decay) {
     opt->free_state = free_momentum_state;
     opt->apply_gradients = apply_gradients_rmsprop;
     opt->free = free_opt;
+    opt->alloc_to_hyper = NULL;
 
     return opt;
 }
@@ -243,6 +272,7 @@ optimizer* create_adam_optimizer(double beta1, double beta2) {
     opt->free_state = free_adam_state;
     opt->apply_gradients = apply_gradients_adam;
     opt->free = free_opt;
+    opt->alloc_to_hyper = NULL;
 
     return opt;
 }

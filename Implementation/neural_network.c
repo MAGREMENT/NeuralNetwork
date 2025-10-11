@@ -362,7 +362,7 @@ inline double avg_cost(neural_network* network, test_data* data) {
 }
 
 static void setup_nv(const backpropagation_data* data,
-        const neural_network* network, const layer_data* gradients, input_data input,
+        const neural_network* network,
         const input_data expected) {
 
     const int lastIndex = network->count - 1;
@@ -421,7 +421,7 @@ inline void add_gradients(const neural_network* network, const layer_data* gradi
 
     backpropagation_data* data = alloc_traverse(network, &input);
 
-    setup_nv(data, network, gradients, input, expected);
+    setup_nv(data, network, expected);
     add_gradients_from_nv(data, network, gradients, input);
 
     free_back_data(data, network->count);
@@ -432,7 +432,7 @@ void async_add_gradients(const neural_network* network, const layer_data* gradie
 
     backpropagation_data* data = alloc_traverse(network, &input);
 
-    setup_nv(data, network, gradients, input, expected);
+    setup_nv(data, network, expected);
 
     enter_critical_section(criticalSection);
     add_gradients_from_nv(data, network, gradients, input);
@@ -480,6 +480,7 @@ static void add_gradients_parallel(void* params, parallel_thread_info threadInfo
 
 inline void learn(neural_network* network, test_data* data, range range, const double learningRate,
         void* optimizerState){
+    //TODO optimize : pass as an argument when called from iterative_learn()
     layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
 
     if (network->threadCount <= 1) {
@@ -627,21 +628,18 @@ static int process_gradient_scale(gradient_diagnostic* diag, double value, int v
     const int x = floor(log(value) / log(10));
     const int result = x <= vanishingBound || x >= explodingBound ? x : 0;
 
-    for (int i = 0; i < diag->scaleCount; i++) {
-        if (diag->scales[i].lower <= x && diag->scales[i].upper > x) {
-            diag->scales[i].count++;
+    for (int i = 0; i < diag->scales->count; i++) {
+        if (l_get(diag->scales, gradient_scale, i).lower <= x && l_get(diag->scales, gradient_scale, i).upper > x) {
+            l_pget(diag->scales, gradient_scale, i)->count++;
             return result;
         }
     }
 
-    diag->scales = list_grow(diag->scales, sizeof(gradient_scale), diag->scaleCount, diag->scaleCount + 1);
-    diag->scaleCount += 1;
-
-    const int ind = diag->scaleCount - 1;
-    diag->scales[ind].count = 1;
-    diag->scales[ind].upper = x + 1;
-    diag->scales[ind].lower = x;
-
+    gradient_scale s;
+    s.count = 1;
+    s.upper = x + 1;
+    s.lower = x;
+    l_add(diag->scales, gradient_scale, s);
     return result;
 }
 
@@ -652,12 +650,9 @@ static int compare_grad_scale(void* s1, void* s2) {
 inline gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* network, test_data* data, int vanishingBound,
         int explodingBound) {
     gradient_diagnostic* diag = malloc(sizeof(gradient_diagnostic));
-    diag->scaleCount = 0;
-    diag->scales = NULL;
-    diag->criticalBiases = NULL;
-    diag->cbCount = 0;
-    diag->criticalWeights = NULL;
-    diag->cwCount = 0;
+    diag->scales = alloc_list(sizeof(gradient_scale));
+    diag->criticalBiases = alloc_list(sizeof(bias_scale));
+    diag->criticalWeights = alloc_list(sizeof(weight_scale));
 
     layer_data* gradients = alloc_layer_data_array(network->layers, network->count, 0);
 
@@ -676,57 +671,54 @@ inline gradient_diagnostic* alloc_run_gradient_diagnostic(neural_network* networ
                 const int index = i * out_count + o;
                 const int scale = process_gradient_scale(diag, gradients[l].weights[index], vanishingBound, explodingBound);
                 if (scale) {
-                    diag->criticalWeights = list_grow(diag->criticalWeights, sizeof(weight_scale),
-                        diag->cwCount, diag->cwCount + 1);
-
-                    diag->criticalWeights[diag->cwCount].layer = l;
-                    diag->criticalWeights[diag->cwCount].in = i;
-                    diag->criticalWeights[diag->cwCount].out = o;
-                    diag->criticalWeights[diag->cwCount].scale = scale;
-
-                    diag->cwCount++;
+                    weight_scale s;
+                    s.layer = l;
+                    s.in = i;
+                    s.out = o;
+                    s.scale = scale;
+                    l_add(diag->criticalWeights, weight_scale, s);
                 }
             }
 
             const int scale = process_gradient_scale(diag, gradients[l].biases[o], vanishingBound, explodingBound);
             if (scale) {
-                diag->criticalBiases = list_grow(diag->criticalBiases, sizeof(weight_scale),
-                    diag->cbCount, diag->cbCount + 1);
-
-                diag->criticalBiases[diag->cbCount].layer = l;
-                diag->criticalBiases[diag->cbCount].out = o;
-                diag->criticalBiases[diag->cbCount].scale = scale;
-
-                diag->cbCount++;
+                bias_scale s;
+                s.layer = l;
+                s.out = o;
+                s.scale = scale;
+                l_add(diag->criticalBiases, bias_scale, s);
             }
         }
     }
 
     free_layer_data_array(gradients, network->count);
 
-    qsort(diag->scales, diag->scaleCount, sizeof(gradient_scale), compare_grad_scale);
+    qsort(diag->scales->data, diag->scales->count, sizeof(gradient_scale), compare_grad_scale);
     return diag;
 }
 
 inline void free_gradient_diagnostic(gradient_diagnostic* diag) {
-    free(diag->scales);
+    free_list(diag->scales);
+    free_list(diag->criticalBiases);
+    free_list(diag->criticalWeights);
     free(diag);
 }
 
 inline void print_diagnostic(neural_network* network, gradient_diagnostic* diag) {
-    for (int i = 0; i < diag->scaleCount; i++) {
+    for (int i = 0; i < diag->scales->count; i++) {
+        gradient_scale s = l_get(diag->scales, gradient_scale, i);
         printf("%d gradients more than %d and less than %d\n",
-            diag->scales[i].count, diag->scales[i].lower, diag->scales[i].upper);
+            s.count, s.lower, s.upper);
     }
 
-    for (int i = 0; i < diag->cwCount; i++) {
-        weight_scale w = diag->criticalWeights[i];
+    for (int i = 0; i < diag->criticalWeights->count; i++) {
+        weight_scale w = l_get(diag->criticalWeights, weight_scale, i);
         printf("Critical gradient l%d i%d o%d with value %f and scale %d\n",
             w.layer, w.in, w.out, network->layers[w.layer].weights[w.in * network->layers[w.layer].out_count + w.out], w.scale);
     }
 
-    for (int i = 0; i < diag->cbCount; i++) {
-        bias_scale b = diag->criticalBiases[i];
+    for (int i = 0; i < diag->criticalBiases->count; i++) {
+        bias_scale b = l_get(diag->criticalBiases, bias_scale, i);
         printf("Critical gradient l%d o%d with value %f and scale %d\n",
             b.layer, b.out, network->layers[b.layer].biases[b.out], b.scale);
     }

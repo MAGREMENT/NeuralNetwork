@@ -28,7 +28,11 @@ add_executable(Test
         hyper_parameters.c
         hyper_parameters.h
         multi-threading.c
-        multi-threading.h)
+        multi-threading.h
+        list.c
+        list.h
+        yaml.c
+        yaml.h)
 add_library(Export SHARED
         export.c
         neural_network.c
@@ -53,4 +57,8 @@ add_library(Export SHARED
         hyper_parameters.c
         hyper_parameters.h
         multi-threading.c
-        multi-threading.h)
+        multi-threading.h
+        list.c
+        list.h
+        yaml.c
+        yaml.h)

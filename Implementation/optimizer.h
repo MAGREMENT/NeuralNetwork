@@ -6,6 +6,7 @@
 #define OPTIMIZER_H
 
 #include "layer.h"
+#include "list.h"
 
 typedef struct optimizer optimizer;
 
@@ -16,6 +17,7 @@ struct optimizer {
         int iteration, double learningRate);
     void (*free_state)(void* state, int layerCount);
     void (*free)(optimizer* optimizer);
+    s_arr* (*alloc_to_hyper)(optimizer* opt, int startIndentation); //TODO finish implementation
 };
 
 optimizer* create_gradient_descent_optimizer();

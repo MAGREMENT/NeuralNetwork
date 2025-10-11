@@ -4,6 +4,7 @@
 #include "data_selector.h"
 #include "layer.h"
 #include "learning_rate_sechduler.h"
+#include "list.h"
 #include "optimizer.h"
 #include "Iterators/iterator.h"
 
@@ -71,12 +72,9 @@ typedef struct bias_scale {
 } bias_scale;
 
 typedef struct gradient_diagnostic {
-    gradient_scale* scales;
-    int scaleCount;
-    weight_scale* criticalWeights;
-    int cwCount;
-    bias_scale* criticalBiases;
-    int cbCount;
+    list* scales;
+    list* criticalWeights;
+    list* criticalBiases;
 } gradient_diagnostic;
 
 enum activation_type {

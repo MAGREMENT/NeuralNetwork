@@ -4,6 +4,7 @@
 
 #ifndef LEARNING_RATE_SECHDULING_H
 #define LEARNING_RATE_SECHDULING_H
+#include "list.h"
 
 typedef struct learning_rate_scheduler learning_rate_scheduler;
 
@@ -11,6 +12,7 @@ struct learning_rate_scheduler {
     void* params;
     double (*schedule)(learning_rate_scheduler* sch, double learningRate, int iteration);
     void (*free)(learning_rate_scheduler* sch);
+    s_arr* (*alloc_to_hyper)(learning_rate_scheduler* lrs, int startIndentation); //TODO finish implementation
 };
 
 learning_rate_scheduler* constr_constant_scheduler();

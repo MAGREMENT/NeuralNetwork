@@ -7,6 +7,8 @@
 #include "big-array.c"
 #include "functions.h"
 #include "generator.h"
+#include "hyper_parameters.h"
+#include "list.h"
 #include "repository.h"
 #include "utils.h"
 
@@ -17,7 +19,15 @@ int main() {
     //cut_2D_test();
     //unit_tests();
 
-    //return EXIT_SUCCESS;
+    const int num[] = {7, 4, 3};
+    neural_network* n = alloc_network(3, num);
+    apply_default_hyper_params(n);
+
+    list* l = alloc_get_hyper_params(n);
+    save_yaml(l->data, l->count, "test.yaml");
+    free_list(l);
+
+    return EXIT_SUCCESS;
 
     clock_t start = clock();
 

@@ -18,6 +18,7 @@ inline data_selector* create_full_batch_selector() {
 
     sel->free = free;
     sel->constr_iterator = constr_fb_iterator;
+    sel->alloc_to_hyper = NULL;
 
     return sel;
 }
@@ -39,6 +40,7 @@ inline data_selector* create_mini_batch_selector(int batchSize) {
     sel->params = bs;
     sel->free = free_base;
     sel->constr_iterator = constr_mb_iterator;
+    sel->alloc_to_hyper = NULL;
 
     return sel;
 }
