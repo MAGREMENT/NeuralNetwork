@@ -32,7 +32,8 @@ add_executable(Test
         list.c
         list.h
         yaml.c
-        yaml.h)
+        yaml.h
+        store.c)
 add_library(Export SHARED
         export.c
         neural_network.c
@@ -61,4 +62,5 @@ add_library(Export SHARED
         list.c
         list.h
         yaml.c
-        yaml.h)
+        yaml.h
+        store.c)

@@ -104,6 +104,12 @@ inline list* alloc_get_hyper_params(neural_network* network) {
     l_add(result, yaml_line, constr_i_yl(indentation, "shuffle_data_on_iteration", network->shuffleDataOnIteration));
     l_add(result, yaml_line, constr_i_yl(indentation, "thread_count", network->threadCount));
 
+    int at, oat;
+    get_activation_type(network, &at, &oat);
+    l_add(result, yaml_line, constr_i_yl(indentation, "activation_type", at));
+    l_add(result, yaml_line, constr_i_yl(indentation, "output_activation_type", oat));
+    l_add(result, yaml_line, constr_i_yl(indentation, "cost_type", get_cost_type(network)));
+
     if (network->optimizer != NULL && network->optimizer->alloc_to_hyper != NULL) {
         s_arr* arr = network->optimizer->alloc_to_hyper(network->optimizer, indentation);
         l_add_s_arr(result, yaml_line, arr);
@@ -121,8 +127,6 @@ inline list* alloc_get_hyper_params(neural_network* network) {
         l_add_s_arr(result, yaml_line, arr);
         free(arr);
     }
-
-    //TODO activation type && cost type
 
     return result;
 }

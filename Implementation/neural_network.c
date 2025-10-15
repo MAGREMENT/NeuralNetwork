@@ -7,6 +7,7 @@
 
 #include "functions.h"
 #include "multi-threading.h"
+#include "store.h"
 #include "utils.h"
 
 inline neural_network* alloc_network(const int count, const int numbers[]){
@@ -34,90 +35,43 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
 inline void set_activation_type(neural_network* network, int type, int outputType) {
     for(int i = 0; i < network->count; i++) {
         const int t = i == network->count - 1 ? outputType : type;
-        switch (t) {
-            case DEFAULT :
-                network->layers[i].activation = default_activation;
-                network->layers[i].activationDerivative = derivative_default_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = random_initialization;
-            break;
-            case SIGMOID :
-                network->layers[i].activation = sigmoid_activation;
-                network->layers[i].activationDerivative = derivative_sigmoid_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = xavier_initialization;
-            break;
-            case TANH :
-                network->layers[i].activation = tanh_activation;
-                network->layers[i].activationDerivative = derivative_tanh_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = xavier_initialization;
-            break;
-            case RELU :
-                network->layers[i].activation = relu_activation;
-                network->layers[i].activationDerivative = derivative_relu_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = he_initialization;
-            break;
-            case LEAKY_RELU :
-                network->layers[i].activation = leaky_relu_activation;
-                network->layers[i].activationDerivative = derivative_leaky_relu_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = he_initialization;
-            break;
-            case SILU :
-                network->layers[i].activation = silu_activation;
-                network->layers[i].activationDerivative = derivative_silu_activation;
-                network->layers[i].processInputs = default_process_inputs;
-                network->layers[i].freeData = default_free_data;
-                network->layers[i].initialization = random_initialization;
-            break;
-            case SOFTMAX :
-                network->layers[i].activation = softmax_activation;
-                network->layers[i].activationDerivative = derivative_softmax_activation;
-                network->layers[i].processInputs = softmax_process_inputs;
-                network->layers[i].freeData = softmax_free_data;
-                network->layers[i].initialization = random_initialization;
-            break;
-            default:
-                network->layers[i].activation = NULL;
-                network->layers[i].activationDerivative = NULL;
-                network->layers[i].processInputs = NULL;
-                network->layers[i].freeData = NULL;
-                network->layers[i].initialization = NULL;
-            break;
+        if (t < 0 || t > activation_store_max) {
+            network->layers[i].activation = NULL;
+            network->layers[i].activationDerivative = NULL;
+            network->layers[i].processInputs = NULL;
+            network->layers[i].freeData = NULL;
+            network->layers[i].initialization = NULL;
+        }
+        else {
+            const activation_data data = activation_store[t];
+            network->layers[i].activation = data.activation;
+            network->layers[i].activationDerivative = data.activationDerivative;
+            network->layers[i].processInputs = data.processInputs;
+            network->layers[i].freeData = data.freeData;
+            network->layers[i].initialization = data.initialization;
         }
     }
 }
 
 inline void set_cost_type(neural_network* network, int type) {
-    switch (type) {
-        case MEAN_SQUARED:
-            network->cost = mean_square_cost;
-            network->costDerivative = derivative_mean_square_cost;
-        break;
-        case MEAN_ABSOLUTE:
-            network->cost = mean_absolute_cost;
-            network->costDerivative = derivative_mean_absolute_cost;
-        break;
-        case MEAN_LOG_COSH:
-            network->cost = mean_log_cosh_cost;
-            network->costDerivative = derivative_mean_log_cosh_cost;
-        break;
-        case BINARY_CROSS_ENTROPY:
-            network->cost = binary_cross_entropy_cost;
-            network->costDerivative = derivative_binary_cross_entropy_cost;
-        break;
-        default:
-            network->cost = NULL;
-            network->costDerivative = NULL;
-        break;
+    if (type < 0 || type > cost_store_max) {
+        network->cost = NULL;
+        network->costDerivative = NULL;
     }
+    else {
+        const cost_data data = cost_store[type];
+        network->cost = data.cost;
+        network->costDerivative = data.costDerivative;
+    }
+}
+
+void get_activation_type(neural_network* network, int* type, int* outputType) {
+    *type = find_activation(network->layers[0].activation);
+    *outputType = find_activation(network->layers[network->count - 1].activation);
+}
+
+inline int get_cost_type(neural_network* network) {
+    return find_cost(network->cost);
 }
 
 void set_optimizer(neural_network* n, optimizer* opt) {

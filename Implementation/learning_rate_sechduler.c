@@ -37,6 +37,7 @@ static learning_rate_scheduler* constr_single_double_param_scheduler(const doubl
     return sch;
 }
 
+//TODO introduce step size
 static double iteration_schedule(learning_rate_scheduler* sch, const double learningRate, int iteration) {
     const double decay = *(double*)sch->params;
     return learningRate * pow(decay, iteration);
@@ -82,7 +83,7 @@ typedef struct cosine_decay_params {
 } cosine_decay_params;
 
 static double cosine_schedule(learning_rate_scheduler* sch, const double learningRate, int iteration) {
-    cosine_decay_params* p = (cosine_decay_params*)sch;
+    cosine_decay_params* p = sch->params;
     return p->ending + 0.5 * (learningRate - p->ending) * (1 + cos(M_PI * iteration / p->span));
 }
 

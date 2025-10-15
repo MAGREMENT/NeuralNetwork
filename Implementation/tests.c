@@ -19,15 +19,7 @@ int main() {
     //cut_2D_test();
     //unit_tests();
 
-    const int num[] = {7, 4, 3};
-    neural_network* n = alloc_network(3, num);
-    apply_default_hyper_params(n);
-
-    list* l = alloc_get_hyper_params(n);
-    save_yaml(l->data, l->count, "test.yaml");
-    free_list(l);
-
-    return EXIT_SUCCESS;
+    //return EXIT_SUCCESS;
 
     clock_t start = clock();
 
@@ -36,8 +28,15 @@ int main() {
     apply_default_hyper_params(network);
     set_activation_type(network, SIGMOID, SIGMOID);
     set_cost_type(network, BINARY_CROSS_ENTROPY);
+    set_scheduler(network, constr_iteration_decay_scheduler(0.999));
     network->learningRate = 1;
     network->threadCount = 1;
+
+    /*list* l = alloc_get_hyper_params(network);
+    save_yaml(l->data, l->count, "test.yaml");
+    free_list(l);
+
+    return EXIT_SUCCESS;*/
 
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     test_data* data = alloc_transfer_flattened_data(big_arr1, 7, big_arr2, 3, 128);
@@ -47,7 +46,14 @@ int main() {
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    iterative_learn(network, data, NULL, 1000);
+    //iterative_learn(network, data, NULL, 1000);
+
+    learning_state* state = alloc_state(network);
+    for (int i = 0; i < 10; i++) {
+        iterative_learn(network, data, state, 100);
+    }
+
+    free_state(network, state);
 
     printf("%f\n", avg_cost(network, data));
 
