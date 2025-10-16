@@ -26,7 +26,7 @@ int main() {
     const int numbers[] = {7, 4, 3};
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    set_activation_type(network, SIGMOID, SIGMOID);
+    set_activation_type(network, SIGMOID, SOFTMAX);
     set_cost_type(network, BINARY_CROSS_ENTROPY);
     set_scheduler(network, constr_iteration_decay_scheduler(0.999));
     network->learningRate = 1;

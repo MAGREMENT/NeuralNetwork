@@ -98,6 +98,12 @@ public partial class NeuralNetwork : IDisposable
     public void SetOptimizerAdam(double delta1, double delta2) => SetOptimizerAdam(Ptr, delta1, delta2);
     public void SetDataSelectorFullBatch() => SetDataSelectorFullBatch(Ptr);
     public void SetDataSelectorMiniBatch(int batchSize) => SetDataSelectorMiniBatch(Ptr, batchSize);
+    public void SetSchedulerConstant() => SetSchedulerConstant(Ptr);
+    public void SetSchedulerIterationDecay(double proportion) => SetSchedulerIterationDecay(Ptr, proportion);
+    public void SetSchedulerExponentialDecay(double decay) => SetSchedulerExponentialDecay(Ptr, decay);
+    public void SetSchedulerInverseDecay(double decay) => SetSchedulerInverseDecay(Ptr, decay);
+    public void SetSchedulerCosineDecay(double endLearningRate, int iterationSpan) =>
+        SetSchedulerCosineDecay(Ptr, endLearningRate, iterationSpan);
 
     public void SetActivationType(ActivationType type, ActivationType outputType)
     {
@@ -261,6 +267,26 @@ public partial class NeuralNetwork : IDisposable
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void SetDataSelectorMiniBatch(IntPtr ptr, int batchSize);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetSchedulerConstant(IntPtr ptr);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetSchedulerIterationDecay(IntPtr ptr, double proportion);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetSchedulerExponentialDecay(IntPtr ptr, double decay);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetSchedulerInverseDecay(IntPtr ptr, double decay);
+    
+    [LibraryImport("libExport.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
+    private static partial void SetSchedulerCosineDecay(IntPtr ptr, double endLearningRate, int iterationSpan);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]

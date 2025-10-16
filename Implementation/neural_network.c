@@ -32,6 +32,12 @@ inline neural_network* alloc_network(const int count, const int numbers[]){
     return result;
 }
 
+static void check_output_layer_delta_optimization(neural_network* network) {
+    network->outputLayerDeltaOptimization =
+        network->layers[network->count - 1].activationDerivative == derivative_softmax_activation
+        && network->costDerivative == derivative_binary_cross_entropy_cost;
+}
+
 inline void set_activation_type(neural_network* network, int type, int outputType) {
     for(int i = 0; i < network->count; i++) {
         const int t = i == network->count - 1 ? outputType : type;
@@ -51,6 +57,8 @@ inline void set_activation_type(neural_network* network, int type, int outputTyp
             network->layers[i].initialization = data.initialization;
         }
     }
+
+    check_output_layer_delta_optimization(network);
 }
 
 inline void set_cost_type(neural_network* network, int type) {
@@ -63,6 +71,8 @@ inline void set_cost_type(neural_network* network, int type) {
         network->cost = data.cost;
         network->costDerivative = data.costDerivative;
     }
+
+    check_output_layer_delta_optimization(network);
 }
 
 void get_activation_type(neural_network* network, int* type, int* outputType) {
@@ -325,10 +335,16 @@ static void setup_nv(const backpropagation_data* data,
         void* d = network->layers[l].processInputs(data[l].weightedInputs, network->layers[l].out_count);
 
         if(l == lastIndex) {
-            for(int i = 0; i < expected.count; i++){
-                const double costDerivative = network->costDerivative(data[l].afterActivations[i], expected.values[i]);
-                const double activationDerivative = network->layers[l].activationDerivative(data[l].weightedInputs[i], d);
-                data[l].nodeValues[i] = activationDerivative * costDerivative;
+            if (network->outputLayerDeltaOptimization) {
+                for(int i = 0; i < expected.count; i++){
+                    data[l].nodeValues[i] = data[l].afterActivations[i] - expected.values[i];
+                }
+            } else {
+                for(int i = 0; i < expected.count; i++){
+                    const double costDerivative = network->costDerivative(data[l].afterActivations[i], expected.values[i]);
+                    const double activationDerivative = network->layers[l].activationDerivative(data[l].weightedInputs[i], d);
+                    data[l].nodeValues[i] = activationDerivative * costDerivative;
+                }
             }
         }
         else {

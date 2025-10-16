@@ -33,22 +33,34 @@ public class MNISTReaderTests
     {
         using var n = new NeuralNetwork(784, 200, 100, 10);
         n.SetDataSelectorMiniBatch(64);
+        n.SetShuffleDataOnIteration(1);
         n.SetThreadCount(4);
         n.SetActivationType(ActivationType.RELU, ActivationType.SOFTMAX);
         n.SetCostType(CostType.BINARY_CROSS_ENTROPY);
-        n.SetLearningRate(0.05);
+        n.SetLearningRate(0.001);
+        //n.SetSchedulerCosineDecay(0.0001, 50);
         n.InitializeWeightsAndBiases();
         
         var data = MNIST.Read(
             @"mnist-data\t10k-labels.idx1-ubyte", 
             @"mnist-data\t10k-images.idx3-ubyte", 10000);
         var flattened = FlattenedData.FromGuessingPoints(data, 10);
-        Console.WriteLine(n.GetCost(flattened));
-        Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
-        n.Learn(flattened, 20);
-        Console.WriteLine(n.GetCost(flattened));
-        Console.WriteLine(GuessingPoint.GetNetworkAccuracy(n, data));
+
+        PrintNetworkProgress(0, n, flattened, data);
+        using var state = new LearningState(n);
+
+        for (int i = 0; i < 10; i++)
+        {
+            n.Learn(flattened, 1, state);
+            PrintNetworkProgress(i + 1, n, flattened, data);
+        }
+        
         
         n.Save("/test.nn");
+    }
+    
+    private static void PrintNetworkProgress(int epoch, NeuralNetwork n, FlattenedData d, IReadOnlyList<GuessingPoint> p)
+    {
+        Console.WriteLine($"Epoch #{epoch} : Cost -> {n.GetCost(d)} - Accuracy -> {GuessingPoint.GetNetworkAccuracy(n, p)}%");
     }
 }

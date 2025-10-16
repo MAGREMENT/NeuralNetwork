@@ -16,7 +16,7 @@ struct learning_rate_scheduler {
 };
 
 learning_rate_scheduler* constr_constant_scheduler();
-learning_rate_scheduler* constr_iteration_decay_scheduler(double decay);
+learning_rate_scheduler* constr_iteration_decay_scheduler(double proportion);
 learning_rate_scheduler* constr_exponential_decay_scheduler(double decay);
 learning_rate_scheduler* constr_inverse_decay_scheduler(double decay);
 learning_rate_scheduler* constr_cosine_decay_scheduler(double endingLr, int iterationSpan);

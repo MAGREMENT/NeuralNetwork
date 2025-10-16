@@ -43,8 +43,8 @@ static double iteration_schedule(learning_rate_scheduler* sch, const double lear
     return learningRate * pow(decay, iteration);
 }
 
-inline learning_rate_scheduler* constr_iteration_decay_scheduler(const double decay) {
-    learning_rate_scheduler* sch = constr_single_double_param_scheduler(decay);
+inline learning_rate_scheduler* constr_iteration_decay_scheduler(const double proportion) {
+    learning_rate_scheduler* sch = constr_single_double_param_scheduler(proportion);
     sch->schedule = iteration_schedule;
     sch->alloc_to_hyper = NULL;
 

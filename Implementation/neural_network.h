@@ -22,6 +22,8 @@ typedef struct neural_network {
 
     double (*cost)(double, double);
     double (*costDerivative)(double, double);
+
+    int outputLayerDeltaOptimization;
 } neural_network;
 
 typedef struct input_data {

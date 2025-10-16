@@ -73,23 +73,32 @@ inline double derivative_silu_activation(double input, void* processedData) {
 }
 
 inline double softmax_activation(double input, void* processedData) {
-    return exp(input) / *(double*)processedData;
+    const double* d = processedData;
+    return exp(input - d[1]) / d[0];
 }
 
+//TODO NE MARCHE PAS SI PAS CROSS_ENTROPY COMME LOSS FUNCTION, REGARDER JACOBIAN MATRIX
 inline double derivative_softmax_activation(double input, void* processedData) {
     const double sum = *(double*)processedData;
     const double ex = exp(input);
     return (ex * sum - ex * ex) / (sum * sum);
 }
 
+//TODO optimize this by giving an array of exponent instead>
 void* softmax_process_inputs(double* inputs, int count) {
-    double sum = 0;
-    for(int i = 0; i < count; i++) {
-        sum += exp(inputs[i]);
+    double max = inputs[0];
+    for (int i = 1; i < count; i++) {
+        if (inputs[i] > max) max = inputs[i];
     }
 
-    double* result = malloc(sizeof(double));
-    *result = sum;
+    double sum = 0;
+    for(int i = 0; i < count; i++) {
+        sum += exp(inputs[i] - max);
+    }
+
+    double* result = malloc(sizeof(double) * 2);
+    result[0] = sum;
+    result[1] = max;
     return result;
 }
 

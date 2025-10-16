@@ -7,7 +7,7 @@
 #include "repository.h"
 #include "utils.h"
 
-#define LOG true
+#define LOG false
 
 inline neural_network* Create(int count, int numbers[]) {
     auto network = alloc_network(count, numbers);
@@ -105,6 +105,26 @@ inline void SetDataSelectorFullBatch(neural_network* n) {
 
 inline void SetDataSelectorMiniBatch(neural_network* n, int batchSize) {
     set_data_selector(n, create_mini_batch_selector(batchSize));
+}
+
+inline void SetSchedulerConstant(neural_network* n) {
+    set_scheduler(n, constr_constant_scheduler());
+}
+
+inline void SetSchedulerIterationDecay(neural_network* n, double proportion) {
+    set_scheduler(n, constr_iteration_decay_scheduler(proportion));
+}
+
+inline void SetSchedulerExponentialDecay(neural_network* n, double decay) {
+    set_scheduler(n, constr_exponential_decay_scheduler(decay));
+}
+
+inline void SetSchedulerInverseDecay(neural_network* n, double decay) {
+    set_scheduler(n, constr_inverse_decay_scheduler(decay));
+}
+
+inline void SetSchedulerCosineDecay(neural_network* n, double endLearningRate, int iterationSpan) {
+    set_scheduler(n, constr_cosine_decay_scheduler(endLearningRate, iterationSpan));
 }
 
 inline void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount) {
