@@ -17,9 +17,9 @@ void cut_2D_test();
 
 int main() {
     //cut_2D_test();
-    //unit_tests();
+    unit_tests();
 
-    //return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 
     clock_t start = clock();
 
@@ -276,12 +276,14 @@ void alloc_flattened_test_data_test() {
 }
 
 void repository_test() {
-    constexpr char filename[] = "neural_network_repository_test.nn";
-    FILE* fptr = fopen(filename, "w");
-    fclose(fptr);
+    const char filename[] = "neural_network_repository_test.nn";
 
-    neural_network* network = alloc_example_network_with_data(SIGMOID);
-    save(network, filename);
+    const int numbers[] = {784, 200, 100, 10};
+    neural_network* network = alloc_network(4, numbers);
+    if (save(network, filename) != 0) {
+        printf("Save failed");
+        return;
+    }
     neural_network* download = restore(filename);
 
     if(network->count != download->count) {

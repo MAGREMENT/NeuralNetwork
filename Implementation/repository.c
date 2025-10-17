@@ -7,31 +7,35 @@
 
 inline neural_network* restore(const char* file){
     FILE* fptr = fopen(file, "rb");
+    if (fptr == NULL) return NULL;
 
     int size[1];
-    fread(size, sizeof(int), 1, fptr);
+    if (fread(size, sizeof(int), 1, fptr) != 1) return NULL;
 
     int* dimensions = malloc(size[0] * sizeof(int));
-    fread(dimensions, sizeof(int), size[0], fptr);
+    if (fread(dimensions, sizeof(int), size[0], fptr) != size[0]) return NULL;
 
     neural_network* result = alloc_network(size[0], dimensions);
     free(dimensions);
 
     for(int i = 0; i < result->count; i++){
         const int wCount = result->layers[i].in_count * result->layers[i].out_count;
-        fread(result->layers[i].weights, sizeof(double), wCount, fptr);
-        fread(result->layers[i].biases, sizeof(double), result->layers[i].out_count, fptr);
+        if (fread(result->layers[i].weights, sizeof(double), wCount, fptr)
+            != wCount) return NULL;
+        if (fread(result->layers[i].biases, sizeof(double), result->layers[i].out_count, fptr)
+            != result->layers[i].out_count) return NULL;
     }
 
     return result;
 }
 
-inline void save(const neural_network* network, const char* file){
+inline int save(const neural_network* network, const char* file){
     FILE* fptr = fopen(file, "wb");
+    if (fptr == NULL) return -1;
 
     int n = network->count + 1;
     int count[] = { n };
-    fwrite(count, sizeof(int), 1, fptr);
+    if (fwrite(count, sizeof(int), 1, fptr) != 1) return -2;
 
     int* size = malloc(n * sizeof(int));
     size[0] = network->layers[0].in_count;
@@ -39,15 +43,20 @@ inline void save(const neural_network* network, const char* file){
         size[i + 1] = network->layers[i].out_count;
     }
 
-    fwrite(size, sizeof(int), n, fptr);
+    const size_t w = fwrite(size, sizeof(int), n, fptr);
     free(size);
+    if (w != n) return -2;
 
     for(int i = 0; i < network->count; i++){
-        fwrite(network->layers[i].weights, sizeof(double), network->layers[i].in_count * network->layers[i].out_count, fptr);
-        fwrite(network->layers[i].biases, sizeof(double), network->layers[i].out_count, fptr);
+        const int wCount = network->layers[i].in_count * network->layers[i].out_count;
+        if (fwrite(network->layers[i].weights, sizeof(double), wCount, fptr)
+            != wCount) return -2;
+        if (fwrite(network->layers[i].biases, sizeof(double), network->layers[i].out_count, fptr)
+            != network->layers[i].out_count) return -2;
     }
 
     fclose(fptr);
+    return 0;
 }
 
 inline void flog(char format[], ...) {

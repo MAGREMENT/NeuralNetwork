@@ -140,11 +140,13 @@ inline void Predict(neural_network* ptr, double inputs[], int inCount, double ou
 }
 
 inline neural_network* FromFile(char file[]) {
-    return restore(file);
+    auto network = restore(file);
+    apply_default_hyper_params(network);
+    return network;
 }
 
-inline void Save(neural_network* ptr, char file[]) {
-    save(ptr, file);
+inline int Save(neural_network* ptr, char file[]) {
+    return save(ptr, file);
 }
 
 inline void Initialize(neural_network* ptr) {

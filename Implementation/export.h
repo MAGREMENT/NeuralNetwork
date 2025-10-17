@@ -40,7 +40,7 @@ DLL_EXPORT void SetSchedulerInverseDecay(neural_network* n, double decay);
 DLL_EXPORT void SetSchedulerCosineDecay(neural_network* n, double endLearningRate, int iterationSpan);
 DLL_EXPORT void Predict(neural_network* ptr, double inputs[], int inCount, double outputs[], int outCount);
 DLL_EXPORT neural_network* FromFile(char file[]);
-DLL_EXPORT void Save(neural_network* ptr, char file[]);
+DLL_EXPORT int Save(neural_network* ptr, char file[]);
 DLL_EXPORT void Initialize(neural_network* ptr);
 DLL_EXPORT void Learn(neural_network* ptr, learning_state* state, double* inputs, int inputCutoff,
         double* expected, int expectedCutoff, int count, int iterations);
