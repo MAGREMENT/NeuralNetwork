@@ -39,9 +39,14 @@ public partial class DoodleGuesser : IDoodleGuesserView
         }
     }
 
-    private void Previous(object sender, RoutedEventArgs e)
+    public void SetExpected(int n)
     {
-        _presenter.Previous();
+        ExpectedBlock.Text = "Expected : " + n;
+    }
+
+    private void Clear(object sender, RoutedEventArgs e)
+    {
+        _presenter.Clear();
     }
 
     private void Next(object sender, RoutedEventArgs e)

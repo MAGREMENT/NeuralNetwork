@@ -7,34 +7,38 @@ public class DoodleGuesserPresenter
     private readonly IDoodleGuesserView _view;
     
     private readonly Doodle _doodle = new(28, 28);
-    private readonly IReadOnlyList<GuessingPoint> dataSet = MNIST.Read(
+    private readonly IReadOnlyList<GuessingPoint> _dataSet = MNIST.Read(
         "mnist-data/t10k-labels.idx1-ubyte", 
-        "mnist-data/t10k-images.idx3-ubyte", 100);
-    private readonly NeuralNetwork _network = new(784, 200, 100, 10);
+        "mnist-data/t10k-images.idx3-ubyte", 10000);
+
+    private readonly Random _random = new();
+
+    private readonly NeuralNetwork _network;
     private int _index = -1;
 
     public DoodleGuesserPresenter(IDoodleGuesserView view)
     {
         _view = view;
+        _network = NeuralNetwork.Restore("test.nn");
+        _network.SetActivationType(ActivationType.RELU, ActivationType.SOFTMAX);
+        _network.SetCostType(CostType.BINARY_CROSS_ENTROPY);
     }
 
     public void Next()
     {
-        if (_index >= dataSet.Count - 1) return;
-        _index++;
+        _index = _random.Next(10000);
         
-        _doodle.SetData(dataSet[_index].Values);
-        _view.SetDoodleData(dataSet[_index].Values.To2D(28, 28));
+        _doodle.SetData(_dataSet[_index].Values);
+        _view.SetDoodleData(_doodle.To2DData());
+        _view.SetExpected(_dataSet[_index].Output);
         Predict();
     }
 
-    public void Previous()
+    public void Clear()
     {
-        if (_index <= 0) return;
-        _index--;
-
-        _doodle.SetData(dataSet[_index].Values);
-        _view.SetDoodleData(dataSet[_index].Values.To2D(28, 28));
+        _index = -1;
+        _doodle.Clear();
+        _view.SetDoodleData(_doodle.To2DData());
         Predict();
     }
 
@@ -48,13 +52,13 @@ public class DoodleGuesserPresenter
     {
         var output = _network.Predict(_doodle.ToNeuralNetworkInputs());
 
-        var predictions = new List<(int, double)>(9);
+        var predictions = new List<(int, double)>(10);
         for (int i = 0; i < output.Length; i++)
         {
-            predictions.Add((i + 1, Math.Round(output[i] * 100, 2)));
+            predictions.Add((i, Math.Round(output[i] * 100, 2)));
         }
         
-        predictions.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+        predictions.Sort((a, b) => b.Item2.CompareTo(a.Item2));
         _view.SetPredictions(predictions);
     }
 }
@@ -63,4 +67,5 @@ public interface IDoodleGuesserView
 {
     void SetDoodleData(double[,] data);
     void SetPredictions(IReadOnlyList<(int, double)> predictions);
+    void SetExpected(int n);
 }

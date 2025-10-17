@@ -17,17 +17,19 @@ public partial class NeuralNetwork : IDisposable
     private NeuralNetwork(IntPtr ptr)
     {
         Ptr = ptr;
+        Length = GetCount(Ptr);
     }
 
-    public static NeuralNetwork Import(string file)
+    public static NeuralNetwork Restore(string file)
     {
         var ptr = FromFile(file);
+        if (ptr == IntPtr.Zero) throw new Exception("Restore failed");
         return new NeuralNetwork(ptr);
     }
 
     public void Save(string file)
     {
-        Save(Ptr, file);
+        if(Save(Ptr, file) != 0) throw new Exception("Save failed");
     }
 
     public void InitializeWeightsAndBiases()
@@ -300,7 +302,7 @@ public partial class NeuralNetwork : IDisposable
     
     [LibraryImport("libExport.dll", StringMarshalling = StringMarshalling.Utf8)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
-    private static partial void Save(IntPtr ptr, string file);
+    private static partial int Save(IntPtr ptr, string file);
     
     [LibraryImport("libExport.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]

@@ -16,6 +16,11 @@ public class Doodle(int _width, int height)
         d.CopyTo(_current, 0);
     }
 
+    public void Clear()
+    {
+        Array.Fill(_current, 0);
+    }
+
     public double[] ToNeuralNetworkInputs() => _current.Copy();
 
     public double[,] To2DData() => _current.To2D(_width, _current.Length / _width);

@@ -27,7 +27,7 @@ public class MNISTReaderTests
             Assert.That(result.Expected[i * 10 + data[i].Output], Is.EqualTo(1));
         }
     }
-
+    
     [Test]
     public void LearnTest()
     {
@@ -49,14 +49,20 @@ public class MNISTReaderTests
         PrintNetworkProgress(0, n, flattened, data);
         using var state = new LearningState(n);
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 20; i++)
         {
             n.Learn(flattened, 1, state);
             PrintNetworkProgress(i + 1, n, flattened, data);
         }
         
+        n.Save("test.nn");
+
+        using var n2 = NeuralNetwork.Restore("test.nn");
+        n2.SetActivationType(ActivationType.RELU, ActivationType.SOFTMAX);
+        n2.SetCostType(CostType.BINARY_CROSS_ENTROPY);
         
-        n.Save("/test.nn");
+        Assert.That(n2.GetCost(flattened), Is.EqualTo(n.GetCost(flattened)));
+        Assert.That(GuessingPoint.GetNetworkAccuracy(n2, data), Is.EqualTo(GuessingPoint.GetNetworkAccuracy(n, data)));
     }
     
     private static void PrintNetworkProgress(int epoch, NeuralNetwork n, FlattenedData d, IReadOnlyList<GuessingPoint> p)

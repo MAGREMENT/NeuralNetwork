@@ -1,8 +1,4 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Navigation;
-using WpfApp.Presenter;
+﻿using System.Windows.Navigation;
 
 namespace WpfApp.View;
 
@@ -17,7 +13,7 @@ public partial class MainWindow
     {
         InitializeComponent();
 
-        Frame.Content = new GraphGuesser();
+        Frame.Content = new DoodleGuesser();
         _cancelNavigation = true;
     }
 

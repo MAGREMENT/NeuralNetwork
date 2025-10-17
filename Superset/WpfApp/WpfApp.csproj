@@ -28,4 +28,10 @@
       </Page>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="test.nn">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
