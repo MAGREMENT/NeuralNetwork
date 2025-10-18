@@ -33,7 +33,9 @@ add_executable(Test
         list.h
         yaml.c
         yaml.h
-        store.c)
+        store.c
+        conv_layer.c
+        conv_layer.h)
 add_library(Export SHARED
         export.c
         neural_network.c
