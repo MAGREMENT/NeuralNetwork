@@ -13,7 +13,7 @@
 
 #define EPSILON 1e-8
 
-static void apply_gradients(optimizer* opt, void* state, layer* layers, layer_data* gradients, const int layerCount,
+static void apply_gradients(optimizer* opt, void* state, old_layer* layers, layer_data* gradients, const int layerCount,
                             int iteration, const double learningRate){
     for (int l = 0; l < layerCount; l++) {
         const int inCount = layers[l].in_count;
@@ -30,7 +30,7 @@ static void apply_gradients(optimizer* opt, void* state, layer* layers, layer_da
     }
 }
 
-static void* create_empty_state(optimizer* opt, layer* layers, int layerCount) {
+static void* create_empty_state(optimizer* opt, old_layer* layers, int layerCount) {
     return NULL;
 }
 
@@ -63,7 +63,7 @@ static void apply_gradient_momentum(double* v, double* p, const double* g, const
     p[index] -= lr * velocity;
 }
 
-static void apply_gradients_momentum(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
+static void apply_gradients_momentum(optimizer* opt, void* state, old_layer* layers, layer_data* gradients, int layerCount,
         int iteration, double learningRate) {
     const double momentum = *(double*) opt->params;
     const layer_data* v = state;
@@ -83,7 +83,7 @@ static void apply_gradients_momentum(optimizer* opt, void* state, layer* layers,
     }
 }
 
-static void* create_momentum_state(optimizer* opt, layer* layers, int layerCount) {
+static void* create_momentum_state(optimizer* opt, old_layer* layers, int layerCount) {
     return alloc_layer_data_array(layers, layerCount, 0);
 }
 
@@ -126,7 +126,7 @@ static void apply_gradient_nesterov(double* v, double* p, const double* g, const
     p[index] -= lr * (velocity * momentum + g[index]);
 }
 
-static void apply_gradients_nesterov(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
+static void apply_gradients_nesterov(optimizer* opt, void* state, old_layer* layers, layer_data* gradients, int layerCount,
         int iteration, double learningRate) {
     const double momentum = *(double*) opt->params;
     layer_data* v = state;
@@ -176,7 +176,7 @@ static void apply_gradient_rmsprop(double* v, double* p, const double* g, const 
     p[index] -= lr * g[index] / (sqrt(velocity) + EPSILON);
 }
 
-static void apply_gradients_rmsprop(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
+static void apply_gradients_rmsprop(optimizer* opt, void* state, old_layer* layers, layer_data* gradients, int layerCount,
         int iteration, double learningRate) {
     const double decay = *(double*) opt->params;
     layer_data* v = state;
@@ -224,7 +224,7 @@ static void apply_gradient_adam(double* v1, double* v2, double* p, const double*
     p[index] -= lr * m / (sqrt(v) + EPSILON);
 }
 
-static void apply_gradients_adam(optimizer* opt, void* state, layer* layers, layer_data* gradients, int layerCount,
+static void apply_gradients_adam(optimizer* opt, void* state, old_layer* layers, layer_data* gradients, int layerCount,
         int iteration, const double learningRate) {
     double* betas = opt->params;
     layer_data* v1 = state;
@@ -247,10 +247,10 @@ static void apply_gradients_adam(optimizer* opt, void* state, layer* layers, lay
     }
 }
 
-static void* create_adam_state(optimizer* opt, layer* layers, int layerCount) {
-    layer* buffer = malloc(layerCount * 2 * sizeof(layer));
-    memcpy(buffer, layers, layerCount * sizeof(layer));
-    memcpy(buffer + layerCount, layers, layerCount * sizeof(layer));
+static void* create_adam_state(optimizer* opt, old_layer* layers, int layerCount) {
+    old_layer* buffer = malloc(layerCount * 2 * sizeof(old_layer));
+    memcpy(buffer, layers, layerCount * sizeof(old_layer));
+    memcpy(buffer + layerCount, layers, layerCount * sizeof(old_layer));
 
     const auto result = alloc_layer_data_array(buffer, layerCount * 2, 0);
     free(buffer);

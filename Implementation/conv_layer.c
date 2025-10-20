@@ -5,35 +5,24 @@
 #include "conv_layer.h"
 
 #include <stdlib.h>
-
-inline void get_output_size(conv_layer* layer, int* width_result, int* height_result, int* depth_result) {
-    *depth_result = layer->kernel_count;
-    *width_result = (layer->input_size.width - layer->kernel_size.width + 2 * layer->padding) / layer->stride + 1;
-    *height_result = (layer->input_size.height - layer->kernel_size.height + 2 * layer->padding) / layer->stride + 1;
-}
-
-static double* alloc_output(conv_layer* l) {
-    int bWidth;
-    int bHeight;
-    int bDepth;
-
-    get_output_size(l, &bWidth, &bHeight, &bDepth);
-    const int bSize = bWidth * bHeight * bDepth;
-    return malloc(sizeof(double) * bSize);
-}
+#include <string.h>
 
 inline conv_layer* alloc_conv_layer(size3D inputSize, size3D kernelSize, int kernelCount, int stride, int padding) {
     conv_layer* l = malloc(sizeof(conv_layer));
     l->kernel_size = kernelSize;
     l->input_size = inputSize;
-    l->kernel_count = kernelCount;
     l->stride = stride;
     l->padding = padding;
+
+    l->output_size.depth = kernelCount;
+    l->output_size.width = (inputSize.width - kernelSize.width + 2 * padding) / stride + 1;
+    l->output_size.height = (inputSize.height - kernelSize.height + 2 * padding) / stride + 1;
 
     const int kSize = kernelSize.width * kernelSize.height * kernelSize.depth * kernelCount;
     l->kernels = malloc(sizeof(double) * kSize);
 
-    l->biases = alloc_output(l);
+    const int bSize = l->output_size.width * l->output_size.height * l->output_size.depth;
+    l->biases = malloc(sizeof(double) * bSize);
 
     return l;
 }
@@ -45,20 +34,15 @@ inline void free_conv_layer(conv_layer* layer) {
 }
 
 double* conv_forward(conv_layer* l, const double* input) {
-    int bWidth;
-    int bHeight;
-    int bDepth;
-
-    get_output_size(l, &bWidth, &bHeight, &bDepth);
-    const int bArea = bWidth * bHeight;
-    double* o = malloc(sizeof(double) * bArea * bDepth);
+    const int bArea = l->output_size.width * l->output_size.height;
+    double* o = malloc(sizeof(double) * 4);
 
     const int kernelArea = l->kernel_size.width * l->kernel_size.height;
     const int inputArea = l->input_size.width * l->input_size.height;
 
-    for (int c = 0; c < l->kernel_count; c++) {
-        for (int oW = 0; oW < bWidth; oW++) {
-            for (int oH = 0; oH < bHeight; oH++) {
+    for (int c = 0; c < l->output_size.depth; c++) {
+        for (int oW = 0; oW < l->output_size.width; oW++) {
+            for (int oH = 0; oH < l->output_size.height; oH++) {
                 const int w = oW * l->stride - l->padding;
                 const int h = oH * l->stride - l->padding;
                 double result = 0;
@@ -80,11 +64,23 @@ double* conv_forward(conv_layer* l, const double* input) {
                     }
                 }
 
-                const int oIndex = c * bArea + oH * bWidth + oW;
+                const int oIndex = c * bArea + oH * l->output_size.width + oW;
                 o[oIndex] = result + l->biases[oIndex];
             }
         }
     }
 
     return o;
+}
+
+inline void set_kernels_and_biases(conv_layer* l, double kernels, double biases) {
+    size_t size = l->kernel_size.width * l->kernel_size.height * l->kernel_size.depth;
+    for (size_t i = 0; i < size; i++) {
+        l->kernels[i] = kernels;
+    }
+
+    size = l->output_size.width * l->output_size.height * l->output_size.depth;
+    for (size_t i = 0; i < size; i++) {
+        l->biases[i] = biases;
+    }
 }

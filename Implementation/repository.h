@@ -1,8 +1,8 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-neural_network* restore(const char* file);
-int save(const neural_network* network, const char* file);
+old_nn* restore(const char* file);
+int save(const old_nn* network, const char* file);
 void flog(char format[], ...);
 
 #endif // REPOSITORY_H

@@ -14,7 +14,7 @@ typedef struct size3D {
 typedef struct conv_layer {
     size3D input_size;
     size3D kernel_size;
-    int kernel_count;
+    size3D output_size;
 
     int stride;
     int padding;
@@ -23,9 +23,9 @@ typedef struct conv_layer {
     double* biases;
 } conv_layer;
 
-void get_output_size(conv_layer* layer, int* width_result, int* height_result, int* depth_result);
 conv_layer* alloc_conv_layer(size3D inputSize, size3D kernelSize, int kernelCount, int stride, int padding);
 void free_conv_layer(conv_layer* layer);
 double* conv_forward(conv_layer* l, const double* input);
+void set_kernels_and_biases(conv_layer* l, double kernels, double biases);
 
 #endif //CONVOLUTION_LAYER_H

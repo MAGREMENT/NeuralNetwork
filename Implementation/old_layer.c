@@ -2,11 +2,11 @@
 // Created by zacha on 01-10-25.
 //
 
-#include "layer.h"
+#include "old_layer.h"
 
 #include <stdlib.h>
 
-inline layer_data* alloc_layer_data_array(layer* layers, const int layerCount, const int copyValues) {
+inline layer_data* alloc_layer_data_array(old_layer* layers, const int layerCount, const int copyValues) {
     layer_data* result = malloc(layerCount * sizeof(layer_data));
 
     for(int n = 0; n < layerCount; n++) {

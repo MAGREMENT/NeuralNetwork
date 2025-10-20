@@ -5,15 +5,14 @@
 #ifndef STORE_H
 #define STORE_H
 
-#include "layer.h"
-#include "neural_network.h"
+#include "old_layer.h"
 
 typedef struct activation_data {
     double (*activation)(double, void*);
     double (*activationDerivative)(double, void*);
     void* (*processInputs)(double*, int);
     void (*freeData)(void*);
-    void (*initialization)(layer* layer);
+    void (*initialization)(old_layer* layer);
 } activation_data;
 
 typedef struct cost_data {

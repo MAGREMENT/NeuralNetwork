@@ -4,7 +4,7 @@ project(Test C)
 set(CMAKE_C_STANDARD 23)
 
 add_executable(Test
-        neural_network.c
+        old_nn.c
         functions.c
         repository.c
         generator.c
@@ -23,8 +23,8 @@ add_executable(Test
         data_selector.h
         optimizer.c
         optimizer.h
-        layer.c
-        layer.h
+        old_layer.c
+        old_layer.h
         hyper_parameters.c
         hyper_parameters.h
         multi-threading.c
@@ -35,10 +35,19 @@ add_executable(Test
         yaml.h
         store.c
         conv_layer.c
-        conv_layer.h)
+        conv_layer.h
+        Layers/layer.c
+        Layers/layer.h
+        Layers/Types/activation_layer.c
+        Layers/Types/activation_layer.h
+        Layers/Types/dense_layer.c
+        Layers/Types/dense_layer.h
+        neural_network.c
+        neural_network.h
+)
 add_library(Export SHARED
         export.c
-        neural_network.c
+        old_nn.c
         functions.c
         utils.c
         repository.c
@@ -55,8 +64,8 @@ add_library(Export SHARED
         data_selector.h
         optimizer.c
         optimizer.h
-        layer.c
-        layer.h
+        old_layer.c
+        old_layer.h
         hyper_parameters.c
         hyper_parameters.h
         multi-threading.c
@@ -65,4 +74,13 @@ add_library(Export SHARED
         list.h
         yaml.c
         yaml.h
-        store.c)
+        store.c
+        Layers/layer.c
+        Layers/layer.h
+        Layers/Types/activation_layer.c
+        Layers/Types/activation_layer.h
+        Layers/Types/dense_layer.c
+        Layers/Types/dense_layer.h
+        neural_network.c
+        neural_network.h
+)

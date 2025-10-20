@@ -45,7 +45,7 @@ static learning_rate_scheduler* def_lrs() {
     return constr_constant_scheduler();
 }
 
-inline void apply_default_hyper_params(neural_network* network) {
+inline void apply_default_hyper_params(old_nn* network) {
     network->shuffleDataOnIteration = def_sdoi();
     network->learningRate = def_lr();
     network->threadCount = def_tc();
@@ -58,7 +58,7 @@ inline void apply_default_hyper_params(neural_network* network) {
     set_scheduler(network, def_lrs());
 }
 
-void apply_hyper_params(neural_network* network, yaml_line* list, int count) {
+void apply_hyper_params(old_nn* network, yaml_line* list, int count) {
     int sdoi = def_sdoi();
     double lr = def_lr();
     int tc = def_tc();
@@ -93,7 +93,7 @@ void apply_hyper_params(neural_network* network, yaml_line* list, int count) {
     set_scheduler(network, lrs == NULL ? def_lrs() : lrs);
 }
 
-inline list* alloc_get_hyper_params(neural_network* network) {
+inline list* alloc_get_hyper_params(old_nn* network) {
     list* result = alloc_list(sizeof(yaml_line));
     int indentation = 0;
 

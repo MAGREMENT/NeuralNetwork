@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include "../iterator-util.h"
 
-
-
 static int next(range_iterator* iterator) {
      const int max = *(int*)iterator->state;
 

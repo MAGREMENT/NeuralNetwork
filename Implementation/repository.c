@@ -1,11 +1,11 @@
-#include "neural_network.h"
+#include "old_nn.h"
 #include "repository.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-inline neural_network* restore(const char* file){
+inline old_nn* restore(const char* file){
     FILE* fptr = fopen(file, "rb");
     if (fptr == NULL) return NULL;
 
@@ -15,7 +15,7 @@ inline neural_network* restore(const char* file){
     int* dimensions = malloc(size[0] * sizeof(int));
     if (fread(dimensions, sizeof(int), size[0], fptr) != size[0]) return NULL;
 
-    neural_network* result = alloc_network(size[0], dimensions);
+    old_nn* result = alloc_network(size[0], dimensions);
     free(dimensions);
 
     for(int i = 0; i < result->count; i++){
@@ -29,7 +29,7 @@ inline neural_network* restore(const char* file){
     return result;
 }
 
-inline int save(const neural_network* network, const char* file){
+inline int save(const old_nn* network, const char* file){
     FILE* fptr = fopen(file, "wb");
     if (fptr == NULL) return -1;
 

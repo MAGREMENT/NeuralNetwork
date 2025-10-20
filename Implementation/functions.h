@@ -1,7 +1,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "neural_network.h"
+#include "old_nn.h"
 
 //Activation
 
@@ -46,9 +46,9 @@ double derivative_binary_cross_entropy_cost(double predicted, double expected);
 
 //Initialization
 
-void random_initialization(layer* layer);
-void he_initialization(layer* layer);
-void xavier_initialization(layer* layer);
+void random_initialization(old_layer* layer);
+void he_initialization(old_layer* layer);
+void xavier_initialization(old_layer* layer);
 
 //Normalization
 
