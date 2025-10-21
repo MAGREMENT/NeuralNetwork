@@ -43,6 +43,26 @@ static double* dense_forward(const layer* l, double* inputs, int* didAllocate) {
     return result;
 }
 
+static double* dense_backward(const layer* l, double* inputs, double* deltas, int* didAllocate) {
+    const dense_layer_params* p = l->params;
+
+    double* result = malloc(sizeof(double) * p->in_count);
+
+    for(int i = 0; i < p->in_count; i++) {
+        double value = 0;
+        for(int o = 0; o < p->out_count; o++) {
+            const double w = p->weights[i * p->out_count + o];
+            const double nv = deltas[o];
+            value += nv * w;
+        }
+
+        result[i] = value;
+    }
+
+    *didAllocate = true;
+    return result;
+}
+
 inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(layer* l)) {
     layer* l = malloc(sizeof(layer));
     dense_layer_params* p = malloc(sizeof(dense_layer_params));

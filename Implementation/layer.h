@@ -5,15 +5,15 @@
 #ifndef OLD_LAYER_H
 #define OLD_LAYER_H
 
-typedef struct old_layer old_layer;
+typedef struct layer layer;
 
-struct old_layer {
+struct layer {
     int in_count;
     int out_count;
     double* weights;
     double* biases;
 
-    void (*initialization)(old_layer* layer);
+    void (*initialization)(layer* layer);
     double (*activation)(double, void*);
     double (*activationDerivative)(double, void*);
     void* (*processInputs)(double*, int);
@@ -25,7 +25,7 @@ typedef struct layer_data {
     double* biases;
 } layer_data;
 
-layer_data* alloc_layer_data_array(old_layer* layers, int layerCount, int copyValues);
+layer_data* alloc_layer_data_array(layer* layers, int layerCount, int copyValues);
 void free_layer_data_array(layer_data* layers, int count);
 
 #endif

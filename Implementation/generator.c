@@ -1,5 +1,5 @@
 #include "generator.h"
-#include "old_nn.h"
+#include "neural_network.h"
 
 #include <stdlib.h>
 

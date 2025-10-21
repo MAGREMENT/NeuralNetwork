@@ -5,14 +5,14 @@
 #ifndef STORE_H
 #define STORE_H
 
-#include "old_layer.h"
+#include "layer.h"
 
 typedef struct activation_data {
     double (*activation)(double, void*);
     double (*activationDerivative)(double, void*);
     void* (*processInputs)(double*, int);
     void (*freeData)(void*);
-    void (*initialization)(old_layer* layer);
+    void (*initialization)(layer* layer);
 } activation_data;
 
 typedef struct cost_data {

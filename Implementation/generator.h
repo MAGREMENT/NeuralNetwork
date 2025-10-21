@@ -1,7 +1,7 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
-#include "old_nn.h"
+#include "neural_network.h"
 
 /**
  * Generate test data in a 2d space

@@ -5,7 +5,7 @@
 #include <float.h>
 #include <stdlib.h>
 
-#include "old_nn.h"
+#include "neural_network.h"
 #include "utils.h"
 
 #define LEAK 0.01
@@ -146,14 +146,14 @@ inline double derivative_binary_cross_entropy_cost(double predicted, double expe
     return (expected - predicted) / (predicted * (predicted - 1));
 }
 
-inline void random_initialization(old_layer* layer) {
+inline void random_initialization(layer* layer) {
     const int total = layer->in_count * layer->out_count;
     for (int i = 0; i < total; i++) {
         layer->weights[i] = rand_std_nrml_distribution() * 0.01;
     }
 }
 
-inline void he_initialization(old_layer* layer) {
+inline void he_initialization(layer* layer) {
     const int total = layer->in_count * layer->out_count;
     const double scale = sqrt(2.0 / layer->in_count);
     for (int i = 0; i < total; i++) {
@@ -161,7 +161,7 @@ inline void he_initialization(old_layer* layer) {
     }
 }
 
-inline void xavier_initialization(old_layer* layer) {
+inline void xavier_initialization(layer* layer) {
     const int total = layer->in_count * layer->out_count;
     const double scale = sqrt(1.0 / layer->in_count);
     for (int i = 0; i < total; i++) {

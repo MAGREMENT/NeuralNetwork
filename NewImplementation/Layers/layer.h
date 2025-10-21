@@ -9,7 +9,7 @@ typedef struct layer layer;
 
 typedef struct layer_functions {
     double* (*forward)(const layer* l, double* inputs, int* didAllocate);
-    double* (*backward)(const layer* l, double* inputs, double* deltas);
+    double* (*backward)(const layer* l, double* inputs, double* deltas, int* didAllocate);
     void (*initialize)(layer* l);
     void (*free)(layer* l);
 } layer_functions;

@@ -21,13 +21,14 @@ static double* sigmoid_forward(const layer* l, double* inputs, int* didAllocate)
     return inputs;
 }
 
-static double* sigmoid_backward(const layer* l, double* inputs, double* deltas) {
+static double* sigmoid_backward(const layer* l, double* inputs, double* deltas, int* didAllocate) {
     const int count = *(int*)l->params;
     for (int i = 0; i < count; i++) {
         const double a = sigmoid(inputs[i]);
         deltas[i] *= a * (1 - a);
     }
 
+    *didAllocate = false;
     return inputs;
 }
 

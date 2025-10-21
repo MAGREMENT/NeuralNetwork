@@ -3,17 +3,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "old_nn.h"
+#include "neural_network.h"
 #include "big-array.c"
-#include "conv_layer.h"
 #include "functions.h"
 #include "generator.h"
-#include "Layers/Types/dense_layer.h"
-#include "Layers/layer.h"
-#include "neural_network.h"
 #include "repository.h"
 #include "utils.h"
-#include "Layers/Types/activation_layer.h"
 
 void unit_tests();
 void cut_2D_test();
@@ -22,38 +17,7 @@ void yolo();
 int main() {
     //cut_2D_test();
     //unit_tests();
-    //yolo();
-
-    const int numbers[] = {2, 3, 2};
-    old_nn* oldN = alloc_network(3, numbers);
-    set_activation_type(oldN, SIGMOID, SIGMOID);
-    set_all_weights_and_biases(oldN, 1, 1);
-
-    layer* l[] = {cnstr_dense_layer(2, 3, initialize_dense_to_one),
-        cnstr_activation_layer(0, 3),
-        cnstr_dense_layer(3, 2, initialize_dense_to_one),
-        cnstr_activation_layer(0, 2)};
-    neural_network* newN = alloc_neural_network(4, l);
-    initialize(newN);
-
-    double* inputs = malloc(sizeof(double) * 4);
-    inputs[0] = 1;
-    inputs[1] = 2;
-    inputs[2] = 3;
-    inputs[3] = 4;
-
-    input_data i;
-    i.count = 4;
-    i.values = inputs;
-    double ov[2];
-    input_data oldResult;
-    oldResult.count = 2;
-    oldResult.values = ov;
-    predict(oldN, &i, &oldResult);
-
-    double* newResult = forward(newN, inputs);
-
-    free(inputs);
+    yolo();
 
     return EXIT_SUCCESS;
 }
@@ -62,9 +26,9 @@ void yolo() {
     clock_t start = clock();
 
     const int numbers[] = {7, 4, 3};
-    old_nn* network = alloc_network(3, numbers);
+    neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    set_activation_type(network, SIGMOID, SOFTMAX);
+    set_activation_type(network, SIGMOID, SIGMOID);
     set_cost_type(network, BINARY_CROSS_ENTROPY);
     set_scheduler(network, constr_iteration_decay_scheduler(0.999));
     network->learningRate = 1;
@@ -79,19 +43,19 @@ void yolo() {
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     test_data* data = alloc_transfer_flattened_data(big_arr1, 7, big_arr2, 3, 128);
 
-    old_initialize(network);
+    initialize(network);
 
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    //iterative_learn(network, data, NULL, 1000);
+    iterative_learn(network, data, NULL, 1000);
 
-    learning_state* state = alloc_state(network);
+    /*learning_state* state = alloc_state(network);
     for (int i = 0; i < 10; i++) {
         iterative_learn(network, data, state, 100);
     }
 
-    free_state(network, state);
+    free_state(network, state);*/
 
     printf("%f\n", avg_cost(network, data));
 
@@ -126,17 +90,17 @@ void yolo() {
     printf("Time : %fs", (double)(end - start) / CLOCKS_PER_SEC);
 }
 
-old_nn* alloc_example_network(int activation) {
+neural_network* alloc_example_network(int activation) {
     int numbers[] = {2, 3, 2};
-    old_nn* network = alloc_network(3, numbers);
+    neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    old_initialize(network);
+    initialize(network);
 
     return network;
 }
 
-old_nn* alloc_example_network_with_data(int activation) {
-    old_nn* network = alloc_example_network(activation);
+neural_network* alloc_example_network_with_data(int activation) {
+    neural_network* network = alloc_example_network(activation);
     set_activation_type(network, activation, activation);
 
     double w1[] = {0.5, 1, 1.5, 0.5, 1, 1.5};
@@ -150,7 +114,7 @@ old_nn* alloc_example_network_with_data(int activation) {
     return network;
 }
 
-void print_network(old_nn* network) {
+void print_network(neural_network* network) {
     for(int i = 0; i < network->count; i++) {
         printf("weights %d : ", i);
 
@@ -169,7 +133,7 @@ void print_network(old_nn* network) {
     }
 }
 
-void test_and_print_network(old_nn* network, test_data* data, const int i) {
+void test_and_print_network(neural_network* network, test_data* data, const int i) {
     const test_result result = test_network(network, data);
 
     print_network(network);
@@ -178,9 +142,9 @@ void test_and_print_network(old_nn* network, test_data* data, const int i) {
 }
 
 void cut_2D_test() {
-    old_nn* network = alloc_example_network(SIGMOID);
+    neural_network* network = alloc_example_network(SIGMOID);
 
-    old_initialize(network);
+    initialize(network);
     test_data *test = positive_generate_for_2D(0.5, 20, 2, sinus_cut);
 
     test_and_print_network(network, test, -1);
@@ -230,7 +194,7 @@ void generate_test(const int verbose) {
 }
 
 void traverse_test() {
-    old_nn* network = alloc_example_network_with_data(DEFAULT);
+    neural_network* network = alloc_example_network_with_data(DEFAULT);
 
     input_data* input = alloc_input_data(2);
     input->values[0] = 2;
@@ -315,12 +279,12 @@ void repository_test() {
     const char filename[] = "neural_network_repository_test.nn";
 
     const int numbers[] = {784, 200, 100, 10};
-    old_nn* network = alloc_network(4, numbers);
+    neural_network* network = alloc_network(4, numbers);
     if (save(network, filename) != 0) {
         printf("Save failed");
         return;
     }
-    old_nn* download = restore(filename);
+    neural_network* download = restore(filename);
 
     if(network->count != download->count) {
         printf("Different network count");
@@ -362,37 +326,6 @@ void repository_test() {
     printf("repository test OK!\n");
 }
 
-void conv_layer_forward_test() {
-    const size3D is = {3, 3, 1};
-    const size3D ks = {2, 2, 1};
-    conv_layer* l = alloc_conv_layer(is, ks,1, 1, 0);
-    set_kernels_and_biases(l, 0, 0);
-
-    l->kernels[0] = 1;
-    l->kernels[1] = 2;
-    l->kernels[2] = -1;
-    l->kernels[3] = 0;
-
-    if (l->output_size.width != 2 || l->output_size.height != 2 || l->output_size.depth != 1) {
-        printf("Wrong output size\n");
-        return;
-    }
-
-    double input[] = {1, 6, 2, 5, 3, 1, 7, 0, 4};
-    double expected[] = {8, 7, 4, 5};
-
-    double* result = conv_forward(l, input);
-
-    for (int i = 0; i < 4; i++) {
-        if (!def_deq(result[i], expected[i])) {
-            printf("Wrong output value at index %i", i);
-            return;
-        }
-    }
-
-    printf("conv layer forward test OK!\n");
-}
-
 void unit_tests() {
     init_random();
 
@@ -400,7 +333,5 @@ void unit_tests() {
     generate_test(0);
     traverse_test();
     repository_test();
-
-    conv_layer_forward_test();
 }
 

@@ -1,0 +1,81 @@
+#include "utils.h"
+
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+
+inline void init_random() {
+    srand(time(NULL));
+}
+
+inline double rand_d(const double min, const double max) {
+    return (double)rand() / (double)RAND_MAX * (max - min) + min;
+
+}
+
+inline int rand_i(const int max) {
+    return rand() % max;
+}
+
+inline double rand_std_nrml_distribution() {
+    const double u1 = (rand() + 1.0) / (RAND_MAX + 2.0);  // avoid log(0)
+    const double u2 = (rand() + 1.0) / (RAND_MAX + 2.0);
+    return sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2);
+}
+
+inline int max_index(double values[], const int count) {
+    double max = DBL_MIN;
+    int index = -1;
+    for(int i = 0; i < count; i++) {
+        if(values[i] > max) {
+            index = i;
+            max = values[i];
+        }
+    }
+
+    return index;
+}
+
+inline int deq(const double left, const double right, const double margin) {
+    return fabs(left - right) < margin;
+}
+
+int def_deq(const double left, const double right) {
+    return deq(left, right, 0.00001);
+}
+
+void list_remove(void* arr, size_t size, int count, int index) {
+    char* base = arr;
+    char* dest = base + index * size;
+    char* src = base + (index + 1) * size;
+
+    memmove(dest, src, (count - index - 1) * size);
+}
+
+char* alloc_seq_to_str(double* values, int count) {
+    int size = 0;
+    for (int i = 0; i < count; i++) {
+        size += snprintf(NULL, 0, "%.2f", values[i]);
+        if (i != 0) size += 2;
+    }
+
+    char* result = malloc(sizeof(char) * (size + 1));
+    char* current = result;
+    for (int i = 0; i < count; i++) {
+        if (i != 0) {
+            current[0] = ',';
+            current[1] = ' ';
+            current += 2;
+        }
+
+        int n = snprintf(current, size, "%.2f", values[i]);
+        current += n;
+    }
+
+    current[0] = '\0';
+    return result;
+}

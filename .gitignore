@@ -1,9 +1,11 @@
 *.user
 Implementation/.idea
+NewImplementation/.idea
 .idea
 Superset/.idea
 
 Implementation/cmake-build-debug/**
+NewImplementation/cmake-build-debug/**
 
 Superset/Model/obj
 Superset/Model/bin
