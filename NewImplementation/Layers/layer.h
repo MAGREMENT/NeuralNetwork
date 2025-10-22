@@ -12,7 +12,8 @@ typedef struct layer layer;
 typedef struct layer_functions {
     void (*forward)(const layer* l, const double* inputs, double* outputs);
     void (*backward)(const layer* l, const double* inputs, const double* deltas, double* outputs);
-    void (*apply_gradients)(const layer* l, const double* inputs, const double* deltas, const optimizer* opt, optimizer_args args);
+    void (*deltas_to_gradients)(const layer* l, const double* inputs, const double* deltas, double* gradients);
+    void (*apply_gradients)(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args);
     void (*initialize)(const layer* l);
     void (*free)(layer* l);
 } layer_functions;
@@ -21,6 +22,7 @@ struct layer {
     void* params;
     int in_count;
     int out_count;
+    int gradient_count;
 
     layer_functions functions;
 };

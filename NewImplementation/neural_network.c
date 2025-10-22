@@ -52,12 +52,6 @@ static double** alloc_layer_output_buffers(const neural_network* network) {
     return result;
 }
 
-static void set_buffers_to_zero(const neural_network* network, double** buffers) {
-    for (int i = 0; i < network->layerCount; i++) {
-        memset(buffers[i], 0, sizeof(double) * network->layers[i]->out_count);
-    }
-}
-
 static void free_buffers(const neural_network* network, double** buffers) {
     for (int i = 0; i < network->layerCount; i++) {
         free(buffers[i]);
@@ -66,23 +60,21 @@ static void free_buffers(const neural_network* network, double** buffers) {
     free(buffers);
 }
 
-static void average_deltas(const neural_network* network, double** buffers, const int count) {
+static void average_gradients(const neural_network* network, double** buffers, const int count) {
     for (int i = 0; i < network->layerCount; i++) {
-        for (int o = 0; o < network->layers[i]->out_count; o++) {
+        for (int o = 0; o < network->layers[i]->gradient_count; o++) {
             buffers[i][o] /= count;
         }
     }
 }
 
-inline void learn(const neural_network* network, test_data data, range range, optimizer_args args) {
+inline void learn(const neural_network* network, const test_data data, const range range, const optimizer* opt, const optimizer_args args) {
     const int lastIndex = network->layerCount - 1;
     const int in_count = network->layers[0]->in_count;
     const int out_count = network->layers[lastIndex]->out_count;
 
-    double** deltas = alloc_layer_output_buffers(network);
+    double** gradients = malloc(sizeof(double*) * network->layerCount);
     double** intermediateValues = alloc_layer_output_buffers(network);
-
-    set_buffers_to_zero(network, deltas);
 
     for (int r = range.from; r < range.to; r++) {
         const double* inputs = data.inputs + r * in_count;
@@ -102,9 +94,10 @@ inline void learn(const neural_network* network, test_data data, range range, op
         for (int i = lastIndex; i >= 0; i--) {
             const layer* l = network->layers[i];
 
-            for (int o = 0; o < l->out_count; o++) {
-                deltas[i][o] += currentDeltas[o];
-            }
+            if (l->gradient_count > 0) {
+                gradients[i] = malloc(sizeof(double) * l->gradient_count);
+                l->functions.deltas_to_gradients(l, intermediateValues[i - 1], currentDeltas, gradients[i]);
+            } else gradients[i] = NULL;
 
             if (i == 0) break;
 
@@ -118,17 +111,17 @@ inline void learn(const neural_network* network, test_data data, range range, op
         }
     }
 
-    //TODO look into ignoring non teachable layers
-    average_deltas(network, deltas, range.from - range.to);
+    average_gradients(network, gradients, range.from - range.to);
 
-    //TODO need to separate gradients from deltas
     for (int i = 0; i < network->layerCount; i++) {
-        const layer* l = network->layers[i];
+        const double* g = gradients[i];
+        if (g == NULL) continue;
 
-        //l->functions.apply_gradients(l, )
+        const layer* l = network->layers[i];
+        l->functions.apply_gradients(l, g, opt, args);
     }
 
-    free_buffers(network, deltas);
+    free_buffers(network, gradients);
     free_buffers(network, intermediateValues);
 }
 

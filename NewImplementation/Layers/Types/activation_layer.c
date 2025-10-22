@@ -8,7 +8,11 @@
 #include <math.h>
 #include <stdlib.h>
 
-static void apply_gradients_to_activation(const layer* l, const double* inputs, const double* deltas, const optimizer* opt, optimizer_args args) {
+static void activation_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
+
+}
+
+static void apply_gradients_to_activation(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args) {
 
 }
 
@@ -26,7 +30,7 @@ static void sigmoid_backward(const layer* l, const double* inputs, const double*
 }
 
 layer_functions store[] = {
-    {sigmoid_forward, sigmoid_backward, apply_gradients_to_activation, no_initialization, default_layer_free}
+    {sigmoid_forward, sigmoid_backward, activation_delta_to_gradients, apply_gradients_to_activation, no_initialization, default_layer_free}
 };
 
 inline layer* cnstr_activation_layer(const int type, const int outputCount) {

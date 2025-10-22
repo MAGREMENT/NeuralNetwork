@@ -29,7 +29,7 @@ typedef struct neural_network {
 
 neural_network* alloc_neural_network(int layerCount, layer** layers);
 void predict(const neural_network* network, const double* inputs, double* outputs);
-void learn(const neural_network* network, test_data data, range range, optimizer_args args);
+void learn(const neural_network* network, test_data data, range range, const optimizer* opt, optimizer_args args);
 void initialize(const neural_network* network);
 
 #endif //NEURAL_NETWORK_H

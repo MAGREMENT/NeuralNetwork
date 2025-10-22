@@ -51,20 +51,21 @@ static void dense_backward(const layer* l, const double* inputs, const double* d
     }
 }
 
-static void apply_gradients_to_dense(const layer* l, const double* inputs, const double* deltas, const optimizer* opt, optimizer_args args) {
-  	const dense_layer_params* p = l->params;
-	double* wg = malloc(sizeof(double) * l->in_count * l->out_count);
-
+static void dense_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
     for(int o = 0; o < l->out_count; o++) {
         for (int i = 0; i < l->in_count; i++) {
-            wg[i * l->out_count + o] = deltas[o] * inputs[i];
+            gradients[i * l->out_count + o] = deltas[o] * inputs[i];
         }
+
+        gradients[l->out_count * l->in_count + o] = deltas[o];
     }
+}
 
-    opt->apply_gradients(p->weights, wg, args);
-    opt->apply_gradients(p->biases, deltas, args);
+static void apply_gradients_to_dense(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args) {
+  	const dense_layer_params* p = l->params;
 
-    free(wg);
+    opt->apply_gradients(p->weights, gradients, l->in_count * l->out_count, args);
+    opt->apply_gradients(p->biases, gradients + l->in_count * l->out_count, l->out_count, args);
 }
 
 inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
@@ -76,11 +77,13 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
     l->params = p;
     l->in_count = inputCount;
     l->out_count = outputCount;
+    l->gradient_count = inputCount * outputCount + outputCount;
 
     l->functions.initialize = initialize;
     l->functions.forward = dense_forward;
     l->functions.backward = dense_backward;
     l->functions.free = free_dense_layer;
+    l->functions.deltas_to_gradients = dense_delta_to_gradients;
     l->functions.apply_gradients = apply_gradients_to_dense;
 
     return l;

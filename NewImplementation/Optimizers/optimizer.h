@@ -14,7 +14,7 @@ typedef struct optimizer optimizer;
 struct optimizer {
     void* params;
 
-    void (*apply_gradients)(double* to, const double* delta, optimizer_args args);
+    void (*apply_gradients)(double* to, const double* gradients, int count, optimizer_args args);
 };
 
 #endif //OPTIMIZER_H
