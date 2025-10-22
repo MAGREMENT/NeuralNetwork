@@ -3,13 +3,14 @@
 
 #include "../layer.h"
 
-/*enum activation_types {
+enum activation_types {
     SIGMOID,
     TANH,
     RELU,
     LEAKY_RELU,
-    SILU
-};*/
+    SILU,
+    SOFTMAX
+};
 
 layer* cnstr_activation_layer(int type, int outputCount);
 

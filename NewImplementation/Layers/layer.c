@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-inline void no_initialization(layer* l) {}
+inline void no_initialization(const layer* l) {}
 
 inline void default_layer_free(layer* l) {
     free(l->params);

@@ -9,8 +9,6 @@
 typedef struct dense_layer_params dense_layer_params;
 
 struct dense_layer_params {
-    int in_count;
-    int out_count;
     double* weights;
     double* biases;
 };
@@ -23,58 +21,67 @@ static void free_dense_layer(layer* l) {
     free(l);
 }
 
-static double* dense_forward(const layer* l, double* inputs, int* didAllocate) {
+static void dense_forward(const layer* l, const double* inputs, double* outputs) {
     const dense_layer_params* p = l->params;
 
-    double* result = malloc(p->out_count * sizeof(double));
-
-    for(int o = 0; o < p->out_count; o++){
+    for(int o = 0; o < l->out_count; o++){
         double n = p->biases[o];
 
-        for(int i = 0; i < p->in_count; i++){
-            const int ind = i * p->out_count + o;
+        for(int i = 0; i < l->in_count; i++){
+            const int ind = i * l->out_count + o;
             n += inputs[i] * p->weights[ind];
         }
 
-        result[o] = n;
+        outputs[o] = n;
     }
-
-    *didAllocate = true;
-    return result;
 }
 
-static double* dense_backward(const layer* l, double* inputs, double* deltas, int* didAllocate) {
+static void dense_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     const dense_layer_params* p = l->params;
 
-    double* result = malloc(sizeof(double) * p->in_count);
-
-    for(int i = 0; i < p->in_count; i++) {
+    for(int i = 0; i < l->in_count; i++) {
         double value = 0;
-        for(int o = 0; o < p->out_count; o++) {
-            const double w = p->weights[i * p->out_count + o];
+        for(int o = 0; o < l->out_count; o++) {
+            const double w = p->weights[i * l->out_count + o];
             const double nv = deltas[o];
             value += nv * w;
         }
 
-        result[i] = value;
+        outputs[i] = value;
     }
-
-    *didAllocate = true;
-    return result;
 }
 
-inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(layer* l)) {
+static void apply_gradients_to_dense(const layer* l, const double* inputs, const double* deltas, const optimizer* opt, optimizer_args args) {
+  	const dense_layer_params* p = l->params;
+	double* wg = malloc(sizeof(double) * l->in_count * l->out_count);
+
+    for(int o = 0; o < l->out_count; o++) {
+        for (int i = 0; i < l->in_count; i++) {
+            wg[i * l->out_count + o] = deltas[o] * inputs[i];
+        }
+    }
+
+    opt->apply_gradients(p->weights, wg, args);
+    opt->apply_gradients(p->biases, deltas, args);
+
+    free(wg);
+}
+
+inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
     dense_layer_params* p = malloc(sizeof(dense_layer_params));
     p->weights = malloc(sizeof(double) * inputCount * outputCount);
     p->biases = malloc(sizeof(double) * outputCount);
-    p->in_count = inputCount;
-    p->out_count = outputCount;
 
     l->params = p;
+    l->in_count = inputCount;
+    l->out_count = outputCount;
+
     l->functions.initialize = initialize;
     l->functions.forward = dense_forward;
+    l->functions.backward = dense_backward;
     l->functions.free = free_dense_layer;
+    l->functions.apply_gradients = apply_gradients_to_dense;
 
     return l;
 }
@@ -82,20 +89,20 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
 static void init_d_to_d(const layer* l, const double d) {
     const dense_layer_params* p = l->params;
 
-    for(int o = 0; o < p->out_count; o++){
+    for(int o = 0; o < l->out_count; o++){
         p->biases[o] = d;
 
-        for(int i = 0; i < p->in_count; i++){
-            const int ind = i * p->out_count + o;
+        for(int i = 0; i < l->in_count; i++){
+            const int ind = i * l->out_count + o;
             p->weights[ind] = d;
         }
     }
 }
 
-inline void initialize_dense_to_zero(layer* l) {
+inline void initialize_dense_to_zero(const layer* l) {
     init_d_to_d(l, 0);
 }
 
-inline void initialize_dense_to_one(layer* l) {
+inline void initialize_dense_to_one(const layer* l) {
     init_d_to_d(l, 1);
 }

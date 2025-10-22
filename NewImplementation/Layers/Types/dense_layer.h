@@ -7,8 +7,8 @@
 
 #include "../layer.h"
 
-layer* cnstr_dense_layer(int inputCount, int outputCount, void (*initialize)(layer* l));
-void initialize_dense_to_zero(layer* l);
-void initialize_dense_to_one(layer* l);
+layer* cnstr_dense_layer(int inputCount, int outputCount, void (*initialize)(const layer* l));
+void initialize_dense_to_zero(const layer* l);
+void initialize_dense_to_one(const layer* l);
 
 #endif //DENSE_LAYER_H

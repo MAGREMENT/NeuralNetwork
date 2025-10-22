@@ -3,45 +3,38 @@
 //
 
 #include "activation_layer.h"
+#include "../../Util/string_math.h"
 
 #include <math.h>
 #include <stdlib.h>
 
-static double sigmoid(const double input) {
-    return 1 / (1 + exp(-input));
+static void apply_gradients_to_activation(const layer* l, const double* inputs, const double* deltas, const optimizer* opt, optimizer_args args) {
+
 }
 
-static double* sigmoid_forward(const layer* l, double* inputs, int* didAllocate) {
-    const int count = *(int*)l->params;
-    for (int i = 0; i < count; i++) {
-        inputs[i] = sigmoid(inputs[i]);
+static void sigmoid_forward(const layer* l, const double* inputs, double* outputs) {
+    for (int i = 0; i < l->out_count; i++) {
+        outputs[i] = sigmoid(inputs[i]);
     }
-
-    *didAllocate = false;
-    return inputs;
 }
 
-static double* sigmoid_backward(const layer* l, double* inputs, double* deltas, int* didAllocate) {
-    const int count = *(int*)l->params;
-    for (int i = 0; i < count; i++) {
+static void sigmoid_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
+    for (int i = 0; i < l->out_count; i++) {
         const double a = sigmoid(inputs[i]);
-        deltas[i] *= a * (1 - a);
+        outputs[i] = deltas[i] * a * (1 - a);
     }
-
-    *didAllocate = false;
-    return inputs;
 }
 
 layer_functions store[] = {
-    {sigmoid_forward, sigmoid_backward, no_initialization, default_layer_free}
+    {sigmoid_forward, sigmoid_backward, apply_gradients_to_activation, no_initialization, default_layer_free}
 };
 
 inline layer* cnstr_activation_layer(const int type, const int outputCount) {
     layer* l = malloc(sizeof(layer));
-    int* oc = malloc(sizeof(int));
-    *oc = outputCount;
 
-    l->params = oc;
+    l->params = NULL;
+    l->in_count = outputCount;
+    l->out_count = outputCount;
     l->functions = store[type];
 
     return l;

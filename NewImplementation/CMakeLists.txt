@@ -10,4 +10,14 @@ add_executable(NewImplementation main.c
         neural_network.c
         utils.c
         asserter.c
-        Util/string_util.c)
+        Util/string_util.c
+        Optimizers/optimizer.c
+        Layers/layer.c
+        Layers/Types/activation_layer.c
+        Layers/Types/dense_layer.c
+        Util/string_math.c
+        Iterators/
+        Iterators/iterator.c
+        Iterators/Types/full_batch_iterator.c
+        Iterators/Types/mini-batch_iterator.c
+        multi-threading.c)
