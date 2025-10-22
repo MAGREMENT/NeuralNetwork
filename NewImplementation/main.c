@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "conv_layer.h"
+#include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
 #include "utils.h"
 #include "Layers/Types/activation_layer.h"
@@ -52,23 +52,25 @@ void predict_test() {
 void conv_layer_forward_test() {
     const size3D is = {3, 3, 1};
     const size3D ks = {2, 2, 1};
-    conv_layer* l = alloc_conv_layer(is, ks,1, 1, 0);
+    layer* l = cnstr_conv_layer(is, ks,1, 1, 0);
     set_kernels_and_biases(l, 0, 0);
 
-    l->kernels[0] = 1;
-    l->kernels[1] = 2;
-    l->kernels[2] = -1;
-    l->kernels[3] = 0;
+    conv_layer_params* p = l->params;
+    p->kernels[0] = 1;
+    p->kernels[1] = 2;
+    p->kernels[2] = -1;
+    p->kernels[3] = 0;
 
-    if (l->output_size.width != 2 || l->output_size.height != 2 || l->output_size.depth != 1) {
+    if (p->output_size.width != 2 || p->output_size.height != 2 || p->output_size.depth != 1) {
         printf("Wrong output size\n");
         return;
     }
 
     double input[] = {1, 6, 2, 5, 3, 1, 7, 0, 4};
     double expected[] = {8, 7, 4, 5};
+    double result[4];
 
-    double* result = conv_forward(l, input);
+    l->functions.forward(l, input, result);
 
     for (int i = 0; i < 4; i++) {
         if (!def_deq(result[i], expected[i])) {

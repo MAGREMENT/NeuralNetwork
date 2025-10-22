@@ -24,6 +24,7 @@ struct layer {
     int out_count;
     int gradient_count;
 
+    //TODO to pointer
     layer_functions functions;
 };
 

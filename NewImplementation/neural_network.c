@@ -15,6 +15,24 @@ inline neural_network* alloc_neural_network(int layerCount, layer** layers) {
     return result;
 }
 
+inline void free_neural_network(neural_network* network) {
+    for (int l = 0; l < network->layerCount; l++) {
+        layer* layer = network->layers[l];
+        layer->functions.free(layer);
+    }
+
+    free(network->layers);
+    free(network);
+}
+
+inline int get_in_count(const neural_network* network) {
+    return network->layers[0]->in_count;
+}
+
+inline int get_out_count(const neural_network* network) {
+    return network->layers[network->layerCount - 1]->out_count;
+}
+
 inline void predict(const neural_network* network, const double* inputs, double* outputs) {
     double* v = NULL;
 
@@ -70,8 +88,8 @@ static void average_gradients(const neural_network* network, double** buffers, c
 
 inline void learn(const neural_network* network, const test_data data, const range range, const optimizer* opt, const optimizer_args args) {
     const int lastIndex = network->layerCount - 1;
-    const int in_count = network->layers[0]->in_count;
-    const int out_count = network->layers[lastIndex]->out_count;
+    const int in_count = get_in_count(network);
+    const int out_count = get_out_count(network);
 
     double** gradients = malloc(sizeof(double*) * network->layerCount);
     double** intermediateValues = alloc_layer_output_buffers(network);
@@ -130,4 +148,27 @@ inline void initialize(const neural_network* network) {
         layer* l = network->layers[i];
         l->functions.initialize(l);
     }
+}
+
+double get_cost(const neural_network* network, const double* inputs, const double* expected) {
+    const int c = get_out_count(network);
+    double* predicted = malloc(sizeof(double) * c);
+    predict(network, inputs, predicted);
+
+    const double cost = network->get_cost(predicted, expected, c);
+
+    free(predicted);
+    return cost;
+}
+
+double get_avg_cost(const neural_network* network, test_data data) {
+    const int in_count = get_in_count(network);
+    const int out_count = get_out_count(network);
+    double cost = 0;
+
+    for (int i = 0; i < data.count; i++) {
+        cost += get_cost(network, data.inputs + i * in_count, data.expected + i * out_count);
+    }
+
+    return cost / data.count;
 }

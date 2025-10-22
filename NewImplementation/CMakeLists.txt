@@ -4,7 +4,6 @@ project(NewImplementation C)
 set(CMAKE_C_STANDARD 23)
 
 add_executable(NewImplementation main.c
-        conv_layer.c
         cost.c
         logger.c
         neural_network.c
@@ -20,4 +19,5 @@ add_executable(NewImplementation main.c
         Iterators/iterator.c
         Iterators/Types/full_batch_iterator.c
         Iterators/Types/mini-batch_iterator.c
-        multi-threading.c)
+        multi-threading.c
+        Layers/Types/convolutional_layer.c)
