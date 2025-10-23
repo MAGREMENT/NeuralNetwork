@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
-#include "Util/string_math.h"
+#include "Util/math_util.h"
 
 void unit_test();
 
@@ -21,13 +21,11 @@ void predict_test() {
     const double i1 = 1;
     const double i2 = 2;
 
-    //TODO nn builder
-    layer* layers[] = {cnstr_dense_layer(2, 3, initialize_dense_to_one),
-        cnstr_activation_layer(SIGMOID, 3),
-        cnstr_dense_layer(3, 2, initialize_dense_to_one),
-        cnstr_activation_layer(SIGMOID, 2)};
-
-    neural_network* n = alloc_neural_network(4, layers);
+    neural_network* n = alloc_neural_network(4);
+    n->layers[0] = cnstr_dense_layer(2, 3, initialize_dense_to_one);
+    n->layers[1] = cnstr_activation_layer(SIGMOID, 3);
+    n->layers[2] = cnstr_dense_layer(3, 2, initialize_dense_to_one);
+    n->layers[3] = cnstr_activation_layer(SIGMOID, 2);
     initialize(n);
 
     const double inputs[] = {i1, i2};
@@ -46,6 +44,7 @@ void predict_test() {
         }
     }
 
+    free_neural_network(n, 1);
     printf("predict test OK!\n");
 }
 
@@ -79,6 +78,7 @@ void conv_layer_forward_test() {
         }
     }
 
+    l->functions.free(l);
     printf("conv layer forward test OK!\n");
 }
 

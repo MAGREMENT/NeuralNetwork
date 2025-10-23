@@ -3,7 +3,7 @@
 //
 
 #include "activation_layer.h"
-#include "../../Util/string_math.h"
+#include "../../Util/math_util.h"
 
 #include <math.h>
 #include <stdlib.h>

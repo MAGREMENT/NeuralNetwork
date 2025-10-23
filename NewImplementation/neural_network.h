@@ -5,6 +5,7 @@
 #ifndef NEURAL_NETWORK_H
 #define NEURAL_NETWORK_H
 
+#include "cost.h"
 #include "Iterators/iterator.h"
 #include "Layers/layer.h"
 
@@ -12,7 +13,7 @@ typedef struct test_data {
     double* inputs;
     double* expected;
     int count;
-} test_data ;
+} test_data;
 
 typedef struct neural_network {
     int layerCount;
@@ -23,12 +24,11 @@ typedef struct neural_network {
 
     optimizer* optimizer;
 
-    void (*get_cost_deltas)(const double* predicted, const double* expected, double* result, int count);
-    double (*get_cost)(const double* predicted, const double* expected, int count);
+    cost_vtable* cost_vtable;
 } neural_network;
 
-neural_network* alloc_neural_network(int layerCount, layer** layers);
-void free_neural_network(neural_network* network);
+neural_network* alloc_neural_network(int layerCount);
+void free_neural_network(neural_network* network, int freeLayerInstances);
 
 int get_in_count(const neural_network* network);
 int get_out_count(const neural_network* network);

@@ -5,20 +5,21 @@
 #include "neural_network.h"
 
 #include <stdlib.h>
-#include <string.h>
 
-inline neural_network* alloc_neural_network(int layerCount, layer** layers) {
+inline neural_network* alloc_neural_network(const int layerCount) {
     neural_network* result = malloc(sizeof(neural_network));
     result->layerCount = layerCount;
-    result->layers = layers;
+    result->layers = malloc(layerCount * sizeof(layer*));
 
     return result;
 }
 
-inline void free_neural_network(neural_network* network) {
-    for (int l = 0; l < network->layerCount; l++) {
-        layer* layer = network->layers[l];
-        layer->functions.free(layer);
+inline void free_neural_network(neural_network* network, const int freeLayerInstances) {
+    if (freeLayerInstances) {
+        for (int l = 0; l < network->layerCount; l++) {
+            layer* layer = network->layers[l];
+            layer->functions.free(layer);
+        }
     }
 
     free(network->layers);
@@ -31,6 +32,10 @@ inline int get_in_count(const neural_network* network) {
 
 inline int get_out_count(const neural_network* network) {
     return network->layers[network->layerCount - 1]->out_count;
+}
+
+inline void set_cost_type(const neural_network* network) {
+
 }
 
 inline void predict(const neural_network* network, const double* inputs, double* outputs) {
@@ -106,7 +111,7 @@ inline void learn(const neural_network* network, const test_data data, const ran
         }
 
         double* currentDeltas = malloc(sizeof(double) * out_count);
-        network->get_cost_deltas(intermediateValues[lastIndex], expected, currentDeltas, out_count);
+        network->cost_vtable->get_cost_deltas(intermediateValues[lastIndex], expected, currentDeltas, out_count);
 
         //backward pass
         for (int i = lastIndex; i >= 0; i--) {
@@ -155,7 +160,7 @@ double get_cost(const neural_network* network, const double* inputs, const doubl
     double* predicted = malloc(sizeof(double) * c);
     predict(network, inputs, predicted);
 
-    const double cost = network->get_cost(predicted, expected, c);
+    const double cost = network->cost_vtable->get_cost(predicted, expected, c);
 
     free(predicted);
     return cost;

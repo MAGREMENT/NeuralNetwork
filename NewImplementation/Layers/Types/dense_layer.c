@@ -5,6 +5,9 @@
 #include "dense_layer.h"
 
 #include <stdlib.h>
+#include <tgmath.h>
+
+#include "../../Util/rand_util.h"
 
 typedef struct dense_layer_params dense_layer_params;
 
@@ -108,4 +111,45 @@ inline void initialize_dense_to_zero(const layer* l) {
 
 inline void initialize_dense_to_one(const layer* l) {
     init_d_to_d(l, 1);
+}
+
+static void biasesToZero(const dense_layer_params* p, const int count) {
+    for (int i = 0; i < count; i++) {
+        p->biases[i] = 0;
+    }
+}
+
+inline void initialize_dense_random(const layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    const dense_layer_params* p = layer->params;
+
+    for (int i = 0; i < total; i++) {
+        p->weights[i] = rand_d_std_nrml_distr() * 0.01;
+    }
+
+    biasesToZero(p, layer->out_count);
+}
+
+inline void initialize_dense_he(const layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    const dense_layer_params* p = layer->params;
+
+    const double scale = sqrt(2.0 / layer->in_count);
+    for (int i = 0; i < total; i++) {
+        p->weights[i] = rand_d_std_nrml_distr() * scale;
+    }
+
+    biasesToZero(p, layer->out_count);
+}
+
+inline void initialize_dense_xavier(const layer* layer) {
+    const int total = layer->in_count * layer->out_count;
+    const dense_layer_params* p = layer->params;
+
+    const double scale = sqrt(1.0 / layer->in_count);
+    for (int i = 0; i < total; i++) {
+        p->weights[i] = rand_d_std_nrml_distr() * scale;
+    }
+
+    biasesToZero(p, layer->out_count);
 }

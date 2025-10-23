@@ -1,19 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include <stddef.h>
 
+//TODO move to appropriate Util/X.c file
 
-void init_random();
-double rand_d(double min, double max);
-int rand_i(int max);
-double rand_std_nrml_distribution();
 int max_index(double values[], int count);
 //Double equals
 int deq(double left, double right, double margin);
 //Default double equals
 int def_deq(double left, double right);
-void list_remove(void* arr, size_t size, int count, int index);
-void* list_grow(void* arr, size_t size, int currentCount, int wantedCount);
 char* alloc_seq_to_str(double* values, int count);
 
 #endif //UTILS_H

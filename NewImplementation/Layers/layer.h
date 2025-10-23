@@ -7,6 +7,11 @@
 
 #include "../Optimizers/optimizer.h"
 
+enum layer_types {
+    DENSE,
+    ACTIVATION
+};
+
 typedef struct layer layer;
 
 typedef struct layer_functions {
@@ -24,7 +29,7 @@ struct layer {
     int out_count;
     int gradient_count;
 
-    //TODO to pointer
+    //TODO to vtable
     layer_functions functions;
 };
 

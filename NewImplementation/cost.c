@@ -77,3 +77,10 @@ inline void derivative_binary_cross_entropy_cost(const double* predicted, const 
         result[i] = (expected[i] - p) / (p * (p - 1));
     }
 }
+
+cost_vtable cost_vtables[] = {
+    {mean_square_cost, derivative_mean_square_cost},
+    {mean_absolute_cost, derivative_mean_absolute_cost},
+    {mean_log_cosh_cost, derivative_mean_log_cosh_cost},
+    {binary_cross_entropy_cost, derivative_binary_cross_entropy_cost}
+};

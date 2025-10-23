@@ -14,10 +14,16 @@ add_executable(NewImplementation main.c
         Layers/layer.c
         Layers/Types/activation_layer.c
         Layers/Types/dense_layer.c
-        Util/string_math.c
+        Util/math_util.c
         Iterators/
         Iterators/iterator.c
         Iterators/Types/full_batch_iterator.c
         Iterators/Types/mini-batch_iterator.c
         multi-threading.c
-        Layers/Types/convolutional_layer.c)
+        Layers/Types/convolutional_layer.c
+        Util/Collections/list.c
+        builder.c
+        builder.h
+        Util/rand_util.c
+        Util/rand_util.h
+)
