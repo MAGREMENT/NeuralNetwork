@@ -11,10 +11,15 @@ typedef struct optimizer_args {
 
 typedef struct optimizer optimizer;
 
+typedef struct optimizer_vtable {
+    void (*apply_gradients)(optimizer* opt, double* to, const double* gradients, int count, optimizer_args args);
+    void (*free) (optimizer* opt);
+} optimizer_vtable;
+
 struct optimizer {
     void* params;
 
-    void (*apply_gradients)(double* to, const double* gradients, int count, optimizer_args args);
+    optimizer_vtable* vtable;
 };
 
 #endif //OPTIMIZER_H

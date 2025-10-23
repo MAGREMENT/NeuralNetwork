@@ -28,13 +28,13 @@ typedef struct neural_network {
 } neural_network;
 
 neural_network* alloc_neural_network(int layerCount);
-void free_neural_network(neural_network* network, int freeLayerInstances);
+void free_neural_network(neural_network* network, int freeConstructed);
 
 int get_in_count(const neural_network* network);
 int get_out_count(const neural_network* network);
 
 void predict(const neural_network* network, const double* inputs, double* outputs);
-void learn(const neural_network* network, test_data data, range range, const optimizer* opt, optimizer_args args);
+void learn(const neural_network* network, test_data data, range range, optimizer_args args);
 void initialize(const neural_network* network);
 
 double get_cost(const neural_network* network, const double* inputs, const double* expected);

@@ -10,16 +10,19 @@ inline neural_network* alloc_neural_network(const int layerCount) {
     neural_network* result = malloc(sizeof(neural_network));
     result->layerCount = layerCount;
     result->layers = malloc(layerCount * sizeof(layer*));
+    result->optimizer = NULL;
 
     return result;
 }
 
-inline void free_neural_network(neural_network* network, const int freeLayerInstances) {
-    if (freeLayerInstances) {
+inline void free_neural_network(neural_network* network, const int freeConstructed) {
+    if (freeConstructed) {
         for (int l = 0; l < network->layerCount; l++) {
             layer* layer = network->layers[l];
             layer->functions.free(layer);
         }
+
+        free(network->optimizer);
     }
 
     free(network->layers);
@@ -91,7 +94,7 @@ static void average_gradients(const neural_network* network, double** buffers, c
     }
 }
 
-inline void learn(const neural_network* network, const test_data data, const range range, const optimizer* opt, const optimizer_args args) {
+inline void learn(const neural_network* network, const test_data data, const range range, const optimizer_args args) {
     const int lastIndex = network->layerCount - 1;
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
@@ -119,7 +122,8 @@ inline void learn(const neural_network* network, const test_data data, const ran
 
             if (l->gradient_count > 0) {
                 gradients[i] = malloc(sizeof(double) * l->gradient_count);
-                l->functions.deltas_to_gradients(l, intermediateValues[i - 1], currentDeltas, gradients[i]);
+                const double* in = i == 0 ? inputs : intermediateValues[i - 1];
+                l->functions.deltas_to_gradients(l, in, currentDeltas, gradients[i]);
             } else gradients[i] = NULL;
 
             if (i == 0) break;
@@ -141,7 +145,7 @@ inline void learn(const neural_network* network, const test_data data, const ran
         if (g == NULL) continue;
 
         const layer* l = network->layers[i];
-        l->functions.apply_gradients(l, g, opt, args);
+        l->functions.apply_gradients(l, g, network->optimizer, args);
     }
 
     free_buffers(network, gradients);

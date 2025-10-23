@@ -1,0 +1,25 @@
+//
+// Created by zacha on 23-10-25.
+//
+
+#include "gradient_descent_optimizer.h"
+
+#include <stdlib.h>
+
+static void apply_gradients(optimizer* opt, double* to, const double* gradients, const int count, optimizer_args args) {
+    for (int i = 0; i < count; i++) {
+        to[i] -= gradients[i] * args.learning_rate;
+    }
+}
+
+static void free_gdo(optimizer* opt) {
+    free(opt);
+}
+
+optimizer_vtable gdo_vtable = {apply_gradients, free_gdo};
+
+optimizer* cnstr_gradient_descent_optimizer() {
+    optimizer* opt = malloc(sizeof(optimizer));
+    opt->vtable = &gdo_vtable;
+    return opt;
+}

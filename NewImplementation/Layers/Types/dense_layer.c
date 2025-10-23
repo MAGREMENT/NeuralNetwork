@@ -5,6 +5,7 @@
 #include "dense_layer.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <tgmath.h>
 
 #include "../../Util/rand_util.h"
@@ -67,8 +68,8 @@ static void dense_delta_to_gradients(const layer* l, const double* inputs, const
 static void apply_gradients_to_dense(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args) {
   	const dense_layer_params* p = l->params;
 
-    opt->apply_gradients(p->weights, gradients, l->in_count * l->out_count, args);
-    opt->apply_gradients(p->biases, gradients + l->in_count * l->out_count, l->out_count, args);
+    opt->vtable->apply_gradients(opt, p->weights, gradients, l->in_count * l->out_count, args);
+    opt->vtable->apply_gradients(opt, p->biases, gradients + l->in_count * l->out_count, l->out_count, args);
 }
 
 inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
@@ -90,6 +91,16 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
     l->functions.apply_gradients = apply_gradients_to_dense;
 
     return l;
+}
+
+void set_weights(const layer* l, double values[]) {
+    const dense_layer_params* p = l->params;
+    memcpy(p->weights, values, sizeof(double) * l->in_count * l->out_count);
+}
+
+void set_biases(const layer* l, double values[]) {
+    const dense_layer_params* p = l->params;
+    memcpy(p->biases, values, sizeof(double) * l->out_count);
 }
 
 static void init_d_to_d(const layer* l, const double d) {
@@ -153,3 +164,5 @@ inline void initialize_dense_xavier(const layer* layer) {
 
     biasesToZero(p, layer->out_count);
 }
+
+

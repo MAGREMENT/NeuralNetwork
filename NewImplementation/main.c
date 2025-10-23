@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
+#include "Optimizers/gradient_descent_optimizer.h"
 #include "Util/math_util.h"
 
 void unit_test();
@@ -13,6 +14,73 @@ void unit_test();
 int main(void) {
     unit_test();
     return EXIT_SUCCESS;
+}
+
+void full_test_value_check(const double v, const double expected) {
+    if (!deq(v, expected, 0.01)) {
+        printf("FULL TEST FAIL !\n");
+    }
+}
+
+void dense_test() {
+    neural_network* n = alloc_neural_network(2);
+    n->layers[0] = cnstr_dense_layer(2, 3, initialize_dense_to_one);
+    n->layers[1] = cnstr_dense_layer(3, 2, initialize_dense_to_one);
+
+    double w1[] = {0.5, 1, 1.5, 0.5, 1, 1.5};
+    double w2[] = {1.5, 1, 0.5, 1.5, 0.5, 1};
+    double b1[] = {-1, 0, -1};
+    double b2[] = {-2, -2};
+
+    set_weights(n->layers[0], w1);
+    set_weights(n->layers[1], w2);
+    set_biases(n->layers[0], b1);
+    set_biases(n->layers[1], b2);
+
+    double i[] = {2, 2};
+    double o[3];
+
+    n->layers[0]->functions.forward(n->layers[0], i, o);
+
+    full_test_value_check(o[0], 1);
+    full_test_value_check(o[1], 4);
+    full_test_value_check(o[2], 5);
+
+    double o2[2];
+
+    n->layers[1]->functions.forward(n->layers[1], o, o2);
+
+    full_test_value_check(o2[0], 4);
+    full_test_value_check(o2[1], 10);
+
+    double o3[2];
+
+    predict(n, i, o3);
+
+    full_test_value_check(o2[0], o3[0]);
+    full_test_value_check(o2[1], o3[1]);
+
+    n->cost_vtable = cost_vtables + MEAN_SQUARE;
+    double e[] = {2, 7};
+
+    const double cost = get_cost(n, i, e);
+
+    full_test_value_check(cost, 4 + 9);
+
+    n->optimizer = cnstr_gradient_descent_optimizer();
+    const optimizer_args args = {0.001};
+
+    learn(n, (test_data){i, e, 1}, (range){1, 0, 1}, args);
+
+    const double cost2 = get_cost(n, i, e);
+
+    if (cost2 >= cost) {
+        printf("Dense test cost lowering fail");
+        return;
+    }
+
+    free_neural_network(n, true);
+    printf("dense test OK!\n");
 }
 
 void predict_test() {
@@ -83,6 +151,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
+    dense_test();
     predict_test();
     conv_layer_forward_test();
 }

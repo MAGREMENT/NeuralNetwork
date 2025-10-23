@@ -26,4 +26,6 @@ add_executable(NewImplementation main.c
         builder.h
         Util/rand_util.c
         Util/rand_util.h
+        Optimizers/gradient_descent_optimizer.c
+        Optimizers/gradient_descent_optimizer.h
 )
