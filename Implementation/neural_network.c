@@ -614,7 +614,7 @@ static int process_gradient_scale(gradient_diagnostic* diag, double value, int v
     return result;
 }
 
-static int compare_grad_scale(void* s1, void* s2) {
+static int compare_grad_scale(const void* s1, const void* s2) {
     return ((gradient_scale*)s2)->lower - ((gradient_scale*)s1)->lower;
 }
 

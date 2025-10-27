@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "neural_network.h"
@@ -17,7 +18,34 @@ void yolo();
 int main() {
     //cut_2D_test();
     //unit_tests();
-    yolo();
+    //yolo();
+
+    const int numbers[] = {2, 3, 2};
+    neural_network* n = alloc_network(3, numbers);
+    apply_default_hyper_params(n);
+    set_activation_type(n, DEFAULT, DEFAULT);
+    set_cost_type(n, MEAN_SQUARED);
+    set_optimizer(n, create_gradient_descent_optimizer());
+
+    double w1[] = {0.5, 1, 1.5, 0.5, 1, 1.5};
+    double w2[] = {1.5, 1, 0.5, 1.5, 0.5, 1};
+    double b1[] = {-1, 0, -1};
+    double b2[] = {-2, -2};
+
+    memcpy(n->layers[0].weights, w1, sizeof(w1));
+    memcpy(n->layers[1].weights, w2, sizeof(w2));
+    memcpy(n->layers[0].biases, b1, sizeof(b1));
+    memcpy(n->layers[1].biases, b2, sizeof(b2));
+
+    double i[] = {2, 2};
+    input_data in = {2, i};
+
+    double e[] = {2, 7};
+    input_data ex = {2, e};
+
+    test_data d = {1, &in, &ex};
+
+    learn(n, &d, (range) {1, 0, 1}, 0.001, NULL);
 
     return EXIT_SUCCESS;
 }

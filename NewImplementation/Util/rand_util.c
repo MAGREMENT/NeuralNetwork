@@ -6,7 +6,7 @@
 
 #include <float.h>
 #include <stdlib.h>
-#include <tgmath.h>
+#include <math.h>
 #include <time.h>
 
 inline void init_random() {

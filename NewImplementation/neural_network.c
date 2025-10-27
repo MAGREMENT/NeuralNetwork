@@ -138,7 +138,7 @@ inline void learn(const neural_network* network, const test_data data, const ran
         }
     }
 
-    average_gradients(network, gradients, range.from - range.to);
+    average_gradients(network, gradients, range.to - range.from);
 
     for (int i = 0; i < network->layerCount; i++) {
         const double* g = gradients[i];

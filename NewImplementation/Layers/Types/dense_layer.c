@@ -4,9 +4,9 @@
 
 #include "dense_layer.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tgmath.h>
 
 #include "../../Util/rand_util.h"
 

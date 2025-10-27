@@ -12,7 +12,7 @@ typedef struct optimizer_args {
 typedef struct optimizer optimizer;
 
 typedef struct optimizer_vtable {
-    void (*apply_gradients)(optimizer* opt, double* to, const double* gradients, int count, optimizer_args args);
+    void (*apply_gradients)(const optimizer* opt, double* to, const double* gradients, int count, optimizer_args args);
     void (*free) (optimizer* opt);
 } optimizer_vtable;
 

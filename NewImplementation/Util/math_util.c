@@ -4,7 +4,7 @@
 
 #include "math_util.h"
 
-#include <tgmath.h>
+#include <math.h>
 
 inline double sigmoid(const double input) {
     return 1 / (1 + exp(-input));

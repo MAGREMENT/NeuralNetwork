@@ -63,20 +63,24 @@ void dense_test() {
     n->cost_vtable = cost_vtables + MEAN_SQUARE;
     double e[] = {2, 7};
 
-    const double cost = get_cost(n, i, e);
+    double cost = get_cost(n, i, e);
 
     full_test_value_check(cost, 4 + 9);
 
-    n->optimizer = cnstr_gradient_descent_optimizer();
+    n->optimizer = cnstr_gradient_descent_optimizer(); //TODO to set optimizer
     const optimizer_args args = {0.001};
 
-    learn(n, (test_data){i, e, 1}, (range){1, 0, 1}, args);
+    for (int epoch = 0; epoch < 10; epoch++) {
 
-    const double cost2 = get_cost(n, i, e);
+        learn(n, (test_data){i, e, 1}, (range){1, 0, 1}, args);
+        const double cost2 = get_cost(n, i, e);
 
-    if (cost2 >= cost) {
-        printf("Dense test cost lowering fail");
-        return;
+        if (cost2 >= cost) {
+            printf("Dense test cost lowering fail\n");
+            return;
+        }
+
+        cost = cost2;
     }
 
     free_neural_network(n, true);

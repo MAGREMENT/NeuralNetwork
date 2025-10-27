@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-static void apply_gradients(optimizer* opt, double* to, const double* gradients, const int count, optimizer_args args) {
+static void apply_gradients(const optimizer* opt, double* to, const double* gradients, const int count, optimizer_args args) {
     for (int i = 0; i < count; i++) {
         to[i] -= gradients[i] * args.learning_rate;
     }
