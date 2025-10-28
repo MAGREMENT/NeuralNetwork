@@ -2,8 +2,8 @@
 // Created by zacha on 20-10-25.
 //
 
-#ifndef LAYER_H
-#define LAYER_H
+#ifndef NEWIMPLEMENTATION_LAYER_H
+#define NEWIMPLEMENTATION_LAYER_H
 
 #include "../Optimizers/optimizer.h"
 
@@ -36,4 +36,4 @@ struct layer {
 void no_initialization(const layer* l);
 void default_layer_free(layer* l);
 
-#endif //LAYER_H
+#endif //NEWIMPLEMENTATION_LAYER_H

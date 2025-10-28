@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
-#include "Optimizers/gradient_descent_optimizer.h"
+#include "Optimizers/GradientDescent/gradient_descent_optimizer.h"
 #include "Util/math_util.h"
 
 void unit_test();
@@ -67,7 +67,7 @@ void dense_test() {
 
     full_test_value_check(cost, 4 + 9);
 
-    n->optimizer = cnstr_gradient_descent_optimizer(); //TODO to set optimizer
+    n->optimizer = cnstr_gradient_descent_optimizer(); //TODO to set_optimizer
     const optimizer_args args = {0.001};
 
     for (int epoch = 0; epoch < 10; epoch++) {
@@ -122,7 +122,7 @@ void predict_test() {
 
 void conv_layer_forward_test() {
     const size3D is = {3, 3, 1};
-    const size3D ks = {2, 2, 1};
+    const size2D ks = {2, 2};
     layer* l = cnstr_conv_layer(is, ks,1, 1, 0);
     set_kernels_and_biases(l, 0, 0);
 

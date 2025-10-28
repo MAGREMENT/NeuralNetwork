@@ -53,7 +53,7 @@ static void forward_conv_layer(const layer* l, const double* inputs, double* out
     }
 }
 
-inline layer* cnstr_conv_layer(size3D inputSize, size3D kernelSize, int kernelCount, int stride, int padding) {
+inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));
     p->kernel_size = kernelSize;
     p->input_size = inputSize;
@@ -64,7 +64,7 @@ inline layer* cnstr_conv_layer(size3D inputSize, size3D kernelSize, int kernelCo
     p->output_size.width = (inputSize.width - kernelSize.width + 2 * padding) / stride + 1;
     p->output_size.height = (inputSize.height - kernelSize.height + 2 * padding) / stride + 1;
 
-    const int kSize = kernelSize.width * kernelSize.height * kernelSize.depth * kernelCount;
+    const int kSize = kernelSize.width * kernelSize.height * inputSize.depth * kernelCount;
     p->kernels = malloc(sizeof(double) * kSize);
 
     const int bSize = p->output_size.width * p->output_size.height * p->output_size.depth;
@@ -86,7 +86,7 @@ inline layer* cnstr_conv_layer(size3D inputSize, size3D kernelSize, int kernelCo
 inline void set_kernels_and_biases(const layer* l, const double kernels, const double biases) {
     const conv_layer_params* p = l->params;
 
-    size_t size = p->kernel_size.width * p->kernel_size.height * p->kernel_size.depth;
+    size_t size = p->kernel_size.width * p->kernel_size.height * p->input_size.depth;
     for (size_t i = 0; i < size; i++) {
         p->kernels[i] = kernels;
     }

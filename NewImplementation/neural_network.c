@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include "Util/rand_util.h"
+
 inline neural_network* alloc_neural_network(const int layerCount) {
     neural_network* result = malloc(sizeof(neural_network));
     result->layerCount = layerCount;
@@ -150,6 +152,68 @@ inline void learn(const neural_network* network, const test_data data, const ran
 
     free_buffers(network, gradients);
     free_buffers(network, intermediateValues);
+}
+
+static void shuffle_test_data(test_data test, const neural_network* network, const int times) {
+    const int in_count = get_in_count(network);
+    const int out_count = get_out_count(network);
+
+    for (int c = 0; c < times; c++) {
+        for (int i = 0; i < test.count; i++) {
+            const int other = rand_i(test.count);
+
+            for (int n = 0; n < in_count; n++) {
+                const double buffer = test.inputs[i * in_count + n];
+                test.inputs[i * in_count + n] = test.inputs[other * in_count + n];
+                test.inputs[other * in_count + n] = buffer;
+            }
+
+            for (int n = 0; n < out_count; n++) {
+                const double buffer = test.inputs[i * out_count + n];
+                test.inputs[i * out_count + n] = test.inputs[other * out_count + n];
+                test.inputs[other * out_count + n] = buffer;
+            }
+        }
+    }
+}
+
+void iterative_learn(neural_network* network, test_data data, learning_state* state, int iterations) {
+    int freeState = false;
+    if (state == NULL) {
+        state = alloc_state(network);
+        freeState = true;
+    }
+
+    range_iterator* iterator = network->data_selector->vtable.cnstr_iterator(network->data_selector, data.count, iterations);
+    int lastIteration = state->iteration;
+    while (iterator->next(iterator)) {
+        const int currentIteration = iterator->current.iteration + state->iteration;
+        const double learningRate = network->scheduler->vtable->schedule(network->scheduler, network->learningRate, currentIteration);
+
+        if (network->shuffleDataOnIteration && currentIteration != lastIteration) {
+            shuffle_test_data(data, network, 1);
+            lastIteration = currentIteration;
+        }
+
+        learn(network, data, iterator->current, (optimizer_args) {learningRate, state->optimizerState});
+    }
+
+    iterator->free(iterator);
+    if (freeState) free_state(network, state);
+    else state->iteration += iterations;
+}
+
+inline learning_state* alloc_state(const neural_network* network) {
+    learning_state* state = malloc(sizeof(learning_state));
+    state->iteration = 0;
+    state->optimizerState = network->optimizer->vtable->cnstr_state(network->optimizer, network);
+
+    return state;
+}
+
+inline void free_state(const neural_network* network, learning_state* state) {
+    network->optimizer->vtable->free_state(state->optimizerState, network);
+    free(state);
 }
 
 inline void initialize(const neural_network* network) {

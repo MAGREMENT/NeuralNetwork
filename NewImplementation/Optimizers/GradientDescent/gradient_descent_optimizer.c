@@ -16,7 +16,7 @@ static void free_gdo(optimizer* opt) {
     free(opt);
 }
 
-optimizer_vtable gdo_vtable = {apply_gradients, free_gdo};
+optimizer_vtable gdo_vtable = {cnstr_empty_state, free_empty_state, apply_gradients, free_gdo};
 
 optimizer* cnstr_gradient_descent_optimizer() {
     optimizer* opt = malloc(sizeof(optimizer));
