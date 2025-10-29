@@ -17,7 +17,7 @@ typedef struct builder {
 } builder;
 
 builder* alloc_builder();
-void free_builder(const builder* builder);
+void free_builder(builder* builder);
 
 void b_dense(const builder* builder, int outputCount);
 void b_activation(const builder* builder, int type, int outputCount);

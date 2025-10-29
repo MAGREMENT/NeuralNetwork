@@ -24,7 +24,7 @@ add_executable(NewImplementation
         Util/Collections/list.c
         builder.c
         Util/rand_util.c
-        Optimizers/GradientDescent/gradient_descent_optimizer.c
+        Optimizers/Types/gradient_descent_optimizer.c
         Schedulers/scheduler.c
         DataSelector/data_selector.c
         DataSelector/Types/full_batch_data_selector.c
@@ -35,4 +35,12 @@ add_executable(NewImplementation
         Schedulers/Types/inverse_decay_scheduler.c
         Schedulers/Types/cosine_decay_scheduler.c
         Layers/Types/pooling_layer.c
+        Optimizers/Types/momentum_gradient_descent_optimizer.c
+        Optimizers/Types/momentum_gradient_descent_optimizer.h
+        Optimizers/Types/nesterov_optimizer.c
+        Optimizers/Types/nesterov_optimizer.h
+        Optimizers/Types/rms_prop_optimizer.c
+        Optimizers/Types/rms_prop_optimizer.h
+        Optimizers/Types/adam_optimizer.c
+        Optimizers/Types/adam_optimizer.h
 )

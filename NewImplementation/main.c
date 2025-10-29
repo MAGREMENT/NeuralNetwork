@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
-#include "Optimizers/GradientDescent/gradient_descent_optimizer.h"
+#include "Optimizers/Types/gradient_descent_optimizer.h"
 #include "Util/math_util.h"
 
 void unit_test();

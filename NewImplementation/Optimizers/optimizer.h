@@ -7,8 +7,13 @@
 
 typedef struct neural_network neural_network;
 
+double** alloc_gradient_buffers(const neural_network* network, int initToZero);
+void free_buffers(const neural_network* network, double** buffers);
+
 typedef struct optimizer_args {
     double learning_rate;
+    int layerIndex;
+    int iteration;
     void* state;
 } optimizer_args;
 
@@ -29,5 +34,8 @@ struct optimizer {
 
 void* cnstr_empty_state(const optimizer* opt, const neural_network* network);
 void free_empty_state(void* state, const neural_network* network);
+
+void* cnstr_gradient_buffers_state(const optimizer* opt, const neural_network* network);
+void free_gradient_buffers_state(void* state, const neural_network* network);
 
 #endif //NEWIMPLEMENTATION_OPTIMIZER_H

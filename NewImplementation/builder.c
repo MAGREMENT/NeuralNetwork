@@ -41,7 +41,7 @@ builder* alloc_builder() {
     return b;
 }
 
-void free_builder(const builder* builder) {
+void free_builder(builder* builder) {
     free(builder->list);
     free(builder);
 }

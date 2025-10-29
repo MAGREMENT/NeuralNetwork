@@ -11,3 +11,11 @@ inline void* cnstr_empty_state(const optimizer* opt, const neural_network* netwo
 }
 
 inline void free_empty_state(void* state, const neural_network* network) {}
+
+void* cnstr_gradient_buffers_state(const optimizer* opt, const neural_network* network) {
+    return alloc_gradient_buffers(network, true);
+}
+
+void free_gradient_buffers_state(void* state, const neural_network* network) {
+    free_buffers(network, state);
+}

@@ -4,6 +4,7 @@
 
 #ifndef GRADIENT_DESCENT_OPTIMIZER_H
 #define GRADIENT_DESCENT_OPTIMIZER_H
+
 #include "../optimizer.h"
 
 optimizer* cnstr_gradient_descent_optimizer();
