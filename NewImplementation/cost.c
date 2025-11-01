@@ -72,7 +72,7 @@ inline void derivative_binary_cross_entropy_cost(const double* predicted, const 
     for (int i = 0; i < count; i++) {
         double p = predicted[i];
         if (p == 0) p = COST_CLAMP;
-        else if (p == 1) p = COST_CLAMP;
+        else if (p == 1) p = 1 - COST_CLAMP;
 
         result[i] = (expected[i] - p) / (p * (p - 1));
     }

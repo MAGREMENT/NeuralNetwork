@@ -39,6 +39,7 @@ inline layer* cnstr_activation_layer(const int type, const int outputCount) {
     l->params = NULL;
     l->in_count = outputCount;
     l->out_count = outputCount;
+    l->gradient_count = 0;
     l->functions = store[type];
 
     return l;
