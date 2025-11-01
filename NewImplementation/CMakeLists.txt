@@ -36,11 +36,10 @@ add_executable(NewImplementation
         Schedulers/Types/cosine_decay_scheduler.c
         Layers/Types/pooling_layer.c
         Optimizers/Types/momentum_gradient_descent_optimizer.c
-        Optimizers/Types/momentum_gradient_descent_optimizer.h
         Optimizers/Types/nesterov_optimizer.c
-        Optimizers/Types/nesterov_optimizer.h
         Optimizers/Types/rms_prop_optimizer.c
-        Optimizers/Types/rms_prop_optimizer.h
         Optimizers/Types/adam_optimizer.c
-        Optimizers/Types/adam_optimizer.h
+        Optimizers/optimizer_factory.c
+        DataSelector/data_selector_factory.c
+        Schedulers/scheduler_factory.c
 )

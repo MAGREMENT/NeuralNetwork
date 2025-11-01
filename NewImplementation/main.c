@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "builder.h"
 #include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
 #include "utils.h"
@@ -16,10 +17,47 @@ int main(void) {
     return EXIT_SUCCESS;
 }
 
-void full_test_value_check(const double v, const double expected) {
-    if (!deq(v, expected, 0.01)) {
-        printf("FULL TEST FAIL !\n");
+void build_test() {
+    builder* b = alloc_builder(9);
+
+    b_dense(b, 7);
+    b_activation(b, LEAKY_RELU);
+    b_activation(b, SIGMOID);
+    b_dense(b, 3);
+    b_activation(b, SOFTMAX);
+
+    b_opt(b, NESTEROV, (optimizer_cnstr_args) {.value = 0.9});
+    b_ds(b, FULL_BATCH, (data_selector_cnstr_args)0);
+    b_sch(b, COSINE_DECAY, (scheduler_cnstr_args) {.di_value = (double_int) {0.5, 20}});
+
+    b->cost_type = MEAN_SQUARE;
+
+    neural_network* n = build_free(b);
+
+    if (n->layerCount != 5) {
+        printf("Wrong layer count\n");
+        return;
     }
+
+    if (n->layers[0]->in_count != 9 || n->layers[0]->out_count != 7 ||
+        n->layers[1]->in_count != 7 || n->layers[1]->out_count != 7 ||
+        n->layers[2]->in_count != 7 || n->layers[2]->out_count != 7 ||
+        n->layers[3]->in_count != 7 || n->layers[3]->out_count != 3 ||
+        n->layers[4]->in_count != 3 || n->layers[4]->out_count != 3) {
+        printf("Wrong layer i/o\n");
+        return;
+    }
+
+    if (n->layers[0]->functions.initialize != initialize_dense_he
+        || n->layers[3]->functions.initialize != initialize_dense_random) {
+        printf("Wrong dense layer initialize func\n");
+        return;
+    }
+
+    //TODO more tests
+
+    free_neural_network(n, true);
+    printf("builder test OK!\n");
 }
 
 void dense_test() {
@@ -42,33 +80,57 @@ void dense_test() {
 
     n->layers[0]->functions.forward(n->layers[0], i, o);
 
-    full_test_value_check(o[0], 1);
-    full_test_value_check(o[1], 4);
-    full_test_value_check(o[2], 5);
+    if (!def_deq(o[0], 1)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
+    if (!def_deq(o[1], 4)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
+    if (!def_deq(o[2], 5)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
 
     double o2[2];
 
     n->layers[1]->functions.forward(n->layers[1], o, o2);
 
-    full_test_value_check(o2[0], 4);
-    full_test_value_check(o2[1], 10);
+    if (!def_deq(o2[0], 4)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
+    if (!def_deq(o2[1], 10)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
 
     double o3[2];
 
     predict(n, i, o3);
 
-    full_test_value_check(o2[0], o3[0]);
-    full_test_value_check(o2[1], o3[1]);
+    if (!def_deq(o2[0], o3[0])) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
+    if (!def_deq(o2[1], o3[1])) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
 
     n->cost_vtable = cost_vtables + MEAN_SQUARE;
     double e[] = {2, 7};
 
     double cost = get_cost(n, i, e);
 
-    full_test_value_check(cost, 4 + 9);
+    if (!def_deq(cost, 4 + 9)) {
+        printf("DENSE TEST FAIL !\n");
+        return;
+    }
 
     n->optimizer = cnstr_gradient_descent_optimizer(); //TODO to set_optimizer
-    const optimizer_args args = {0.001};
+    const learning_args args = {0.001, NULL};
 
     for (int epoch = 0; epoch < 10; epoch++) {
 
@@ -155,6 +217,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
+    build_test();
     dense_test();
     predict_test();
     conv_layer_forward_test();
