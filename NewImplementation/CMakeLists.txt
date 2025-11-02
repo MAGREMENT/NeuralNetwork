@@ -42,4 +42,5 @@ add_executable(NewImplementation
         Optimizers/optimizer_factory.c
         DataSelector/data_selector_factory.c
         Schedulers/scheduler_factory.c
+        Util/size.c
 )
