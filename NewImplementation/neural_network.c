@@ -23,7 +23,7 @@ inline void free_neural_network(neural_network* network, const int freeConstruct
     if (freeConstructed) {
         for (int l = 0; l < network->layerCount; l++) {
             layer* layer = network->layers[l];
-            layer->functions.free(layer);
+            layer->vtable->free(layer);
         }
 
         free(network->optimizer);
@@ -53,21 +53,21 @@ inline void predict(const neural_network* network, const double* inputs, double*
         const layer* l = network->layers[i];
 
         if (isLast) {
-            l->functions.forward(l, v, outputs);
+            l->vtable->forward(l, v, outputs);
             free(v);
             return;
         }
 
         if (i == 0) {
             v = malloc(sizeof(double) * l->out_count);
-            l->functions.forward(l, inputs, v);
+            l->vtable->forward(l, inputs, v);
         } else if (l->in_count != l->out_count) {
             double* temp = malloc(sizeof(double) * l->out_count);
-            l->functions.forward(l, v, temp);
+            l->vtable->forward(l, v, temp);
             free(v);
             v = temp;
         } else {
-            l->functions.forward(l, v, v);
+            l->vtable->forward(l, v, v);
         }
     }
 }
@@ -127,7 +127,7 @@ inline void learn(const neural_network* network, const test_data data, const ran
         for (int i = 0; i < network->layerCount; i++) {
             const layer* l = network->layers[i];
             const double* in = i == 0 ? inputs : intermediateValues[i - 1];
-            l->functions.forward(l, in, intermediateValues[i]);
+            l->vtable->forward(l, in, intermediateValues[i]);
         }
 
         double* currentDeltas = malloc(sizeof(double) * out_count);
@@ -139,15 +139,15 @@ inline void learn(const neural_network* network, const test_data data, const ran
 
             if (l->gradient_count > 0) {
                 const double* in = i == 0 ? inputs : intermediateValues[i - 1];
-                l->functions.deltas_to_gradients(l, in, currentDeltas, gradients[i]);
+                l->vtable->deltas_to_gradients(l, in, currentDeltas, gradients[i]);
             }
 
             if (i == 0) break;
 
-            if (l->in_count == l->out_count) l->functions.backward(l, intermediateValues[i - 1], currentDeltas, currentDeltas);
+            if (l->in_count == l->out_count) l->vtable->backward(l, intermediateValues[i - 1], currentDeltas, currentDeltas);
             else {
                 double* buffer = malloc(sizeof(double) * l->in_count);
-                l->functions.backward(l, intermediateValues[i - 1], currentDeltas, buffer);
+                l->vtable->backward(l, intermediateValues[i - 1], currentDeltas, buffer);
                 free(currentDeltas);
                 currentDeltas = buffer;
             }
@@ -163,7 +163,7 @@ inline void learn(const neural_network* network, const test_data data, const ran
 
         const layer* l = network->layers[i];
         opt_args.layerIndex = i;
-        l->functions.apply_gradients(l, g, network->optimizer, opt_args);
+        l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
     }
 
     free_buffers(network, gradients);
@@ -234,12 +234,12 @@ inline void free_state(const neural_network* network, learning_state* state) {
 
 inline void initialize(const neural_network* network) {
     for (int i = 0; i < network->layerCount; i++) {
-        layer* l = network->layers[i];
-        l->functions.initialize(l);
+        const layer* l = network->layers[i];
+        l->initialize(l);
     }
 }
 
-double get_cost(const neural_network* network, const double* inputs, const double* expected) {
+inline double get_cost(const neural_network* network, const double* inputs, const double* expected) {
     const int c = get_out_count(network);
     double* predicted = malloc(sizeof(double) * c);
     predict(network, inputs, predicted);
@@ -250,7 +250,7 @@ double get_cost(const neural_network* network, const double* inputs, const doubl
     return cost;
 }
 
-double get_avg_cost(const neural_network* network, test_data data) {
+inline double get_avg_cost(const neural_network* network, test_data data) {
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
     double cost = 0;

@@ -53,6 +53,8 @@ static void forward_conv_layer(const layer* l, const double* inputs, double* out
     }
 }
 
+layer_vtable conv_vtable = {.forward = forward_conv_layer, .free = free_conv_layer};
+
 inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));
     p->kernel_size = kernelSize;
@@ -77,8 +79,7 @@ inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, 
     l->out_count = p->output_size.depth * p->output_size.width * p->output_size.height;
     l->gradient_count = kSize + bSize;
 
-    l->functions.free = free_conv_layer;
-    l->functions.forward = forward_conv_layer;
+    l->vtable = &conv_vtable;
 
     return l;
 }

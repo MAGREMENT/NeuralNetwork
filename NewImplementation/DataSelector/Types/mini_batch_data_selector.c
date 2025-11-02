@@ -9,7 +9,7 @@
 #include "../../Iterators/Types/mini-batch_iterator.h"
 
 static range_iterator* cnstr_iterator(const data_selector* sel, const int dataSize, const int iterations) {
-    return constr_mini_batch_iterator(dataSize, iterations, *(int*)sel->params);
+    return cnstr_mini_batch_iterator(dataSize, iterations, *(int*)sel->params);
 }
 
 static void free_ds(data_selector* selector) {

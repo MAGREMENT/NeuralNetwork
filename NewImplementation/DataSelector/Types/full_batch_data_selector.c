@@ -9,7 +9,7 @@
 #include "../../Iterators/Types/full_batch_iterator.h"
 
 static range_iterator* cnstr_iterator(const data_selector* sel, const int dataSize, const int iterations) {
-    return constr_full_batch_iterator(dataSize, iterations);
+    return cnstr_full_batch_iterator(dataSize, iterations);
 }
 
 data_selector_vtable vtable = {cnstr_iterator, def_free_ds};

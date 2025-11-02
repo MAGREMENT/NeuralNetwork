@@ -73,6 +73,8 @@ static void apply_gradients_to_dense(const layer* l, const double* gradients, co
     opt->vtable->apply_gradients(opt, p->biases, gradients + l->in_count * l->out_count, l->out_count, args);
 }
 
+layer_vtable dense_vtable = {dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, free_dense_layer};
+
 inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
     dense_layer_params* p = malloc(sizeof(dense_layer_params));
@@ -84,12 +86,8 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
     l->out_count = outputCount;
     l->gradient_count = inputCount * outputCount + outputCount;
 
-    l->functions.initialize = initialize;
-    l->functions.forward = dense_forward;
-    l->functions.backward = dense_backward;
-    l->functions.free = free_dense_layer;
-    l->functions.deltas_to_gradients = dense_delta_to_gradients;
-    l->functions.apply_gradients = apply_gradients_to_dense;
+    l->initialize = initialize;
+    l->vtable = &dense_vtable;
 
     return l;
 }

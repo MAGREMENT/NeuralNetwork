@@ -7,6 +7,6 @@
 
 #include "../iterator.h"
 
-range_iterator* constr_full_batch_iterator(int size, int iterations);
+range_iterator* cnstr_full_batch_iterator(int size, int iterations);
 
 #endif //FULL_BATCH_ITERATOR_H

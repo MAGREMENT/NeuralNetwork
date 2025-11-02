@@ -11,7 +11,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
     const double momentum = *(double*)opt->params;
 
     for (int i = 0; i < count; i++) {
-        const double velocity = velocities[i] * momentum + gradients[i];
+        const double velocity = velocities[i] * momentum + gradients[i]; //TODO with averaging
 
         velocities[i] = velocity;
         to[i] -= velocity * args.learning_rate;

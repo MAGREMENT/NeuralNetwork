@@ -3,3 +3,66 @@
 //
 
 #include "pooling_layer.h"
+
+#include <float.h>
+#include <stdlib.h>
+
+static void forward_max_pooling_layer(const layer* l, const double* inputs, double* outputs) {
+    const pooling_layer_params* p = l->params;
+
+    const int inArea = p->input_size.width * p->input_size.height;
+    const int outArea = p->output_size.width * p->output_size.height;
+
+    for (int d = 0; d < p->output_size.depth; d++) {
+        for (int oW = 0; oW < p->output_size.width; oW++) {
+            for (int oH = 0; oH < p->output_size.height; oH++) {
+                const int w = oW * p->stride - p->padding;
+                const int h = oH * p->stride - p->padding;
+
+                double result = DBL_MIN;
+
+                for (int kW = 0; kW < p->window_size.width; kW++) {
+                    for (int kH = 0; kH < p->window_size.height; kH++) {
+                        const int currW = w + kW;
+                        const int currH = h + kH;
+
+                        if (currW < 0 || currW >= p->input_size.width ||
+                            currH < 0 || currH >= p->input_size.height) continue;
+
+                        const int inIndex = inArea * d + currH * p->input_size.width + currW;
+                        if (inputs[inIndex] > result) result = inputs[inIndex];
+                    }
+                }
+
+                outputs[outArea * d + oH * p->output_size.width + oW] = result;
+            }
+        }
+    }
+}
+
+layer_vtable pooling_vtable_store[] = {
+    {.forward = forward_max_pooling_layer}
+};
+
+layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D windowSize, const int stride, const int padding) {
+    layer* l = malloc(sizeof(layer));
+    pooling_layer_params* p = malloc(sizeof(pooling_layer_params));
+
+    p->input_size = inputSize;
+    p->window_size = windowSize;
+    p->stride = stride;
+    p->padding = padding;
+
+    p->output_size.depth = inputSize.depth;
+    p->output_size.width = (inputSize.width - windowSize.width + 2 * padding) / stride + 1;
+    p->output_size.height = (inputSize.height - windowSize.height + 2 * padding) / stride + 1;
+
+    l->in_count = inputSize.width * inputSize.height * inputSize.depth;
+    l->out_count = p->output_size.width * p->output_size.height * p->output_size.depth;
+    l->gradient_count = 0;
+    l->params = p;
+
+    l->vtable = pooling_vtable_store + type;
+
+    return l;
+}

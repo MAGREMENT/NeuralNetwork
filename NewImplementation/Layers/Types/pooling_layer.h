@@ -15,15 +15,15 @@ enum pooling_types {
     POOLING_STOCHASTIC
 };
 
-typedef struct conv_layer_params {
+typedef struct pooling_layer_params {
     size3D input_size;
     size2D window_size;
     size3D output_size;
 
     int stride;
     int padding;
-} conv_layer_params;
+} pooling_layer_params;
 
-layer* cnstr_pooling_layer(size3D inputSize, size2D windowSize, int stride, int padding);
+layer* cnstr_pooling_layer(int type, size3D inputSize, size2D windowSize, int stride, int padding);
 
 #endif //NEWIMPLEMENTATION_POOLING_LAYER_H

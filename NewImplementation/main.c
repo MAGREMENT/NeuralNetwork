@@ -86,6 +86,7 @@ void bit_add_learn_test(bool verbose) {
     }
 
     free_builder(b);
+    printf("bit add learn testr OK!\n");
 }
 
 void build_test() {
@@ -128,8 +129,8 @@ void build_test() {
         return;
     }
 
-    if (n->layers[0]->functions.initialize != initialize_dense_he
-        || n->layers[3]->functions.initialize != initialize_dense_random) {
+    if (n->layers[0]->initialize != initialize_dense_he
+        || n->layers[3]->initialize != initialize_dense_random) {
         printf("Wrong dense layer initialize func\n");
         return;
     }
@@ -158,7 +159,7 @@ void dense_test() {
     double i[] = {2, 2};
     double o[3];
 
-    n->layers[0]->functions.forward(n->layers[0], i, o);
+    n->layers[0]->vtable->forward(n->layers[0], i, o);
 
     if (!def_deq(o[0], 1)) {
         printf("DENSE TEST FAIL !\n");
@@ -175,7 +176,7 @@ void dense_test() {
 
     double o2[2];
 
-    n->layers[1]->functions.forward(n->layers[1], o, o2);
+    n->layers[1]->vtable->forward(n->layers[1], o, o2);
 
     if (!def_deq(o2[0], 4)) {
         printf("DENSE TEST FAIL !\n");
@@ -283,7 +284,7 @@ void conv_layer_forward_test() {
     double expected[] = {8, 7, 4, 5};
     double result[4];
 
-    l->functions.forward(l, input, result);
+    l->vtable->forward(l, input, result);
 
     for (int i = 0; i < 4; i++) {
         if (!def_deq(result[i], expected[i])) {
@@ -292,12 +293,12 @@ void conv_layer_forward_test() {
         }
     }
 
-    l->functions.free(l);
+    l->vtable->free(l);
     printf("conv layer forward test OK!\n");
 }
 
 void unit_test() {
-    bit_add_learn_test(true);
+    bit_add_learn_test(false);
     build_test();
     dense_test();
     predict_test();

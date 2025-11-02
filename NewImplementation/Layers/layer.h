@@ -14,14 +14,13 @@ enum layer_types {
 
 typedef struct layer layer;
 
-typedef struct layer_functions {
+typedef struct layer_vtable {
     void (*forward)(const layer* l, const double* inputs, double* outputs);
     void (*backward)(const layer* l, const double* inputs, const double* deltas, double* outputs);
     void (*deltas_to_gradients)(const layer* l, const double* inputs, const double* deltas, double* gradients);
     void (*apply_gradients)(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args);
-    void (*initialize)(const layer* l);
     void (*free)(layer* l);
-} layer_functions;
+} layer_vtable;
 
 struct layer {
     void* params;
@@ -29,8 +28,8 @@ struct layer {
     int out_count;
     int gradient_count;
 
-    //TODO to vtable
-    layer_functions functions;
+    layer_vtable* vtable;
+    void (*initialize)(const layer* l);
 };
 
 void no_initialization(const layer* l);
