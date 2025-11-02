@@ -5,6 +5,7 @@
 #include "convolutional_layer.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static void free_conv_layer(layer* l) {
     conv_layer_params* p = l->params;
@@ -27,7 +28,9 @@ static void forward_conv_layer(const layer* l, const double* inputs, double* out
             for (int oH = 0; oH < p->output_size.height; oH++) {
                 const int w = oW * p->stride - p->padding;
                 const int h = oH * p->stride - p->padding;
-                double result = 0;
+
+                const int oIndex = c * oArea + oH * p->output_size.width + oW;
+                double result = p->biases[oIndex];
 
                 for (int kW = 0; kW < p->kernel_size.width; kW++) {
                     for (int kH = 0; kH < p->kernel_size.height; kH++) {
@@ -46,14 +49,71 @@ static void forward_conv_layer(const layer* l, const double* inputs, double* out
                     }
                 }
 
-                const int oIndex = c * oArea + oH * p->output_size.width + oW;
-                outputs[oIndex] = result + p->biases[oIndex];
+                outputs[oIndex] = result;
             }
         }
     }
 }
 
-layer_vtable conv_vtable = {.forward = forward_conv_layer, .free = free_conv_layer};
+//TODO look into the impact of kernel count
+static void conv_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
+    const conv_layer_params* p = l->params;
+
+    const int oArea = p->output_size.width * p->output_size.height;
+    const int kArea = p->kernel_size.width * p->kernel_size.height;
+
+    int bufferWidth, bufferHeight;
+    if (p->padding == 0) {
+        bufferWidth = p->input_size.width;
+        bufferHeight = p->input_size.height;
+    }
+    else {
+        bufferWidth = p->input_size.width + p->padding * 2;
+        bufferHeight = p->input_size.height + p->padding * 2;
+    }
+
+    const int bufferArea = bufferWidth * bufferHeight;
+    const int bufferSize = p->input_size.depth * bufferArea;
+
+    double* buffer = p->padding == 0 ? gradients : malloc(bufferSize * sizeof(double));
+
+    memset(buffer, 0, bufferSize * sizeof(double));
+
+    for (int d = 0; d < p->output_size.depth; d++) {
+        for (int w = 0; w < p->output_size.width; w++) {
+            for (int h = 0; h < p->output_size.height; h++) {
+                const int bIndex = d * oArea + h * p->output_size.width + w;
+                gradients[bIndex] = deltas[bIndex];
+
+                for (int kW = 0; kW < p->kernel_size.width; kW++) {
+                    for (int kH = 0; kH < p->kernel_size.height; kH++) {
+                        const int oIndex = d * bufferArea + kH * bufferWidth + kW + w * p->stride + h * p->stride * bufferWidth;
+                        const int kIndex = d * kArea + kH * p->kernel_size.height + kW;
+                        buffer[oIndex] += deltas[bIndex] * p->kernels[kIndex];
+                    }
+                }
+            }
+        }
+    }
+
+    if (p->padding != 0) {
+        const int inArea = p->input_size.width * p->input_size.height;
+
+        for (int d = 0; d < p->input_size.depth; d++) {
+            for (int w = 0; w < p->input_size.width; w++) {
+                for (int h = 0; h < p->input_size.height; h++) {
+                    const int bIndex = d * bufferArea + h * bufferWidth + w + p->padding + p->padding * bufferWidth;
+                    const int oIndex = d * inArea + h * p->input_size.width + w;
+                    gradients[oIndex] = buffer[bIndex];
+                }
+            }
+        }
+
+        free(buffer);
+    }
+}
+
+layer_vtable conv_vtable = {.forward = forward_conv_layer, .deltas_to_gradients = conv_delta_to_gradients, .free = free_conv_layer};
 
 inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));

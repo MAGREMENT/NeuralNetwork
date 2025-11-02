@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "builder.h"
 #include "Layers/Types/convolutional_layer.h"
@@ -26,6 +27,36 @@ typedef struct bal_b {
     optimizer_cnstr_args opt_args;
     double learning_rate;
 } bal_b;
+
+//https://medium.com/data-science/understand-transposed-convolutions-and-build-your-own-transposed-convolution-layer-from-scratch-4f5d97b2967
+void conv_layer_delta_to_gradients_test() {
+    layer* l = cnstr_conv_layer((size3D) {2, 2, 1}, (size2D) {2, 2}, 1, 2, 1);
+    conv_layer_params* p = l->params;
+
+    if (p->output_size.width != 2 || p->output_size.height != 2 || p->output_size.depth != 1) {
+        printf("Wrong output size\n");
+        return;
+    }
+
+    const double kernels[] = {1, 2, 2, 1};
+    memcpy(p->kernels, kernels, sizeof(kernels));
+
+    const double deltas[] = {55, 52, 57, 50};
+    const double expected[] = {55, 104, 114, 50};
+    double result[8];
+
+    l->vtable->deltas_to_gradients(l, NULL, deltas, result);
+
+    for (int i = 0; i < 4; i++) {
+        if (!def_deq(expected[i], result[i])) {
+            printf("Wrong value\n");
+            return;
+        }
+    }
+
+    l->vtable->free(l);
+    printf("conv layer delta to gradients test OK!\n");
+}
 
 void bit_add_learn_test(bool verbose) {
     const bal_b builds[] = {
@@ -298,6 +329,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
+    conv_layer_delta_to_gradients_test();
     bit_add_learn_test(false);
     build_test();
     dense_test();
