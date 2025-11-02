@@ -11,6 +11,7 @@ layer* cnstr_dense_layer(int inputCount, int outputCount, void (*initialize)(con
 
 void set_weights(const layer* l, double values[]);
 void set_biases(const layer* l, double values[]);
+void set_all_weights_and_biases(const layer* l, double weights, double biases);
 
 void initialize_dense_to_zero(const layer* l);
 void initialize_dense_to_one(const layer* l);

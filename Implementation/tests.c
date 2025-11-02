@@ -18,34 +18,7 @@ void yolo();
 int main() {
     //cut_2D_test();
     //unit_tests();
-    //yolo();
-
-    const int numbers[] = {2, 3, 2};
-    neural_network* n = alloc_network(3, numbers);
-    apply_default_hyper_params(n);
-    set_activation_type(n, DEFAULT, DEFAULT);
-    set_cost_type(n, MEAN_SQUARED);
-    set_optimizer(n, create_gradient_descent_optimizer());
-
-    double w1[] = {0.5, 1, 1.5, 0.5, 1, 1.5};
-    double w2[] = {1.5, 1, 0.5, 1.5, 0.5, 1};
-    double b1[] = {-1, 0, -1};
-    double b2[] = {-2, -2};
-
-    memcpy(n->layers[0].weights, w1, sizeof(w1));
-    memcpy(n->layers[1].weights, w2, sizeof(w2));
-    memcpy(n->layers[0].biases, b1, sizeof(b1));
-    memcpy(n->layers[1].biases, b2, sizeof(b2));
-
-    double i[] = {2, 2};
-    input_data in = {2, i};
-
-    double e[] = {2, 7};
-    input_data ex = {2, e};
-
-    test_data d = {1, &in, &ex};
-
-    learn(n, &d, (range) {1, 0, 1}, 0.001, NULL);
+    yolo();
 
     return EXIT_SUCCESS;
 }
@@ -58,7 +31,8 @@ void yolo() {
     apply_default_hyper_params(network);
     set_activation_type(network, SIGMOID, SIGMOID);
     set_cost_type(network, BINARY_CROSS_ENTROPY);
-    set_scheduler(network, constr_iteration_decay_scheduler(0.999));
+    set_scheduler(network, constr_constant_scheduler());
+    set_optimizer(network, create_nesterov_optimizer(0.9));
     network->learningRate = 1;
     network->threadCount = 1;
 
@@ -76,7 +50,9 @@ void yolo() {
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    iterative_learn(network, data, NULL, 1000);
+    set_all_weights_and_biases(network, 1, 1);
+
+    iterative_learn(network, data, NULL, 100);
 
     /*learning_state* state = alloc_state(network);
     for (int i = 0; i < 10; i++) {

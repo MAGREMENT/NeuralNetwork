@@ -58,10 +58,11 @@ static void dense_backward(const layer* l, const double* inputs, const double* d
 static void dense_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
     for(int o = 0; o < l->out_count; o++) {
         for (int i = 0; i < l->in_count; i++) {
-            gradients[i * l->out_count + o] = deltas[o] * inputs[i];
+            gradients[i * l->out_count + o] += deltas[o] * inputs[i];
         }
 
-        gradients[l->out_count * l->in_count + o] = deltas[o];
+        const int ind = l->out_count * l->in_count + o;
+        gradients[ind] += deltas[o];
     }
 }
 
@@ -93,14 +94,26 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
     return l;
 }
 
-void set_weights(const layer* l, double values[]) {
+inline void set_weights(const layer* l, double values[]) {
     const dense_layer_params* p = l->params;
     memcpy(p->weights, values, sizeof(double) * l->in_count * l->out_count);
 }
 
-void set_biases(const layer* l, double values[]) {
+inline void set_biases(const layer* l, double values[]) {
     const dense_layer_params* p = l->params;
     memcpy(p->biases, values, sizeof(double) * l->out_count);
+}
+
+inline void set_all_weights_and_biases(const layer* l, const double weights, const double biases) {
+    const dense_layer_params* p = l->params;
+
+    for(int o = 0; o < l->out_count; o++) {
+        for(int i = 0; i < l->in_count; i++) {
+            p->weights[i * l->out_count + o] = weights;
+        }
+
+        p->biases[o] = biases;
+    }
 }
 
 static void init_d_to_d(const layer* l, const double d) {

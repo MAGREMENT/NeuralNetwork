@@ -115,7 +115,8 @@ inline void learn(const neural_network* network, const test_data data, const ran
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
 
-    double** gradients = alloc_gradient_buffers(network, false);
+    double** gradients = alloc_gradient_buffers(network, true);
+    double* g0 = gradients[0];
     double** intermediateValues = alloc_layer_output_buffers(network);
 
     for (int r = range.from; r < range.to; r++) {

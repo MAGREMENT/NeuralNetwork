@@ -25,7 +25,8 @@ static void sigmoid_forward(const layer* l, const double* inputs, double* output
 static void sigmoid_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     for (int i = 0; i < l->out_count; i++) {
         const double a = sigmoid(inputs[i]);
-        outputs[i] = deltas[i] * a * (1 - a);
+        const double temp = a * (1 - a); //TODO remove after testing
+        outputs[i] = deltas[i] * temp;
     }
 }
 

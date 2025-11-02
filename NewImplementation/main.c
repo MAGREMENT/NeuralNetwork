@@ -27,10 +27,10 @@ typedef struct bal_b {
     double learning_rate;
 } bal_b;
 
-void bit_add_learn_test() {
+void bit_add_learn_test(bool verbose) {
     const bal_b builds[] = {
         {GRADIENT_DESCENT, (optimizer_cnstr_args) {.value = 0}, 1},
-        {MOMENTUM_GRADIENT_DESCENT, (optimizer_cnstr_args) {.value = 0.9}, 1},
+        {MOMENTUM_GRADIENT_DESCENT, (optimizer_cnstr_args) {.value = 0.1}, 1},
         {NESTEROV, (optimizer_cnstr_args) {.value = 0.9}, 1},
         //{ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}}, 1},
     };
@@ -58,12 +58,15 @@ void bit_add_learn_test() {
         neural_network* n = build(b);
         initialize(n);
 
+        set_all_weights_and_biases(n->layers[0], 1, 1);
+        set_all_weights_and_biases(n->layers[2], 1, 1);
+
         learning_state* state = alloc_state(n);
 
         double cost = get_avg_cost(n, test);
 
         for (int j = 0; j < 10; j++) {
-            iterative_learn(n, test, state, 10);
+            iterative_learn(n, test, state, 100);
 
             const double buffer = get_avg_cost(n, test);
             if (buffer >= cost) {
@@ -72,6 +75,10 @@ void bit_add_learn_test() {
             }
 
             cost = buffer;
+        }
+
+        if (verbose) {
+            printf("Cost for optimizer %d : %f\n", i, cost);
         }
 
         free_state(n, state);
@@ -290,7 +297,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
-    bit_add_learn_test();
+    bit_add_learn_test(true);
     build_test();
     dense_test();
     predict_test();
