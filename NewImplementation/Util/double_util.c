@@ -1,13 +1,15 @@
-#include "utils.h"
+//
+// Created by zacha on 02-11-25.
+//
+
+#include "double_util.h"
 
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
-inline int max_index(double values[], const int count) {
+inline int d_max_ind(const double* values, const int count) {
     double max = DBL_MIN;
     int index = -1;
     for(int i = 0; i < count; i++) {
@@ -28,7 +30,7 @@ int def_deq(const double left, const double right) {
     return deq(left, right, 0.00001);
 }
 
-char* alloc_seq_to_str(double* values, int count) {
+char* alloc_dseq_to_str(const double* values, const int count) {
     int size = 0;
     for (int i = 0; i < count; i++) {
         size += snprintf(NULL, 0, "%.2f", values[i]);

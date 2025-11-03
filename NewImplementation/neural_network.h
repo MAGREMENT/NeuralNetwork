@@ -65,4 +65,7 @@ void initialize(const neural_network* network);
 double get_cost(const neural_network* network, const double* inputs, const double* expected);
 double get_avg_cost(const neural_network* network, test_data data);
 
+double get_binary_accuracy(const neural_network* network, test_data test);
+double get_classification_accuracy(const neural_network* network, test_data test);
+
 #endif //NEWIMPLEMENTATION_NEURAL_NETWORK_H

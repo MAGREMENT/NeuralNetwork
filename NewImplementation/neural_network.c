@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "Util/double_util.h"
 #include "Util/rand_util.h"
 
 inline neural_network* alloc_neural_network(const int layerCount) {
@@ -184,9 +185,9 @@ static void shuffle_test_data(test_data test, const neural_network* network, con
             }
 
             for (int n = 0; n < out_count; n++) {
-                const double buffer = test.inputs[i * out_count + n];
-                test.inputs[i * out_count + n] = test.inputs[other * out_count + n];
-                test.inputs[other * out_count + n] = buffer;
+                const double buffer = test.expected[i * out_count + n];
+                test.expected[i * out_count + n] = test.expected[other * out_count + n];
+                test.expected[other * out_count + n] = buffer;
             }
         }
     }
@@ -259,4 +260,44 @@ inline double get_avg_cost(const neural_network* network, test_data data) {
     }
 
     return cost / data.count;
+}
+
+inline double get_binary_accuracy(const neural_network* network, const test_data test) {
+    const int in_count = get_in_count(network);
+    const int out_count = get_out_count(network);
+    double acc = 0;
+    double* predicted = malloc(sizeof(double) * out_count);
+
+    for (int i = 0; i < test.count; i++) {
+        predict(network, test.inputs + i * in_count, predicted);
+
+        const double* expected = test.expected + i * out_count;
+        bool ok = true;
+        for (int o = 0; o < out_count; o++) {
+            if ((expected[o] >= 0.5 && predicted[o] < 0.5) || (expected[o] < 0.5 && predicted[o] >= 0.5)) {
+                ok = false;
+                break;
+            }
+        }
+
+        if (ok) acc++;
+    }
+
+    return acc / test.count * 100;
+}
+
+inline double get_classification_accuracy(const neural_network* network, const test_data test) {
+    const int in_count = get_in_count(network);
+    const int out_count = get_out_count(network);
+    double acc = 0;
+    double* predicted = malloc(sizeof(double) * out_count);
+
+    for (int i = 0; i < test.count; i++) {
+        predict(network, test.inputs + i * in_count, predicted);
+
+        const double* expected = test.expected + i * out_count;
+        if (d_max_ind(predicted, out_count) == d_max_ind(expected, out_count)) acc++;
+    }
+
+    return acc / test.count * 100;
 }

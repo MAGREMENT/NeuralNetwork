@@ -50,9 +50,9 @@ void yolo() {
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
 
-    set_all_weights_and_biases(network, 1, 1);
+    //set_all_weights_and_biases(network, 1, 1);
 
-    iterative_learn(network, data, NULL, 100);
+    iterative_learn(network, data, NULL, 1000);
 
     /*learning_state* state = alloc_state(network);
     for (int i = 0; i < 10; i++) {

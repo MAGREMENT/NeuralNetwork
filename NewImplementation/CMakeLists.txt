@@ -8,7 +8,6 @@ add_executable(NewImplementation
         cost.c
         logger.c
         neural_network.c
-        utils.c
         asserter.c
         Util/string_util.c
         Optimizers/optimizer.c
@@ -43,4 +42,5 @@ add_executable(NewImplementation
         DataSelector/data_selector_factory.c
         Schedulers/scheduler_factory.c
         Util/size.c
+        Util/double_util.c
 )
