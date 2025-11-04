@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_gradient_descent_optimizer();
+optimizer* cnstr_simple_optimizer();
 
 #endif //GRADIENT_DESCENT_OPTIMIZER_H

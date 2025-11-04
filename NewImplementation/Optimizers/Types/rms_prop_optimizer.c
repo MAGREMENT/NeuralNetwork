@@ -17,16 +17,11 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
         const double velocity = velocities[i] * decay + gradients[i] * gradients[i] * (1 - decay);
 
         velocities[i] = velocity;
-        to[i] = args.learning_rate * gradients[i] / (sqrt(velocity) + EPSILON);
+        to[i] -= args.learning_rate * gradients[i] / sqrt(velocity + EPSILON);
     }
 }
 
-static void free_rms(optimizer* opt) {
-    free(opt->params);
-    free(opt);
-}
-
-optimizer_vtable rms_vtable = {cnstr_gradient_buffers_state, free_gradient_buffers_state, apply_gradients, free_rms};
+optimizer_vtable rms_vtable = {cnstr_gradient_buffers_state, free_gradient_buffers_state, apply_gradients, free_base_opt};
 
 inline optimizer* cnstr_rms_prop_optimizer(const double decay) {
     optimizer* opt = malloc(sizeof(optimizer));

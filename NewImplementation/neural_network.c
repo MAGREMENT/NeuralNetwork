@@ -47,6 +47,11 @@ inline void set_cost_type(const neural_network* network) {
 }
 
 inline void predict(const neural_network* network, const double* inputs, double* outputs) {
+    if (network->layerCount == 1) {
+        network->layers[0]->vtable->forward(network->layers[0], inputs, outputs);
+        return;
+    }
+
     double* v = NULL;
 
     for (int i = 0; i < network->layerCount; i++) {

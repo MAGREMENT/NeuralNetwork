@@ -7,6 +7,13 @@
 
 #include "../layer.h"
 
+typedef struct dense_layer_params dense_layer_params;
+
+struct dense_layer_params {
+    double* weights;
+    double* biases;
+};
+
 layer* cnstr_dense_layer(int inputCount, int outputCount, void (*initialize)(const layer* l));
 
 void set_weights(const layer* l, double values[]);

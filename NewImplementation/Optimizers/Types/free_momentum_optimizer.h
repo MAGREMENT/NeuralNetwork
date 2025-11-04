@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_momentum_gradient_descent_optimizer(double momentum);
+optimizer* cnstr_free_momentum_optimizer(double momentum);
 
 #endif //NEWIMPLEMENTATION_MOMENTUM_GRADIENT_DESCENT_OPTIMIZER_H

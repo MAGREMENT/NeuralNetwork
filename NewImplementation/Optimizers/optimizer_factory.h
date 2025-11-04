@@ -7,11 +7,14 @@
 #include "optimizer.h"
 
 enum optimizers {
-    GRADIENT_DESCENT,
-    MOMENTUM_GRADIENT_DESCENT,
-    NESTEROV,
+    SIMPLE,
+    FREE_MOMENTUM,
+    PROPORTIONAL_MOMENTUM,
+    SIMPLIFIED_NESTEROV,
     RMS_PROP,
-    ADAM
+    ADAM,
+    ADAGRAD,
+    ADADELTA
 };
 
 typedef struct double2 {

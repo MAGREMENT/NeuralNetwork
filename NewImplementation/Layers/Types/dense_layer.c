@@ -10,13 +10,6 @@
 
 #include "../../Util/rand_util.h"
 
-typedef struct dense_layer_params dense_layer_params;
-
-struct dense_layer_params {
-    double* weights;
-    double* biases;
-};
-
 static void free_dense_layer(layer* l) {
     dense_layer_params* p = l->params;
     free(p->weights);

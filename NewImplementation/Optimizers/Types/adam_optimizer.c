@@ -21,32 +21,13 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
         v2[i] = beta2 * v2[i] + (1 - beta2) * grad * grad;
 
         const double m = v1[i] / (1 - pow(beta1, args.iteration));
-        const double v = v2[i] / (1 - pow(beta2, args.iteration)); //TODO avoid repeated pow calls
+        const double v = v2[i] / (1 - pow(beta2, args.iteration));
 
-        to[i] -= args.learning_rate * m / (sqrt(v) + EPSILON);
+        to[i] -= args.learning_rate * m / sqrt(v + EPSILON);
     }
 }
 
-static void free_adam(optimizer* opt) {
-    free(opt->params);
-    free(opt);
-}
-
-static void* cnstr_adam_state(const optimizer* opt, const neural_network* network) {
-    double*** /*xD*/ s = malloc(sizeof(double**) * 2);
-    s[0] = alloc_gradient_buffers(network, true);
-    s[1] = alloc_gradient_buffers(network, true);
-    return s;
-}
-
-static void free_adam_state(void* state, const neural_network* network) {
-    double*** s = state;
-    free_buffers(network, s[0]);
-    free_buffers(network, s[1]);
-    free(s);
-}
-
-optimizer_vtable adam_vtable = {cnstr_adam_state, free_adam_state, apply_gradients, free_adam};
+optimizer_vtable adam_vtable = {cnstr_double_gradient_buffers_state, free_double_gradient_buffers_state, apply_gradients, free_base_opt};
 
 inline optimizer* cnstr_adam_optimizer(const double beta1, const double beta2) {
     optimizer* opt = malloc(sizeof(optimizer));
