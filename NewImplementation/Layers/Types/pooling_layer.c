@@ -40,8 +40,113 @@ static void forward_max_pooling_layer(const layer* l, const double* inputs, doub
     }
 }
 
+static void forward_avg_pooling_layer(const layer* l, const double* inputs, double* outputs) {
+    const pooling_layer_params* p = l->params;
+
+    const int inArea = p->input_size.width * p->input_size.height;
+    const int outArea = p->output_size.width * p->output_size.height;
+    const double div = p->window_size.width * p->window_size.height;
+
+    for (int d = 0; d < p->output_size.depth; d++) {
+        for (int oW = 0; oW < p->output_size.width; oW++) {
+            for (int oH = 0; oH < p->output_size.height; oH++) {
+                const int w = oW * p->stride - p->padding;
+                const int h = oH * p->stride - p->padding;
+
+                double result = 0;
+
+                for (int kW = 0; kW < p->window_size.width; kW++) {
+                    for (int kH = 0; kH < p->window_size.height; kH++) {
+                        const int currW = w + kW;
+                        const int currH = h + kH;
+
+                        if (currW < 0 || currW >= p->input_size.width ||
+                            currH < 0 || currH >= p->input_size.height) continue;
+
+                        const int inIndex = inArea * d + currH * p->input_size.width + currW;
+                        result += inputs[inIndex];
+                    }
+                }
+
+                outputs[outArea * d + oH * p->output_size.width + oW] = result / div;
+            }
+        }
+    }
+}
+
+static void backward_max_pooling_layer(const layer* l, const double* inputs, const double* deltas, double* outputs) {
+    const pooling_layer_params* p = l->params;
+    const int inArea = p->input_size.width * p->input_size.height;
+    const int outArea = p->output_size.width * p->output_size.height;
+
+    for (int d = 0; d < p->output_size.depth; d++) {
+        for (int oW = 0; oW < p->output_size.width; oW++) {
+            for (int oH = 0; oH < p->output_size.height; oH++) {
+                const int w = oW * p->stride - p->padding;
+                const int h = oH * p->stride - p->padding;
+
+                double max = DBL_MIN;
+                int ind = -1;
+
+                for (int kW = 0; kW < p->window_size.width; kW++) {
+                    for (int kH = 0; kH < p->window_size.height; kH++) {
+                        const int currW = w + kW;
+                        const int currH = h + kH;
+
+                        if (currW < 0 || currW >= p->input_size.width ||
+                            currH < 0 || currH >= p->input_size.height) continue;
+
+                        const int inIndex = inArea * d + currH * p->input_size.width + currW;
+                        outputs[inIndex] = 0;
+
+                        if (inputs[inIndex] > max) {
+                            max = inputs[inIndex];
+                            ind = inIndex;
+                        }
+                    }
+                }
+
+                if (ind != -1) outputs[ind] += deltas[d * outArea + oH * p->output_size.width + oW];
+            }
+        }
+    }
+}
+
+static void backward_avg_pooling_layer(const layer* l, const double* inputs, const double* deltas, double* outputs) {
+    const pooling_layer_params* p = l->params;
+
+    const int inArea = p->input_size.width * p->input_size.height;
+    const int outArea = p->output_size.width * p->output_size.height;
+    const double div = p->window_size.width * p->window_size.height;
+
+    for (int d = 0; d < p->output_size.depth; d++) {
+        for (int oW = 0; oW < p->output_size.width; oW++) {
+            for (int oH = 0; oH < p->output_size.height; oH++) {
+                const int w = oW * p->stride - p->padding;
+                const int h = oH * p->stride - p->padding;
+
+                const double v = deltas[d * outArea + oH * p->output_size.width + oW] / div;
+
+                for (int kW = 0; kW < p->window_size.width; kW++) {
+                    for (int kH = 0; kH < p->window_size.height; kH++) {
+                        const int currW = w + kW;
+                        const int currH = h + kH;
+
+                        if (currW < 0 || currW >= p->input_size.width ||
+                            currH < 0 || currH >= p->input_size.height) continue;
+
+                        const int inIndex = inArea * d + currH * p->input_size.width + currW;
+                        outputs[inIndex] = v;
+                    }
+                }
+            }
+        }
+    }
+}
+
 layer_vtable pooling_vtable_store[] = {
-    {.forward = forward_max_pooling_layer}
+    {forward_max_pooling_layer, backward_max_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {forward_avg_pooling_layer, backward_avg_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free}
 };
 
 layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D windowSize, const int stride, const int padding) {

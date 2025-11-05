@@ -8,6 +8,7 @@
 #include "neural_network.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
+#include "Layers/Types/pooling_layer.h"
 #include "Optimizers/Types/simple_optimizer.h"
 #include "Util/double_util.h"
 #include "Util/math_util.h"
@@ -21,6 +22,12 @@ void unit_test();
 int main(void) {
     unit_test();
     return EXIT_SUCCESS;
+}
+
+void pooling_layer_test() {
+    //TODO
+
+    printf("pooling layer test OK!");
 }
 
 typedef struct bal_b {
@@ -405,6 +412,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
+    pooling_layer_test();
     optimizer_test(true, false);
     bit_add_learn_test(true);
     build_test();

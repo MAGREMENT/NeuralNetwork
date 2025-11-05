@@ -167,8 +167,10 @@ inline void learn(const neural_network* network, const test_data data, const ran
         if (g == NULL) continue;
 
         const layer* l = network->layers[i];
-        opt_args.layerIndex = i;
-        l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
+        if (l->gradient_count > 0) {
+            opt_args.layerIndex = i;
+            l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
+        }
     }
 
     free_buffers(network, gradients);
