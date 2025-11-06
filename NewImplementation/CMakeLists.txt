@@ -49,3 +49,10 @@ add_executable(NewImplementation
         Optimizers/Types/adadelta_optimizer.c
         Optimizers/Types/adadelta_optimizer.h
 )
+
+add_custom_command(
+        TARGET NewImplementation POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Data
+        $<TARGET_FILE_DIR:NewImplementation>/Data
+)

@@ -19,6 +19,8 @@ typedef struct cost_vtable {
 
 extern cost_vtable cost_vtables[];
 
+extern cost_vtable softmax_bce_cost_vtable;
+
 double mean_square_cost(const double* predicted, const double* expected, int count);
 
 void derivative_mean_square_cost(const double* predicted, const double* expected, double* result, int count);
@@ -34,5 +36,7 @@ void derivative_mean_log_cosh_cost(const double* predicted, const double* expect
 double binary_cross_entropy_cost(const double* predicted, const double* expected, int count);
 
 void derivative_binary_cross_entropy_cost(const double* predicted, const double* expected, double* result, int count);
+
+void derivative_softmax_bce_cost(const double* predicted, const double* expected, double* result, int count);
 
 #endif //COST_H

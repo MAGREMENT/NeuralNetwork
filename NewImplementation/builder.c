@@ -113,11 +113,11 @@ neural_network* build(const builder* builder) {
     n->learningRate = builder->learningRate;
     n->shuffleDataOnIteration = builder->shuffleDataOnIteration;
 
-    //TODO binary entropy + softmax
-    if (builder->cost_type >= 0) n->cost_vtable = cost_vtables + builder->cost_type;
     if (builder->optimizer >= 0) n->optimizer = cnstr_optimizer(builder->optimizer, builder->opt_args);
     if (builder->data_selector >= 0) n->data_selector = cnstr_data_selector(builder->data_selector, builder->ds_args);
     if (builder->scheduler >= 0) n->scheduler = cnstr_scheduler(builder->scheduler, builder->sch_args);
+
+    bool softmax_bce_optimization = false;
 
     int in_count = builder->in_count;
     for (int i = 0; i < builder->list->count; i++) {
@@ -134,7 +134,11 @@ neural_network* build(const builder* builder) {
             case ACTIVATION :
                 const activation_element ae = el.element.activation;
                 const int out = i == 0 ? builder->in_count - 1 : n->layers[i - 1]->out_count;
-                n->layers[i] = cnstr_activation_layer(ae.type, out);
+
+                if (i == builder->list->count - 1 && ae.type == SOFTMAX && builder->cost_type == BINARY_CROSS_ENTROPY) {
+                    softmax_bce_optimization = true;
+                    n->layers[i] = cnstr_softmax_bce_layer(out);
+                } else n->layers[i] = cnstr_activation_layer(ae.type, out);
 
                 break;
             default:
@@ -143,6 +147,9 @@ neural_network* build(const builder* builder) {
                 return NULL;
         }
     }
+
+    if (softmax_bce_optimization) n->cost_vtable = &softmax_bce_cost_vtable;
+    else if (builder->cost_type >= 0) n->cost_vtable = cost_vtables + builder->cost_type;
 
     return n;
 }

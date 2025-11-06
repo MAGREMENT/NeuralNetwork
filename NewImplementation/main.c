@@ -17,17 +17,104 @@ double big_arr1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
 
 double big_arr2[] = {0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1};
 
+void mnist_run();
 void unit_test();
 
 int main(void) {
-    unit_test();
+    mnist_run();
+    //unit_test();
     return EXIT_SUCCESS;
 }
 
-void pooling_layer_test() {
-    //TODO
+//TODO fix somehow
+void mnist_run() {
+    //max : 10000
+    const int count = 100;
 
-    printf("pooling layer test OK!");
+    const int iCount = 784 * count;
+    const int lCount = 10 * count;
+
+    double* images = malloc(sizeof(double) * iCount);
+    double* labels = malloc(sizeof(double) * lCount);
+
+    FILE* iFile = fopen("Data/images", "r");
+    fread(images, sizeof(double), iCount, iFile);
+    fclose(iFile);
+
+    FILE* oFile = fopen("Data/labels", "r");
+    fread(labels, sizeof(double), lCount, oFile);
+    fclose(oFile);
+
+    test_data test = {images, labels, count};
+    builder* b = alloc_builder(784);
+
+    b_dense(b, 200);
+    b_activation(b, RELU);
+    b_dense(b, 100);
+    b_activation(b, RELU);
+    b_dense(b, 10);
+    b_activation(b, SOFTMAX);
+
+    b_opt(b, SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8});
+    b_sch(b, CONSTANT, (scheduler_cnstr_args)0.0);
+    b_ds(b, MINI_BATCH, (data_selector_cnstr_args) {.value = 64});
+
+    b->cost_type = BINARY_CROSS_ENTROPY;
+
+    b->shuffleDataOnIteration = true;
+    b->learningRate = 0.1;
+
+    neural_network* n = build_free(b);
+    initialize(n);
+
+    printf("Iteration 0 : Cost -> %f | Accuracy -> %f\n", get_avg_cost(n, test), get_classification_accuracy(n, test));
+    learning_state* state = alloc_state(n);
+
+    for (int i = 0; i < 10; i++) {
+        iterative_learn(n, test, state, 1);
+        printf("Iteration %d : Cost -> %f | Accuracy -> %f\n", i + 1, get_avg_cost(n, test), get_classification_accuracy(n, test));
+    }
+
+    free(images);
+    free(labels);
+}
+
+void pooling_layer_test() {
+    const double i1[] = {1, 9, 3, 4, 5, 10, 12, 4, 1};
+    const double i2[] = {1, 2, 3, 8, 9, 6, 5, 4, 2, 1, 3, 4, -3, 2, 7, 8};
+    const double i3[] = {1, 5, 7, 8, 14, -1, 3, 2};
+
+    layer* l = cnstr_pooling_layer(POOLING_MAX, (size3D){3, 3, 1}, (size2D) {2, 2}, 1, 0);
+
+    double o1[4];
+    const double e1[] = {9, 10, 12, 10};
+
+    l->vtable->forward(l, i1, o1);
+    for (int i = 0; i < 4; i++) {
+        if (!def_deq(o1[i], e1[i])) {
+            printf("Forward 1 fail\n");
+            return;
+        }
+    }
+
+    l->vtable->free(l);
+
+    l = cnstr_pooling_layer(POOLING_MAX, (size3D){4, 4, 1}, (size2D) {2, 2}, 2, 1);
+
+    double o2[9];
+    const double e2[] = {1, 3, 8, 9, 6, 4, -3, 7, 8};
+
+    l->vtable->forward(l, i2, o2);
+    for (int i = 0; i < 9; i++) {
+        if (!def_deq(o2[i], e2[i])) {
+            printf("Forward 2 fail\n");
+            return;
+        }
+    }
+
+    l->vtable->free(l);
+
+    printf("pooling layer test OK!\n");
 }
 
 typedef struct bal_b {
@@ -414,7 +501,7 @@ void conv_layer_forward_test() {
 void unit_test() {
     pooling_layer_test();
     optimizer_test(true, false);
-    bit_add_learn_test(true);
+    bit_add_learn_test(false);
     build_test();
     dense_test();
     predict_test();

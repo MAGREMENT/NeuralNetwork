@@ -6,6 +6,7 @@
 
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void forward_max_pooling_layer(const layer* l, const double* inputs, double* outputs) {
     const pooling_layer_params* p = l->params;
@@ -19,7 +20,7 @@ static void forward_max_pooling_layer(const layer* l, const double* inputs, doub
                 const int w = oW * p->stride - p->padding;
                 const int h = oH * p->stride - p->padding;
 
-                double result = DBL_MIN;
+                double result = -DBL_MAX;
 
                 for (int kW = 0; kW < p->window_size.width; kW++) {
                     for (int kH = 0; kH < p->window_size.height; kH++) {
@@ -85,7 +86,7 @@ static void backward_max_pooling_layer(const layer* l, const double* inputs, con
                 const int w = oW * p->stride - p->padding;
                 const int h = oH * p->stride - p->padding;
 
-                double max = DBL_MIN;
+                double max = -DBL_MAX;
                 int ind = -1;
 
                 for (int kW = 0; kW < p->window_size.width; kW++) {
@@ -119,6 +120,8 @@ static void backward_avg_pooling_layer(const layer* l, const double* inputs, con
     const int outArea = p->output_size.width * p->output_size.height;
     const double div = p->window_size.width * p->window_size.height;
 
+    memset(outputs, 0, inArea * p->input_size.depth * sizeof(double));
+
     for (int d = 0; d < p->output_size.depth; d++) {
         for (int oW = 0; oW < p->output_size.width; oW++) {
             for (int oH = 0; oH < p->output_size.height; oH++) {
@@ -136,7 +139,7 @@ static void backward_avg_pooling_layer(const layer* l, const double* inputs, con
                             currH < 0 || currH >= p->input_size.height) continue;
 
                         const int inIndex = inArea * d + currH * p->input_size.width + currW;
-                        outputs[inIndex] = v;
+                        outputs[inIndex] += v;
                     }
                 }
             }
