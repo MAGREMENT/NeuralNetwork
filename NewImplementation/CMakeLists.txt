@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.30)
 set(CMAKE_C_STANDARD 23)
 
+project(NewImplementation C)
+
 set(SOURCES
         main.c
         cost.c
@@ -46,7 +48,7 @@ set(SOURCES
         Optimizers/Types/adadelta_optimizer.c)
 
 if(MSVC)
-    message("Configuring project for MSVC")
+    message(STATUS "MVSC detected - enabling CUDA")
 
     #To use CUDA in Windows, you need :
     #   - To use the MSVC compiler. Install Visual Studio 2022 Build Tools with the Desktop C++ kit.
@@ -55,12 +57,9 @@ if(MSVC)
     set(CUDAToolkit_ROOT "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0") #Edit with your path
     set(CMAKE_CUDA_COMPILER "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe")  #Edit with your path
 
-    project(NewImplementation C CUDA)
     list(APPEND SOURCES test.cu)
-else()
-    message("Configuring project for GCC")
 
-    project(NewImplementation C)
+    enable_language(CUDA)
 endif()
 
 add_executable(NewImplementation ${SOURCES})
