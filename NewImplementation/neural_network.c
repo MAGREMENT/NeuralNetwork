@@ -42,10 +42,6 @@ inline int get_out_count(const neural_network* network) {
     return network->layers[network->layerCount - 1]->out_count;
 }
 
-inline void set_cost_type(const neural_network* network) {
-
-}
-
 inline void predict(const neural_network* network, const double* inputs, double* outputs) {
     if (network->layerCount == 1) {
         network->layers[0]->vtable->forward(network->layers[0], inputs, outputs);
@@ -116,12 +112,11 @@ static void average_gradients(const neural_network* network, double** buffers, c
     }
 }
 
-inline void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
+static void get_gradients(const neural_network* network, const test_data data, const range range, double** gradients) {
     const int lastIndex = network->layerCount - 1;
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
 
-    double** gradients = alloc_gradient_buffers(network, true);
     double** intermediateValues = alloc_layer_output_buffers(network);
 
     for (int r = range.from; r < range.to; r++) {
@@ -159,9 +154,13 @@ inline void learn(const neural_network* network, const test_data data, const ran
         }
     }
 
-    average_gradients(network, gradients, range.to - range.from);
+    free_buffers(network, intermediateValues);
+}
 
+static void apply_gradients(const neural_network* network, double** gradients, const range range, const learning_args args) {
+    average_gradients(network, gradients, range.to - range.from);
     optimizer_args opt_args = {args.learningRate, 0, range.iteration, args.optimizer_state};
+
     for (int i = 0; i < network->layerCount; i++) {
         const double* g = gradients[i];
         if (g == NULL) continue;
@@ -172,9 +171,15 @@ inline void learn(const neural_network* network, const test_data data, const ran
             l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
         }
     }
+}
+
+inline void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
+    double** gradients = alloc_gradient_buffers(network, true);
+
+    get_gradients(network, data, range, gradients);
+    apply_gradients(network, gradients, range, args);
 
     free_buffers(network, gradients);
-    free_buffers(network, intermediateValues);
 }
 
 static void shuffle_test_data(test_data test, const neural_network* network, const int times) {

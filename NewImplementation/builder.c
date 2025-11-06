@@ -33,6 +33,7 @@ builder* alloc_builder(const int inCount) {
 
     b->in_count = inCount;
 
+    //TODO implement
     b->thread_count = 1;
     b->learningRate = 1;
     b->shuffleDataOnIteration = false;
@@ -109,7 +110,6 @@ neural_network* build(const builder* builder) {
 
     neural_network* n = alloc_neural_network(builder->list->count);
 
-    n->threadCount = builder->thread_count;
     n->learningRate = builder->learningRate;
     n->shuffleDataOnIteration = builder->shuffleDataOnIteration;
 

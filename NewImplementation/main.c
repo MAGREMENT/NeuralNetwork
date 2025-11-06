@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 #include "builder.h"
 #include "Layers/Types/convolutional_layer.h"
@@ -12,6 +13,7 @@
 #include "Optimizers/Types/simple_optimizer.h"
 #include "Util/double_util.h"
 #include "Util/math_util.h"
+#include "Util/rand_util.h"
 
 double big_arr1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1};
 
@@ -21,8 +23,8 @@ void mnist_run();
 void unit_test();
 
 int main(void) {
-    mnist_run();
-    //unit_test();
+    //mnist_run();
+    unit_test();
     return EXIT_SUCCESS;
 }
 
@@ -75,6 +77,7 @@ void mnist_run() {
         printf("Iteration %d : Cost -> %f | Accuracy -> %f\n", i + 1, get_avg_cost(n, test), get_classification_accuracy(n, test));
     }
 
+    free_neural_network(n, true);
     free(images);
     free(labels);
 }
@@ -113,6 +116,8 @@ void pooling_layer_test() {
     }
 
     l->vtable->free(l);
+
+    //TODO backward & i3 & avg
 
     printf("pooling layer test OK!\n");
 }
@@ -329,6 +334,67 @@ void build_test() {
     printf("builder test OK!\n");
 }
 
+void mt_dense_test(bool verbose) {
+    double in[784];
+    double out1[200];
+    double out2[200];
+
+    for (int i = 0; i < 784; i++) {
+        in[i] = rand_d(-5, 5);
+    }
+
+    layer* single = cnstr_dense_layer(784, 200, initialize_dense_to_zero);
+    layer* multi = cnstr_multi_thread_dense_layer(784, 200, 4, initialize_dense_to_zero);
+
+    dense_layer_params* sp = single->params;
+    dense_layer_params* mp = multi->params;
+
+    for (int i = 0; i < 784 * 200; i++) {
+        const double d = rand_d(-5, 5);
+        sp->weights[i] = d;
+        mp->weights[i] = d;
+    }
+
+    for (int i = 0; i < 200; i++) {
+        const double d = rand_d(-5, 5);
+        sp->biases[i] = d;
+        mp->biases[i] = d;
+    }
+
+    clock_t singleTime = 0;
+    clock_t multiTime = 0;
+
+    for (int i = 0; i < 1000; i++) {
+        clock_t s = clock();
+        single->vtable->forward(single, in, out1);
+        clock_t e = clock();
+
+        singleTime += e - s;
+
+        s = clock();
+        multi->vtable->forward(multi, in, out2);
+        e = clock();
+
+        multiTime += e - s;
+    }
+
+    if (verbose) {
+        printf("Single thread time : %f s\n", (double)singleTime / CLOCKS_PER_SEC);
+        printf("Multi thread time : %f s\n", (double)multiTime / CLOCKS_PER_SEC);
+    }
+
+    for (int i = 0; i < 200; i++) {
+        if (!def_deq(out1[i], out2[i])) {
+            printf("Not same value\n");
+            return;
+        }
+    }
+
+    printf("multi-thread dense layer test OK!\n");
+    free(single);
+    free(multi);
+}
+
 void dense_test() {
     neural_network* n = alloc_neural_network(2);
     n->layers[0] = cnstr_dense_layer(2, 3, initialize_dense_to_one);
@@ -503,6 +569,7 @@ void unit_test() {
     optimizer_test(true, false);
     bit_add_learn_test(false);
     build_test();
+    mt_dense_test(true);
     dense_test();
     predict_test();
     conv_layer_forward_test();

@@ -4,16 +4,22 @@
 
 #ifndef MULTI_THREADING_H
 #define MULTI_THREADING_H
+#include <bemapiset.h>
 
-typedef struct parallel_thread_info {
-    int index;
-    int total;
-} parallel_thread_info;
+typedef struct parallel_range {
+    int from;
+    int to;
+} parallel_range;
+
+typedef struct parallel_range_data {
+    void* params;
+    parallel_range range;
+} parallel_range_data;
 
 void* alloc_critical_section();
 void enter_critical_section(void* section);
 void exit_critical_section(void* section);
 void free_critical_section(void* section);
-void exec_parallel(void(*func)(void* params, parallel_thread_info threadInfo), void* params, int threadCount);
+void exec_range_parallel(LPTHREAD_START_ROUTINE func, void* params, int total, int threadCount);
 
 #endif //MULTI_THREADING_H

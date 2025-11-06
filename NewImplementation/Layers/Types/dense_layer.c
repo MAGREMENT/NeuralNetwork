@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../multi-threading.h"
 #include "../../Util/rand_util.h"
 
 static void free_dense_layer(layer* l) {
@@ -31,6 +32,43 @@ static void dense_forward(const layer* l, const double* inputs, double* outputs)
 
         outputs[o] = n;
     }
+}
+
+typedef struct parallel_dense_forward_params {
+    mt_dense_layer_params* params;
+    double* inputs;
+    double* outputs;
+    int in_count;
+    int out_count;
+} parallel_dense_forward_params;
+
+static unsigned long async_dense_forward(void* params) {
+    const parallel_range_data* data = params;
+    parallel_dense_forward_params* p = data->params;
+
+    for(int o = data->range.from; o < data->range.to; o++){
+        double n = p->params->biases[o];
+
+        for(int i = 0; i < p->in_count; i++){
+            const int ind = i * p->out_count + o;
+            n += p->inputs[i] * p->params->weights[ind];
+        }
+
+        p->outputs[o] = n;
+    }
+
+    return 0;
+}
+
+static void mt_dense_forward(const layer* l, const double* inputs, double* outputs) {
+    mt_dense_layer_params* p = l->params;
+
+    parallel_dense_forward_params* pdfp = malloc(sizeof(parallel_dense_forward_params));
+    *pdfp = (parallel_dense_forward_params) {p, inputs, outputs, l->in_count, l->out_count};
+
+    exec_range_parallel(async_dense_forward, pdfp, l->out_count, p->threadCount);
+
+    free(pdfp);
 }
 
 static void dense_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
@@ -71,6 +109,7 @@ layer_vtable dense_vtable = {dense_forward, dense_backward, dense_delta_to_gradi
 inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
     dense_layer_params* p = malloc(sizeof(dense_layer_params));
+
     p->weights = malloc(sizeof(double) * inputCount * outputCount);
     p->biases = malloc(sizeof(double) * outputCount);
 
@@ -81,6 +120,27 @@ inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, voi
 
     l->initialize = initialize;
     l->vtable = &dense_vtable;
+
+    return l;
+}
+
+layer_vtable mt_dense_vtable = {mt_dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, free_dense_layer};
+
+layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, const int thread_count, void (*initialize)(const layer* l)) {
+    layer* l = malloc(sizeof(layer));
+    mt_dense_layer_params* p = malloc(sizeof(mt_dense_layer_params));
+
+    p->weights = malloc(sizeof(double) * inputCount * outputCount);
+    p->biases = malloc(sizeof(double) * outputCount);
+    p->threadCount = thread_count;
+
+    l->params = p;
+    l->in_count = inputCount;
+    l->out_count = outputCount;
+    l->gradient_count = inputCount * outputCount + outputCount;
+
+    l->initialize = initialize;
+    l->vtable = &mt_dense_vtable;
 
     return l;
 }
@@ -126,6 +186,10 @@ inline void initialize_dense_to_zero(const layer* l) {
 
 inline void initialize_dense_to_one(const layer* l) {
     init_d_to_d(l, 1);
+}
+
+inline void initialize_dense_to_two(const layer* l) {
+    init_d_to_d(l, 2);
 }
 
 static void biasesToZero(const dense_layer_params* p, const int count) {

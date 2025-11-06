@@ -7,54 +7,44 @@
 #include <bemapiset.h>
 #include <windows.h>
 
-void* alloc_critical_section() {
+inline void* alloc_critical_section() {
     CRITICAL_SECTION* cs = malloc(sizeof(CRITICAL_SECTION));
     InitializeCriticalSection(cs);
     return cs;
 }
 
-void enter_critical_section(void* section) {
+inline void enter_critical_section(void* section) {
     EnterCriticalSection(section);
 }
 
-void exit_critical_section(void* section) {
+inline void exit_critical_section(void* section) {
     LeaveCriticalSection(section);
 }
 
-void free_critical_section(void* section) {
+inline void free_critical_section(void* section) {
     DeleteCriticalSection(section);
     free(section);
 }
 
-typedef struct parallel_handler {
-    void (*func)(void* params, parallel_thread_info threadInfo);
-    void* params;
-    parallel_thread_info threadInfo;
-} parallel_handler;
-
-static DWORD exec_parallel_handler(LPVOID param) {
-    parallel_handler* ph = param;
-    ph->func(ph->params, ph->threadInfo);
-    return 0;
-}
-
-void exec_parallel(void(*func)(void* params, parallel_thread_info threadInfo), void* params, int threadCount) {
+inline void exec_range_parallel(const LPTHREAD_START_ROUTINE func, void* params, const int total, const int threadCount) {
     HANDLE* threads = malloc(sizeof(HANDLE) * threadCount);
-    parallel_handler* phs = malloc(sizeof(parallel_handler) * threadCount);
+    parallel_range_data* data = malloc(sizeof(parallel_range_data) * threadCount);
+
+    const int div = total / threadCount;
+    const int add = total % threadCount;
 
     for (int i = 0; i < threadCount; i++) {
-        parallel_handler* ph = ph + i;
+        parallel_range_data* pd = data + i;
 
-        ph->func = func;
-        ph->params = params;
-        ph->threadInfo.index = i;
-        ph->threadInfo.total = threadCount;
+        pd->params = params;
+        pd->range.from = i * div;
+        pd->range.to = (i + 1) * div + (i == threadCount - 1 ? add : 0);
 
         threads[i] = CreateThread(
             NULL,
             0,
-            exec_parallel_handler,
-            ph,
+            func,
+            pd,
             0,
             NULL);
     }
@@ -66,5 +56,5 @@ void exec_parallel(void(*func)(void* params, parallel_thread_info threadInfo), v
     }
 
     free(threads);
-    free(phs);
+    free(data);
 }

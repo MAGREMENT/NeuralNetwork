@@ -32,8 +32,6 @@ typedef struct neural_network {
     int layerCount;
     layer** layers;
 
-    //TODO implement
-    int threadCount;
     double learningRate;
     bool shuffleDataOnIteration;
 
