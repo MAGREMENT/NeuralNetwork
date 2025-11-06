@@ -33,7 +33,7 @@ typedef struct neural_network {
     layer** layers;
 
     double learningRate;
-    bool shuffleDataOnIteration;
+    int shuffleDataOnIteration;
 
     optimizer* optimizer;
     scheduler* scheduler;

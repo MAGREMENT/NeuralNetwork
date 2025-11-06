@@ -4,7 +4,10 @@
 
 #ifndef STRING_MATH_H
 #define STRING_MATH_H
+
 #include "size.h"
+
+#define PI 3.14159265358979323846
 
 double sigmoid(double input);
 void valid_correlate_add(const double* inputs, size3D input_size, const double* kernels, size2D kernel_size,

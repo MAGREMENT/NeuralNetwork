@@ -14,11 +14,11 @@ typedef struct mini_batch_iterator_state {
 
 static int next(range_iterator* iterator) {
     mini_batch_iterator_state* state = iterator->state;
-    if (state->max_iterations <= 0) return false;
+    if (state->max_iterations <= 0) return 0;
 
     if (iterator->current.to >= state->size) {
         iterator->current.iteration++;
-        if (iterator->current.iteration > state->max_iterations) return false;
+        if (iterator->current.iteration > state->max_iterations) return 0;
 
         iterator->current.from = 0;
         iterator->current.to = state->batch_size;

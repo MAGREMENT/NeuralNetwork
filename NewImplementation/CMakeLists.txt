@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.30)
-project(NewImplementation C)
-
 set(CMAKE_C_STANDARD 23)
 
-add_executable(NewImplementation
+set(SOURCES
         main.c
         cost.c
         logger.c
+        builder.c
         neural_network.c
         asserter.c
         Util/string_util.c
@@ -21,7 +20,6 @@ add_executable(NewImplementation
         multi-threading.c
         Layers/Types/convolutional_layer.c
         Util/Collections/list.c
-        builder.c
         Util/rand_util.c
         Optimizers/Types/simple_optimizer.c
         Schedulers/scheduler.c
@@ -45,10 +43,27 @@ add_executable(NewImplementation
         Util/double_util.c
         Optimizers/Types/proportional_momentum_optimizer.c
         Optimizers/Types/adagrad_optimizer.c
-        Optimizers/Types/adagrad_optimizer.h
-        Optimizers/Types/adadelta_optimizer.c
-        Optimizers/Types/adadelta_optimizer.h
-)
+        Optimizers/Types/adadelta_optimizer.c)
+
+if(MSVC)
+    message("Configuring project for MSVC")
+
+    #To use CUDA in Windows, you need :
+    #   - To use the MSVC compiler. Install Visual Studio 2022 Build Tools with the Desktop C++ kit.
+    #   - To install the CUDA Toolkit and set the following variables
+    set(CMAKE_CUDA_ARCHITECTURES 120)  #For RTX 5060
+    set(CUDAToolkit_ROOT "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0") #Edit with your path
+    set(CMAKE_CUDA_COMPILER "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe")  #Edit with your path
+
+    project(NewImplementation C CUDA)
+    list(APPEND SOURCES test.cu)
+else()
+    message("Configuring project for GCC")
+
+    project(NewImplementation C)
+endif()
+
+add_executable(NewImplementation ${SOURCES})
 
 add_custom_command(
         TARGET NewImplementation POST_BUILD

@@ -5,7 +5,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#define LOG_ENABLED true
+#define LOG_ENABLED 1
 
 void flog(char format[], ...);
 

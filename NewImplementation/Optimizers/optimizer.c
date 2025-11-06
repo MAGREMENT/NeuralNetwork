@@ -14,7 +14,7 @@ inline void* cnstr_empty_state(const optimizer* opt, const neural_network* netwo
 inline void free_empty_state(void* state, const neural_network* network) {}
 
 inline void* cnstr_gradient_buffers_state(const optimizer* opt, const neural_network* network) {
-    return alloc_gradient_buffers(network, true);
+    return alloc_gradient_buffers(network, 1);
 }
 
 inline void free_gradient_buffers_state(void* state, const neural_network* network) {
@@ -23,8 +23,8 @@ inline void free_gradient_buffers_state(void* state, const neural_network* netwo
 
 inline void* cnstr_double_gradient_buffers_state(const optimizer* opt, const neural_network* network) {
     double*** /*xD*/ s = malloc(sizeof(double**) * 2);
-    s[0] = alloc_gradient_buffers(network, true);
-    s[1] = alloc_gradient_buffers(network, true);
+    s[0] = alloc_gradient_buffers(network, 1);
+    s[1] = alloc_gradient_buffers(network, 1);
     return s;
 }
 

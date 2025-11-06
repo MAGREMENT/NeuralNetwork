@@ -3,6 +3,7 @@
 //
 
 #include "cosine_decay_scheduler.h"
+#include "../../Util/math_util.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@ typedef struct cosine_decay_params {
 
 static double schedule(const scheduler* sch, const double learningRate, const int iteration) {
     const cosine_decay_params* p = sch->params;
-    return p->ending + 0.5 * (learningRate - p->ending) * (1 + cos(M_PI * iteration / p->span));
+    return p->ending + 0.5 * (learningRate - p->ending) * (1 + cos(PI * iteration / p->span));
 }
 
 scheduler_vtable cds_vtable = {schedule, free_def_scheduler};

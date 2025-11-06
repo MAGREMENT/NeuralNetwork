@@ -4,7 +4,6 @@
 
 #include "neural_network.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -174,7 +173,7 @@ static void apply_gradients(const neural_network* network, double** gradients, c
 }
 
 inline void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
-    double** gradients = alloc_gradient_buffers(network, true);
+    double** gradients = alloc_gradient_buffers(network, 1);
 
     get_gradients(network, data, range, gradients);
     apply_gradients(network, gradients, range, args);
@@ -206,10 +205,10 @@ static void shuffle_test_data(test_data test, const neural_network* network, con
 }
 
 void iterative_learn(const neural_network* network, const test_data data, learning_state* state, const int iterations) {
-    int freeState = false;
+    int freeState = 0;
     if (state == NULL) {
         state = alloc_state(network);
-        freeState = true;
+        freeState = 1;
     }
 
     range_iterator* iterator = network->data_selector->vtable.cnstr_iterator(network->data_selector, data.count, iterations);
@@ -284,10 +283,10 @@ inline double get_binary_accuracy(const neural_network* network, const test_data
         predict(network, test.inputs + i * in_count, predicted);
 
         const double* expected = test.expected + i * out_count;
-        bool ok = true;
+        int ok = 1;
         for (int o = 0; o < out_count; o++) {
             if ((expected[o] >= 0.5 && predicted[o] < 0.5) || (expected[o] < 0.5 && predicted[o] >= 0.5)) {
-                ok = false;
+                ok = 0;
                 break;
             }
         }

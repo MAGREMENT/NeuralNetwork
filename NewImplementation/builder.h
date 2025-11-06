@@ -14,9 +14,9 @@ typedef struct builder {
     list* list;
     int in_count;
 
-    int thread_count;
+    int multiThreading;
     double learningRate;
-    bool shuffleDataOnIteration;
+    int shuffleDataOnIteration;
 
     int cost_type;
 

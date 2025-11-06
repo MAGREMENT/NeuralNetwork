@@ -5,7 +5,7 @@
 #ifndef ASSERTER_H
 #define ASSERTER_H
 
-#define ASSERT_ENABLED true
+#define ASSERT_ENABLED 1
 
 void assert(int v);
 

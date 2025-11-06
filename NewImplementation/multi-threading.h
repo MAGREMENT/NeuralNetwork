@@ -4,7 +4,7 @@
 
 #ifndef MULTI_THREADING_H
 #define MULTI_THREADING_H
-#include <bemapiset.h>
+#include <windows.h>
 
 typedef struct parallel_range {
     int from;

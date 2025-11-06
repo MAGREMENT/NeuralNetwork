@@ -3,8 +3,6 @@
 //
 
 #include "multi-threading.h"
-
-#include <bemapiset.h>
 #include <windows.h>
 
 inline void* alloc_critical_section() {

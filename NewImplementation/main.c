@@ -58,12 +58,12 @@ void mnist_run() {
     b_activation(b, SOFTMAX);
 
     b_opt(b, SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8});
-    b_sch(b, CONSTANT, (scheduler_cnstr_args)0.0);
+    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
     b_ds(b, MINI_BATCH, (data_selector_cnstr_args) {.value = 64});
 
     b->cost_type = BINARY_CROSS_ENTROPY;
 
-    b->shuffleDataOnIteration = true;
+    b->shuffleDataOnIteration = 1;
     b->learningRate = 0.1;
 
     neural_network* n = build_free(b);
@@ -77,7 +77,7 @@ void mnist_run() {
         printf("Iteration %d : Cost -> %f | Accuracy -> %f\n", i + 1, get_avg_cost(n, test), get_classification_accuracy(n, test));
     }
 
-    free_neural_network(n, true);
+    free_neural_network(n, 1);
     free(images);
     free(labels);
 }
@@ -147,7 +147,7 @@ static void print_costs(double* costs, int count) {
     printf("\n");
 }
 
-void optimizer_test(const bool error, const bool verbose) {
+void optimizer_test(const int error, const int verbose) {
     const bal_b builds[] = {
         {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 0.1},
         {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.2}, 0.1},
@@ -155,7 +155,7 @@ void optimizer_test(const bool error, const bool verbose) {
         {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.3}, 0.1},
         {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
         {ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}}, 0.1},
-        {ADAGRAD, (optimizer_cnstr_args)0.0, 0.1},
+        {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 0.1},
         {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 0.1}
     };
 
@@ -214,11 +214,11 @@ void optimizer_test(const bool error, const bool verbose) {
         if (verbose) printf("\n");
     }
 
-    free_neural_network(dummy, true);
+    free_neural_network(dummy, 1);
     printf("optimizer test OK!\n");
 }
 
-void bit_add_learn_test(const bool verbose) {
+void bit_add_learn_test(const int verbose) {
     const bal_b builds[] = {
         {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 1},
         {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.1}, 1},
@@ -226,7 +226,7 @@ void bit_add_learn_test(const bool verbose) {
         {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8}, 1},
         {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
         {ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}}, 1},
-        {ADAGRAD, (optimizer_cnstr_args)0.0, 1},
+        {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 1},
         {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 1}
     };
 
@@ -236,11 +236,11 @@ void bit_add_learn_test(const bool verbose) {
     b_dense(b, 3);
     b_activation(b, SIGMOID);
 
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args)0);
-    b_sch(b, CONSTANT, (scheduler_cnstr_args)0.0);
+    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
+    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
 
     b->cost_type = BINARY_CROSS_ENTROPY;
-    b->shuffleDataOnIteration = false;
+    b->shuffleDataOnIteration = 0;
 
     test_data test;
     test.count = 128;
@@ -292,7 +292,7 @@ void build_test() {
     b_activation(b, SOFTMAX);
 
     b_opt(b, SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.9});
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args)0);
+    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
     b_sch(b, COSINE_DECAY, (scheduler_cnstr_args) {.di_value = (double_int) {0.5, 20}});
 
     b->cost_type = MEAN_SQUARE;
@@ -330,41 +330,44 @@ void build_test() {
 
     //TODO more tests
 
-    free_neural_network(n, true);
+    free_neural_network(n, 1);
     printf("builder test OK!\n");
 }
 
-void mt_dense_test(bool verbose) {
-    double in[784];
-    double out1[200];
-    double out2[200];
+void mt_dense_test(int verbose) {
+    const int inCount = 10000;
+    const int outCount = 10000;
 
-    for (int i = 0; i < 784; i++) {
+    double* in = malloc(inCount * sizeof(double));
+    double* out1 = malloc(outCount * sizeof(double));
+    double* out2 = malloc(outCount * sizeof(double));
+
+    for (int i = 0; i < inCount; i++) {
         in[i] = rand_d(-5, 5);
     }
 
-    layer* single = cnstr_dense_layer(784, 200, initialize_dense_to_zero);
-    layer* multi = cnstr_multi_thread_dense_layer(784, 200, 4, initialize_dense_to_zero);
+    layer* single = cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero);
+    layer* multi = cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero);
 
     dense_layer_params* sp = single->params;
     dense_layer_params* mp = multi->params;
 
-    for (int i = 0; i < 784 * 200; i++) {
-        const double d = rand_d(-5, 5);
-        sp->weights[i] = d;
-        mp->weights[i] = d;
-    }
-
-    for (int i = 0; i < 200; i++) {
-        const double d = rand_d(-5, 5);
-        sp->biases[i] = d;
-        mp->biases[i] = d;
-    }
-
     clock_t singleTime = 0;
     clock_t multiTime = 0;
 
-    for (int i = 0; i < 1000; i++) {
+    for (int iteration = 0; iteration < 5; iteration++) {
+        for (int i = 0; i < inCount * outCount; i++) {
+            const double d = rand_d(-5, 5);
+            sp->weights[i] = d;
+            mp->weights[i] = d;
+        }
+
+        for (int i = 0; i < outCount; i++) {
+            const double d = rand_d(-5, 5);
+            sp->biases[i] = d;
+            mp->biases[i] = d;
+        }
+
         clock_t s = clock();
         single->vtable->forward(single, in, out1);
         clock_t e = clock();
@@ -376,6 +379,13 @@ void mt_dense_test(bool verbose) {
         e = clock();
 
         multiTime += e - s;
+
+        for (int i = 0; i < outCount; i++) {
+            if (!def_deq(out1[i], out2[i])) {
+                printf("Not same value\n");
+                return;
+            }
+        }
     }
 
     if (verbose) {
@@ -383,16 +393,12 @@ void mt_dense_test(bool verbose) {
         printf("Multi thread time : %f s\n", (double)multiTime / CLOCKS_PER_SEC);
     }
 
-    for (int i = 0; i < 200; i++) {
-        if (!def_deq(out1[i], out2[i])) {
-            printf("Not same value\n");
-            return;
-        }
-    }
-
     printf("multi-thread dense layer test OK!\n");
     free(single);
     free(multi);
+    free(in);
+    free(out1);
+    free(out2);
 }
 
 void dense_test() {
@@ -480,7 +486,7 @@ void dense_test() {
         cost = cost2;
     }
 
-    free_neural_network(n, true);
+    free_neural_network(n, 1);
     printf("dense test OK!\n");
 }
 
@@ -566,10 +572,10 @@ void conv_layer_forward_test() {
 
 void unit_test() {
     pooling_layer_test();
-    optimizer_test(true, false);
-    bit_add_learn_test(false);
+    optimizer_test(1, 0);
+    bit_add_learn_test(0);
     build_test();
-    mt_dense_test(true);
+    mt_dense_test(1);
     dense_test();
     predict_test();
     conv_layer_forward_test();

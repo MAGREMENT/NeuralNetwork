@@ -34,9 +34,9 @@ builder* alloc_builder(const int inCount) {
     b->in_count = inCount;
 
     //TODO implement
-    b->thread_count = 1;
+    b->multiThreading = 1;
     b->learningRate = 1;
-    b->shuffleDataOnIteration = false;
+    b->shuffleDataOnIteration = 0;
 
     b->cost_type = -1;
     b->optimizer = -1;
@@ -117,7 +117,7 @@ neural_network* build(const builder* builder) {
     if (builder->data_selector >= 0) n->data_selector = cnstr_data_selector(builder->data_selector, builder->ds_args);
     if (builder->scheduler >= 0) n->scheduler = cnstr_scheduler(builder->scheduler, builder->sch_args);
 
-    bool softmax_bce_optimization = false;
+    int softmax_bce_optimization = 0;
 
     int in_count = builder->in_count;
     for (int i = 0; i < builder->list->count; i++) {
@@ -136,14 +136,14 @@ neural_network* build(const builder* builder) {
                 const int out = i == 0 ? builder->in_count - 1 : n->layers[i - 1]->out_count;
 
                 if (i == builder->list->count - 1 && ae.type == SOFTMAX && builder->cost_type == BINARY_CROSS_ENTROPY) {
-                    softmax_bce_optimization = true;
+                    softmax_bce_optimization = 1;
                     n->layers[i] = cnstr_softmax_bce_layer(out);
                 } else n->layers[i] = cnstr_activation_layer(ae.type, out);
 
                 break;
             default:
-                assert(false); //Should not happen
-                free_neural_network(n, true);
+                assert(0); //Should not happen
+                free_neural_network(n, 1);
                 return NULL;
         }
     }
@@ -155,7 +155,7 @@ neural_network* build(const builder* builder) {
 }
 
 neural_network* build_free(builder* builder) {
-    const auto result = build(builder);
+    neural_network* result = build(builder);
     free_builder(builder);
     return result;
 }

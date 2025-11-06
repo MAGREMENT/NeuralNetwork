@@ -3,6 +3,7 @@
 //
 
 #include "rand_util.h"
+#include "math_util.h"
 
 #include <float.h>
 #include <stdlib.h>
@@ -25,5 +26,5 @@ inline int rand_i(const int max) {
 inline double rand_d_std_nrml_distr() {
     const double u1 = (rand() + 1.0) / (RAND_MAX + 2.0);  // avoid log(0)
     const double u2 = (rand() + 1.0) / (RAND_MAX + 2.0);
-    return sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2);
+    return sqrt(-2.0 * log(u1)) * cos(2.0 * PI * u2);
 }
