@@ -9,10 +9,10 @@
 
 #define PI 3.14159265358979323846
 
-double sigmoid(double input);
-void valid_correlate_add(const double* inputs, size3D input_size, const double* kernels, size2D kernel_size,
+extern double sigmoid(double input);
+extern void valid_correlate_add(const double* inputs, size3D input_size, const double* kernels, size2D kernel_size,
     double* outputs, size3D output_size, int padding, int stride);
-void full_convolve_add(const double* inputs, size3D input_size, const double* kernels, size2D kernel_size,
+extern void full_convolve_add(const double* inputs, size3D input_size, const double* kernels, size2D kernel_size,
     double* outputs, size3D output_size, int padding, int stride);
 
 #endif //STRING_MATH_H

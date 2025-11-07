@@ -14,7 +14,7 @@ static range_iterator* cnstr_iterator(const data_selector* sel, const int dataSi
 
 data_selector_vtable vtable = {cnstr_iterator, def_free_ds};
 
-inline data_selector* cnstr_full_batch_data_selector() {
+data_selector* cnstr_full_batch_data_selector() {
     data_selector* sel = malloc(sizeof(data_selector));
 
     sel->params = NULL;

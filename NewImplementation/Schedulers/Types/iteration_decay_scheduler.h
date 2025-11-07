@@ -7,6 +7,6 @@
 
 #include "../scheduler.h"
 
-scheduler* cnstr_iteration_decay_scheduler(double decay, int stepSize);
+extern scheduler* cnstr_iteration_decay_scheduler(double decay, int stepSize);
 
 #endif //NEWIMPLEMENTATION_ITERATION_DECAY_SCHEDULER_H

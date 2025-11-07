@@ -19,6 +19,6 @@ struct data_selector {
     data_selector_vtable vtable;
 };
 
-void def_free_ds(data_selector* selector);
+extern void def_free_ds(data_selector* selector);
 
 #endif //NEWIMPLEMENTATION_DATA_SELECTOR_H

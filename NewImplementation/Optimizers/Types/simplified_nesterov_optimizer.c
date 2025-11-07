@@ -20,7 +20,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
 
 optimizer_vtable nest_vtable = {cnstr_gradient_buffers_state, free_gradient_buffers_state, apply_gradients, free_base_opt};
 
-inline optimizer* cnstr_simplified_nesterov_optimizer(const double momentum) {
+optimizer* cnstr_simplified_nesterov_optimizer(const double momentum) {
     optimizer* opt = malloc(sizeof(optimizer));
     double* d = malloc(sizeof(double));
     *d = momentum;

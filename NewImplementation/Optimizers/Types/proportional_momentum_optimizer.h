@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_proportional_momentum_optimizer(double momentum);
+extern optimizer* cnstr_proportional_momentum_optimizer(double momentum);
 
 #endif //NEWIMPLEMENTATION_PROPORTIONAL_MOMENTUM_OPTIMIZER_H

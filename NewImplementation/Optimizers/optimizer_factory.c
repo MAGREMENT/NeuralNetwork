@@ -15,7 +15,7 @@
 #include "Types/proportional_momentum_optimizer.h"
 #include "Types/rms_prop_optimizer.h"
 
-inline optimizer* cnstr_optimizer(const int type, const optimizer_cnstr_args args) {
+optimizer* cnstr_optimizer(const int type, const optimizer_cnstr_args args) {
     switch (type) {
         case SIMPLE : return cnstr_simple_optimizer();
         case FREE_MOMENTUM: return cnstr_free_momentum_optimizer(args.value);

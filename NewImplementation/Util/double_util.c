@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-inline int d_max_ind(const double* values, const int count) {
+int d_max_ind(const double* values, const int count) {
     double max = DBL_MIN;
     int index = -1;
     for(int i = 0; i < count; i++) {

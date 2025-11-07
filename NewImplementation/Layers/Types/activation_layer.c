@@ -109,7 +109,7 @@ layer_vtable store[] = {
     {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free}
 };
 
-inline layer* cnstr_activation_layer(const int type, const int outputCount) {
+layer* cnstr_activation_layer(const int type, const int outputCount) {
     layer* l = malloc(sizeof(layer));
 
     l->params = NULL;
@@ -127,7 +127,7 @@ static void no_backward(const layer* l, const double* inputs, const double* delt
 
 layer_vtable softmax_bce_vtable = {softmax_forward, no_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free};
 
-inline layer* cnstr_softmax_bce_layer(const int outputCount) {
+layer* cnstr_softmax_bce_layer(const int outputCount) {
     layer* l = malloc(sizeof(layer));
 
     l->params = NULL;

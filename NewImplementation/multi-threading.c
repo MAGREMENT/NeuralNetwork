@@ -24,7 +24,7 @@ inline void free_critical_section(void* section) {
     free(section);
 }
 
-inline void exec_range_parallel(const LPTHREAD_START_ROUTINE func, void* params, const int total, const int threadCount) {
+void exec_range_parallel(const LPTHREAD_START_ROUTINE func, void* params, const int total, const int threadCount) {
     HANDLE* threads = malloc(sizeof(HANDLE) * threadCount);
     parallel_range_data* data = malloc(sizeof(parallel_range_data) * threadCount);
 

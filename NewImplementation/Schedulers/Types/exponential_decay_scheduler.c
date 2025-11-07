@@ -15,7 +15,7 @@ static double schedule(const scheduler* sch, const double learningRate, const in
 
 scheduler_vtable eds_vtable = {schedule, free_def_scheduler};
 
-inline scheduler* cnstr_exponential_decay_scheduler(const double decay) {
+scheduler* cnstr_exponential_decay_scheduler(const double decay) {
     scheduler* sch = malloc(sizeof(scheduler));
     double* d = malloc(sizeof(double));
     *d = decay;

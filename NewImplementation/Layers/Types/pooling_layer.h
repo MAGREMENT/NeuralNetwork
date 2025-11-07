@@ -24,6 +24,6 @@ typedef struct pooling_layer_params {
     int padding;
 } pooling_layer_params;
 
-layer* cnstr_pooling_layer(int type, size3D inputSize, size2D windowSize, int stride, int padding);
+extern layer* cnstr_pooling_layer(int type, size3D inputSize, size2D windowSize, int stride, int padding);
 
 #endif //NEWIMPLEMENTATION_POOLING_LAYER_H

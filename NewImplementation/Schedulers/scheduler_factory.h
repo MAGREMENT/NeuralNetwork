@@ -24,6 +24,6 @@ typedef union scheduler_cnstr_args {
     double_int di_value;
 } scheduler_cnstr_args;
 
-scheduler* cnstr_scheduler(int type, scheduler_cnstr_args args);
+extern scheduler* cnstr_scheduler(int type, scheduler_cnstr_args args);
 
 #endif //NEWIMPLEMENTATION_SCHEDULER_FACTORY_H

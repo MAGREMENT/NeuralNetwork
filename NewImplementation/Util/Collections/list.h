@@ -22,11 +22,11 @@ typedef struct s_arr {
     int count;
 } s_arr;
 
-list* alloc_list(size_t el_size);
-void free_list(list* l);
-void grow_if_needed(list* list);
+extern list* alloc_list(size_t el_size);
+extern void free_list(list* l);
+extern void grow_if_needed(list* list);
 
-s_arr* alloc_s_arr(size_t el_size, int count);
-void free_s_arr(s_arr* arr);
+extern s_arr* alloc_s_arr(size_t el_size, int count);
+extern void free_s_arr(s_arr* arr);
 
 #endif //LIST_H

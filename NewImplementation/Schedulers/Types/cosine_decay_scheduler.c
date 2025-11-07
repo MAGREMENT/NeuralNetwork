@@ -20,7 +20,7 @@ static double schedule(const scheduler* sch, const double learningRate, const in
 
 scheduler_vtable cds_vtable = {schedule, free_def_scheduler};
 
-inline scheduler* cnstr_cosine_decay_scheduler(const double endingLearningRate, const int iterationSpan) {
+scheduler* cnstr_cosine_decay_scheduler(const double endingLearningRate, const int iterationSpan) {
     scheduler* sch = malloc(sizeof(scheduler));
     cosine_decay_params* d = malloc(sizeof(cosine_decay_params));
     d->ending = endingLearningRate;

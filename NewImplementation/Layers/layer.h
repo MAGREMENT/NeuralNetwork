@@ -32,10 +32,10 @@ struct layer {
     void (*initialize)(const layer* l);
 };
 
-void no_initialization(const layer* l);
-void default_layer_free(layer* l);
+extern void no_initialization(const layer* l);
+extern void default_layer_free(layer* l);
 
-void no_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients);
-void apply_no_gradients(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args);
+extern void no_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients);
+extern void apply_no_gradients(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args);
 
 #endif //NEWIMPLEMENTATION_LAYER_H

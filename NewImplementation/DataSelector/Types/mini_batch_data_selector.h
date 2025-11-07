@@ -7,6 +7,6 @@
 
 #include "../data_selector.h"
 
-data_selector* cnstr_mini_batch_data_selector(int size);
+extern data_selector* cnstr_mini_batch_data_selector(int size);
 
 #endif //NEWIMPLEMENTATION_MINI_BATCH_DATA_SELECTOR_H

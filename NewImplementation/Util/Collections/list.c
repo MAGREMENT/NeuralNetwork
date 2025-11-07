@@ -8,7 +8,7 @@
 
 #define LIST_BASE_CAPACITY 4
 
-inline list* alloc_list(size_t el_size) {
+list* alloc_list(size_t el_size) {
     list* result = malloc(sizeof(list));
     result->el_size = el_size;
     result->count = 0;
@@ -17,12 +17,12 @@ inline list* alloc_list(size_t el_size) {
     return result;
 }
 
-inline void free_list(list* l) {
+void free_list(list* l) {
     free(l->data);
     free(l);
 }
 
-inline void grow_if_needed(list* list) {
+void grow_if_needed(list* list) {
     if (list->count < list->capacity) return;
 
     list->capacity *= 2;
@@ -32,7 +32,7 @@ inline void grow_if_needed(list* list) {
     list->data = buffer;
 }
 
-inline s_arr* alloc_s_arr(size_t el_size, int count) {
+s_arr* alloc_s_arr(size_t el_size, int count) {
     s_arr* result = malloc(sizeof(s_arr));
     result->count = count;
     result->data = malloc(el_size * count);

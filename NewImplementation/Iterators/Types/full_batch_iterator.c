@@ -17,7 +17,7 @@ static void reset(range_iterator* iterator) {
     iterator->current.iteration = 0;
 }
 
-inline range_iterator* cnstr_full_batch_iterator(int size, int iterations) {
+range_iterator* cnstr_full_batch_iterator(int size, int iterations) {
     range_iterator* it = malloc(sizeof(range_iterator));
     int* state = malloc(sizeof(int));
 

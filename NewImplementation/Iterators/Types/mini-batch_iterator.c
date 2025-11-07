@@ -40,7 +40,7 @@ static void reset(range_iterator* iterator) {
     iterator->current.to = state->size;
 }
 
-inline range_iterator* cnstr_mini_batch_iterator(int size, int iterations, int batchSize) {
+range_iterator* cnstr_mini_batch_iterator(int size, int iterations, int batchSize) {
     range_iterator* it = malloc(sizeof(range_iterator));
     mini_batch_iterator_state* state = malloc(sizeof(mini_batch_iterator_state));
 

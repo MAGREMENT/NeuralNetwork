@@ -7,6 +7,6 @@
 
 #include "../scheduler.h"
 
-scheduler* cnstr_exponential_decay_scheduler(double decay);
+extern scheduler* cnstr_exponential_decay_scheduler(double decay);
 
 #endif //NEWIMPLEMENTATION_EXPONENTIAL_DECAY_SCHEDULER_H

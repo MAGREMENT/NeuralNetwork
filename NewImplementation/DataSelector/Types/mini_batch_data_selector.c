@@ -19,7 +19,7 @@ static void free_ds(data_selector* selector) {
 
 data_selector_vtable mbds_vtable = {cnstr_iterator, free_ds};
 
-inline data_selector* cnstr_mini_batch_data_selector(const int size) {
+data_selector* cnstr_mini_batch_data_selector(const int size) {
     data_selector* sel = malloc(sizeof(data_selector));
     int* s = malloc(sizeof(int));
     *s = size;

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void assert(const int v) {
+inline void assert(const int v) {
 #if ASSERT_ENABLED
     if (!v) {
         printf("Assert failed");

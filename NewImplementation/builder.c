@@ -46,34 +46,34 @@ builder* alloc_builder(const int inCount) {
     return b;
 }
 
-void free_builder(builder* builder) {
+inline void free_builder(builder* builder) {
     free(builder->list);
     free(builder);
 }
 
-void b_opt(builder* builder, const int type, const optimizer_cnstr_args args) {
+inline void b_opt(builder* builder, const int type, const optimizer_cnstr_args args) {
     builder->optimizer = type;
     builder->opt_args = args;
 }
 
-void b_sch(builder* builder, const int type, const scheduler_cnstr_args args) {
+inline void b_sch(builder* builder, const int type, const scheduler_cnstr_args args) {
     builder->scheduler = type;
     builder->sch_args = args;
 }
 
-void b_ds(builder* builder, const int type, const data_selector_cnstr_args args) {
+inline void b_ds(builder* builder, const int type, const data_selector_cnstr_args args) {
     builder->data_selector = type;
     builder->ds_args = args;
 }
 
-void b_dense(const builder* builder, const int outputCount) {
+inline void b_dense(const builder* builder, const int outputCount) {
     builder_element el;
     el.type = DENSE;
     el.element.dense.out_count = outputCount;
     l_add(builder->list, builder_element, el);
 }
 
-void b_activation(const builder* builder, const int type) {
+inline void b_activation(const builder* builder, const int type) {
     builder_element el;
     el.type = ACTIVATION;
     el.element.activation.type = type;

@@ -7,6 +7,6 @@
 
 #include "../scheduler.h"
 
-scheduler* cnstr_constant_scheduler();
+extern scheduler* cnstr_constant_scheduler();
 
 #endif //NEWIMPLEMENTATION_CONSTANT_SCHEDULER_H

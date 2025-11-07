@@ -17,7 +17,7 @@ struct scheduler {
     scheduler_vtable* vtable;
 };
 
-void free_empty_scheduler(scheduler* sch);
-void free_def_scheduler(scheduler* sch);
+extern void free_empty_scheduler(scheduler* sch);
+extern void free_def_scheduler(scheduler* sch);
 
 #endif //SCHEDULER_H

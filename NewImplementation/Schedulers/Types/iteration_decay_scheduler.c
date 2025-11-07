@@ -21,7 +21,7 @@ static double schedule(const scheduler* sch, const double learningRate, const in
 
 scheduler_vtable ids_vtable = {schedule, free_def_scheduler};
 
-inline scheduler* cnstr_iteration_decay_scheduler(const double decay, const int stepSize) {
+scheduler* cnstr_iteration_decay_scheduler(const double decay, const int stepSize) {
     scheduler* sch = malloc(sizeof(scheduler) * 2);
     ids_params* d = malloc(sizeof(ids_params));
     d->decay = decay;

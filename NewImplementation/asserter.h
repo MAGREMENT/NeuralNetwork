@@ -7,6 +7,6 @@
 
 #define ASSERT_ENABLED 1
 
-void assert(int v);
+extern void assert(int v);
 
 #endif //ASSERTER_H

@@ -27,6 +27,6 @@ typedef union optimizer_cnstr_args {
     double2 values;
 } optimizer_cnstr_args;
 
-optimizer* cnstr_optimizer(int type, optimizer_cnstr_args args);
+extern optimizer* cnstr_optimizer(int type, optimizer_cnstr_args args);
 
 #endif //NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H

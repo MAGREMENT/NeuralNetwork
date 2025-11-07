@@ -30,17 +30,17 @@ typedef struct builder {
     data_selector_cnstr_args ds_args;
 } builder;
 
-builder* alloc_builder(int inCount);
-void free_builder(builder* builder);
+extern builder* alloc_builder(int inCount);
+extern void free_builder(builder* builder);
 
-void b_opt(builder* builder, int type, optimizer_cnstr_args args);
-void b_sch(builder* builder, int type, scheduler_cnstr_args args);
-void b_ds(builder* builder, int type, data_selector_cnstr_args args);
+extern void b_opt(builder* builder, int type, optimizer_cnstr_args args);
+extern void b_sch(builder* builder, int type, scheduler_cnstr_args args);
+extern void b_ds(builder* builder, int type, data_selector_cnstr_args args);
 
-void b_dense(const builder* builder, int outputCount);
-void b_activation(const builder* builder, int type);
+extern void b_dense(const builder* builder, int outputCount);
+extern void b_activation(const builder* builder, int type);
 
-neural_network* build(const builder* builder);
-neural_network* build_free(builder* builder);
+extern neural_network* build(const builder* builder);
+extern neural_network* build_free(builder* builder);
 
 #endif //BUILDER_H

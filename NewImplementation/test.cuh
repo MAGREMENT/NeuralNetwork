@@ -1,8 +1,0 @@
-//
-// Created by zacha on 06-11-25.
-//
-
-#ifndef NEWIMPLEMENTATION_TEST_CUH
-#define NEWIMPLEMENTATION_TEST_CUH
-
-#endif //NEWIMPLEMENTATION_TEST_CUH

@@ -7,6 +7,6 @@
 
 #include "../data_selector.h"
 
-data_selector* cnstr_full_batch_data_selector();
+extern data_selector* cnstr_full_batch_data_selector();
 
 #endif //NEWIMPLEMENTATION_FULL_BATCH_DATA_SELECTOR_H

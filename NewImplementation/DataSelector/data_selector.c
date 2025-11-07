@@ -6,6 +6,6 @@
 
 #include <stdlib.h>
 
-void def_free_ds(data_selector* selector) {
+inline void def_free_ds(data_selector* selector) {
     free(selector);
 }

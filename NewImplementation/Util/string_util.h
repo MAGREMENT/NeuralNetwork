@@ -6,6 +6,6 @@
 #define STRING_UTIL_H
 #include <stdarg.h>
 
-char* alloc_format(char format[], va_list args, int* size);
+extern char* alloc_format(char format[], va_list args, int* size);
 
 #endif //STRING_UTIL_H

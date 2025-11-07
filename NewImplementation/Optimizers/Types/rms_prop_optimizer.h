@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_rms_prop_optimizer(double decay);
+extern optimizer* cnstr_rms_prop_optimizer(double decay);
 
 #endif //NEWIMPLEMENTATION_RMS_PROP_OPTIMIZER_H

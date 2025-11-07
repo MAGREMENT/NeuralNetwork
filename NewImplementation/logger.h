@@ -7,6 +7,6 @@
 
 #define LOG_ENABLED 1
 
-void flog(char format[], ...);
+extern void flog(char format[], ...);
 
 #endif //LOGGER_H

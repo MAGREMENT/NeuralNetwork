@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_simplified_nesterov_optimizer(double momentum);
+extern optimizer* cnstr_simplified_nesterov_optimizer(double momentum);
 
 #endif //NEWIMPLEMENTATION_NESTEROV_OPTIMIZER_H

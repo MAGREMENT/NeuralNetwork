@@ -16,7 +16,7 @@ typedef struct size2D {
     int height;
 } size2D;
 
-size2D to2D(size3D s);
-size3D to3D(size2D s, int depth);
+extern size2D to2D(size3D s);
+extern size3D to3D(size2D s, int depth);
 
 #endif //NEWIMPLEMENTATION_SIZE_H

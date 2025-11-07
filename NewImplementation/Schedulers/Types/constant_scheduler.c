@@ -12,7 +12,7 @@ static double schedule(const scheduler* sch, const double learningRate, const in
 
 scheduler_vtable cs_vtable = {schedule, free_empty_scheduler};
 
-inline scheduler* cnstr_constant_scheduler() {
+scheduler* cnstr_constant_scheduler() {
     scheduler* sch = malloc(sizeof(scheduler));
 
     sch->params = NULL;

@@ -17,6 +17,6 @@ struct range_iterator {
     range current;
 };
 
-void default_free_iterator(range_iterator *iterator);
+extern void default_free_iterator(range_iterator *iterator);
 
 #endif //ITERATOR_H

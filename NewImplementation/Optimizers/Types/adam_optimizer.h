@@ -7,7 +7,7 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_adam_optimizer(double beta1, double beta2);
+extern optimizer* cnstr_adam_optimizer(double beta1, double beta2);
 
 //TODO AdamW AdaMax Nadam
 

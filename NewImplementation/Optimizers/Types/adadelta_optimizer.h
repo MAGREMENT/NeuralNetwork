@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_adadelta_optimizer(double decay);
+extern optimizer* cnstr_adadelta_optimizer(double decay);
 
 #endif //NEWIMPLEMENTATION_ADADELTA_OPTIMIZER_H

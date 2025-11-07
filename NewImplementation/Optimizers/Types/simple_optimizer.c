@@ -14,7 +14,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
 
 optimizer_vtable s_vtable = {cnstr_empty_state, free_empty_state, apply_gradients, free_empty_opt};
 
-inline optimizer* cnstr_simple_optimizer() {
+optimizer* cnstr_simple_optimizer() {
     optimizer* opt = malloc(sizeof(optimizer));
     opt->params = NULL;
     opt->vtable = &s_vtable;

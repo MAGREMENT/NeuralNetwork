@@ -20,7 +20,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
 
 optimizer_vtable adagrad_vtable = {cnstr_gradient_buffers_state, free_gradient_buffers_state, apply_gradients, free_empty_opt};
 
-inline optimizer* cnstr_adagrad_optimizer() {
+optimizer* cnstr_adagrad_optimizer() {
     optimizer* opt = malloc(sizeof(optimizer));
 
     opt->params = NULL;

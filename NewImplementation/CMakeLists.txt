@@ -57,12 +57,20 @@ if(MSVC)
     set(CUDAToolkit_ROOT "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0") #Edit with your path
     set(CMAKE_CUDA_COMPILER "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin/nvcc.exe")  #Edit with your path
 
-    list(APPEND SOURCES test.cu)
+    list(APPEND SOURCES Layers/Types/Cuda/cuda_dense_layer.cu)
 
+    set(CMAKE_CXX_STANDARD 20)
+
+    enable_language(CXX)
     enable_language(CUDA)
 endif()
 
 add_executable(NewImplementation ${SOURCES})
+
+if(MSVC)
+    target_include_directories(NewImplementation PRIVATE ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(NewImplementation PRIVATE ${CUDA_CUDART_LIBRARY})
+endif()
 
 add_custom_command(
         TARGET NewImplementation POST_BUILD

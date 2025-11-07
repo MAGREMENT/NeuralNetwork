@@ -68,7 +68,7 @@ static void apply_gradients_to_conv(const layer* l, const double* gradients, con
 
 layer_vtable conv_vtable = {forward_conv_layer, conv_backward, conv_delta_to_gradients, apply_gradients_to_conv, free_conv_layer};
 
-inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
+layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));
     p->kernel_size = kernelSize;
     p->input_size = inputSize;
@@ -97,7 +97,7 @@ inline layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, 
     return l;
 }
 
-inline void set_kernels_and_biases(const layer* l, const double kernels, const double biases) {
+void set_kernels_and_biases(const layer* l, const double kernels, const double biases) {
     const conv_layer_params* p = l->params;
 
     size_t size = p->kernel_size.width * p->kernel_size.height * p->input_size.depth;

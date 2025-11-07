@@ -10,7 +10,7 @@
 #include "Util/double_util.h"
 #include "Util/rand_util.h"
 
-inline neural_network* alloc_neural_network(const int layerCount) {
+neural_network* alloc_neural_network(const int layerCount) {
     neural_network* result = malloc(sizeof(neural_network));
     result->layerCount = layerCount;
     result->layers = malloc(layerCount * sizeof(layer*));
@@ -19,7 +19,7 @@ inline neural_network* alloc_neural_network(const int layerCount) {
     return result;
 }
 
-inline void free_neural_network(neural_network* network, const int freeConstructed) {
+void free_neural_network(neural_network* network, const int freeConstructed) {
     if (freeConstructed) {
         for (int l = 0; l < network->layerCount; l++) {
             layer* layer = network->layers[l];
@@ -41,7 +41,7 @@ inline int get_out_count(const neural_network* network) {
     return network->layers[network->layerCount - 1]->out_count;
 }
 
-inline void predict(const neural_network* network, const double* inputs, double* outputs) {
+void predict(const neural_network* network, const double* inputs, double* outputs) {
     if (network->layerCount == 1) {
         network->layers[0]->vtable->forward(network->layers[0], inputs, outputs);
         return;
@@ -83,7 +83,7 @@ static double** alloc_layer_output_buffers(const neural_network* network) {
     return result;
 }
 
-inline double** alloc_gradient_buffers(const neural_network* network, const int initToZero) {
+double** alloc_gradient_buffers(const neural_network* network, const int initToZero) {
     double** gradients = malloc(sizeof(double*) * network->layerCount);
 
     for (int i = 0; i < network->layerCount; i++) {
@@ -95,7 +95,7 @@ inline double** alloc_gradient_buffers(const neural_network* network, const int 
     return gradients;
 }
 
-inline void free_buffers(const neural_network* network, double** buffers) {
+void free_buffers(const neural_network* network, double** buffers) {
     for (int i = 0; i < network->layerCount; i++) {
         free(buffers[i]);
     }
@@ -172,7 +172,7 @@ static void apply_gradients(const neural_network* network, double** gradients, c
     }
 }
 
-inline void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
+void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
     double** gradients = alloc_gradient_buffers(network, 1);
 
     get_gradients(network, data, range, gradients);
@@ -230,7 +230,7 @@ void iterative_learn(const neural_network* network, const test_data data, learni
     else state->iteration += iterations;
 }
 
-inline learning_state* alloc_state(const neural_network* network) {
+learning_state* alloc_state(const neural_network* network) {
     learning_state* state = malloc(sizeof(learning_state));
     state->iteration = 0;
     state->optimizerState = network->optimizer->vtable->cnstr_state(network->optimizer, network);
@@ -238,19 +238,19 @@ inline learning_state* alloc_state(const neural_network* network) {
     return state;
 }
 
-inline void free_state(const neural_network* network, learning_state* state) {
+void free_state(const neural_network* network, learning_state* state) {
     network->optimizer->vtable->free_state(state->optimizerState, network);
     free(state);
 }
 
-inline void initialize(const neural_network* network) {
+void initialize(const neural_network* network) {
     for (int i = 0; i < network->layerCount; i++) {
         const layer* l = network->layers[i];
         l->initialize(l);
     }
 }
 
-inline double get_cost(const neural_network* network, const double* inputs, const double* expected) {
+double get_cost(const neural_network* network, const double* inputs, const double* expected) {
     const int c = get_out_count(network);
     double* predicted = malloc(sizeof(double) * c);
     predict(network, inputs, predicted);
@@ -261,7 +261,7 @@ inline double get_cost(const neural_network* network, const double* inputs, cons
     return cost;
 }
 
-inline double get_avg_cost(const neural_network* network, test_data data) {
+double get_avg_cost(const neural_network* network, test_data data) {
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
     double cost = 0;
@@ -273,7 +273,7 @@ inline double get_avg_cost(const neural_network* network, test_data data) {
     return cost / data.count;
 }
 
-inline double get_binary_accuracy(const neural_network* network, const test_data test) {
+double get_binary_accuracy(const neural_network* network, const test_data test) {
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
     double acc = 0;
@@ -297,7 +297,7 @@ inline double get_binary_accuracy(const neural_network* network, const test_data
     return acc / test.count * 100;
 }
 
-inline double get_classification_accuracy(const neural_network* network, const test_data test) {
+double get_classification_accuracy(const neural_network* network, const test_data test) {
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
     double acc = 0;

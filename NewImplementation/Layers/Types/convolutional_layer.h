@@ -21,7 +21,7 @@ typedef struct conv_layer_params {
     double* biases;
 } conv_layer_params;
 
-layer* cnstr_conv_layer(size3D inputSize, size2D kernelSize, int kernelCount, int stride, int padding);
-void set_kernels_and_biases(const layer* l, double kernels, double biases);
+extern layer* cnstr_conv_layer(size3D inputSize, size2D kernelSize, int kernelCount, int stride, int padding);
+extern void set_kernels_and_biases(const layer* l, double kernels, double biases);
 
 #endif //CONVOLUTIONAL_LAYER_H

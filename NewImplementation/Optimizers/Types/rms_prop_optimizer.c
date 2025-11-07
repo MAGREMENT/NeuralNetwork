@@ -23,7 +23,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
 
 optimizer_vtable rms_vtable = {cnstr_gradient_buffers_state, free_gradient_buffers_state, apply_gradients, free_base_opt};
 
-inline optimizer* cnstr_rms_prop_optimizer(const double decay) {
+optimizer* cnstr_rms_prop_optimizer(const double decay) {
     optimizer* opt = malloc(sizeof(optimizer));
     double* d = malloc(sizeof(double));
     *d = decay;

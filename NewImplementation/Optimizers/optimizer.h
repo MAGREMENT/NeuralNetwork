@@ -32,16 +32,16 @@ struct optimizer {
     optimizer_vtable* vtable;
 };
 
-void* cnstr_empty_state(const optimizer* opt, const neural_network* network);
-void free_empty_state(void* state, const neural_network* network);
+extern void* cnstr_empty_state(const optimizer* opt, const neural_network* network);
+extern void free_empty_state(void* state, const neural_network* network);
 
-void* cnstr_gradient_buffers_state(const optimizer* opt, const neural_network* network);
-void free_gradient_buffers_state(void* state, const neural_network* network);
+extern void* cnstr_gradient_buffers_state(const optimizer* opt, const neural_network* network);
+extern void free_gradient_buffers_state(void* state, const neural_network* network);
 
-void* cnstr_double_gradient_buffers_state(const optimizer* opt, const neural_network* network);
-void free_double_gradient_buffers_state(void* state, const neural_network* network);
+extern void* cnstr_double_gradient_buffers_state(const optimizer* opt, const neural_network* network);
+extern void free_double_gradient_buffers_state(void* state, const neural_network* network);
 
-void free_empty_opt(optimizer* opt);
-void free_base_opt(optimizer* opt);
+extern void free_empty_opt(optimizer* opt);
+extern void free_base_opt(optimizer* opt);
 
 #endif //NEWIMPLEMENTATION_OPTIMIZER_H

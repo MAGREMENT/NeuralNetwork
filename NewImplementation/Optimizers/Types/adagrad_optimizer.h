@@ -7,6 +7,6 @@
 
 #include "../optimizer.h"
 
-optimizer* cnstr_adagrad_optimizer();
+extern optimizer* cnstr_adagrad_optimizer();
 
 #endif //NEWIMPLEMENTATION_ADAGRAD_OPTIMIZER_H

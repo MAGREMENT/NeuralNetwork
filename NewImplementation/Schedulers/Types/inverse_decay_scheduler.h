@@ -7,6 +7,6 @@
 
 #include "../scheduler.h"
 
-scheduler* cnstr_inverse_decay_scheduler(double decay);
+extern scheduler* cnstr_inverse_decay_scheduler(double decay);
 
 #endif //NEWIMPLEMENTATION_INVERSE_DECAY_SCHEDULER_H

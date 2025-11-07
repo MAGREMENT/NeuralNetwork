@@ -36,7 +36,7 @@ static void dense_forward(const layer* l, const double* inputs, double* outputs)
 
 typedef struct parallel_dense_forward_params {
     mt_dense_layer_params* params;
-    double* inputs;
+    const double* inputs;
     double* outputs;
     int in_count;
     int out_count;
@@ -106,7 +106,7 @@ static void apply_gradients_to_dense(const layer* l, const double* gradients, co
 
 layer_vtable dense_vtable = {dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, free_dense_layer};
 
-inline layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
+layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
     dense_layer_params* p = malloc(sizeof(dense_layer_params));
 
@@ -155,7 +155,7 @@ inline void set_biases(const layer* l, double values[]) {
     memcpy(p->biases, values, sizeof(double) * l->out_count);
 }
 
-inline void set_all_weights_and_biases(const layer* l, const double weights, const double biases) {
+void set_all_weights_and_biases(const layer* l, const double weights, const double biases) {
     const dense_layer_params* p = l->params;
 
     for(int o = 0; o < l->out_count; o++) {
@@ -198,7 +198,7 @@ static void biasesToZero(const dense_layer_params* p, const int count) {
     }
 }
 
-inline void initialize_dense_random(const layer* layer) {
+void initialize_dense_random(const layer* layer) {
     const int total = layer->in_count * layer->out_count;
     const dense_layer_params* p = layer->params;
 
@@ -209,7 +209,7 @@ inline void initialize_dense_random(const layer* layer) {
     biasesToZero(p, layer->out_count);
 }
 
-inline void initialize_dense_he(const layer* layer) {
+void initialize_dense_he(const layer* layer) {
     const int total = layer->in_count * layer->out_count;
     const dense_layer_params* p = layer->params;
 
@@ -221,7 +221,7 @@ inline void initialize_dense_he(const layer* layer) {
     biasesToZero(p, layer->out_count);
 }
 
-inline void initialize_dense_xavier(const layer* layer) {
+void initialize_dense_xavier(const layer* layer) {
     const int total = layer->in_count * layer->out_count;
     const dense_layer_params* p = layer->params;
 

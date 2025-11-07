@@ -14,7 +14,7 @@ static double schedule(const scheduler* sch, const double learningRate, const in
 
 scheduler_vtable ivds_vtable = {schedule, free_def_scheduler};
 
-inline scheduler* cnstr_inverse_decay_scheduler(const double decay) {
+scheduler* cnstr_inverse_decay_scheduler(const double decay) {
     scheduler* sch = malloc(sizeof(scheduler));
     double* d = malloc(sizeof(double));
     *d = decay;

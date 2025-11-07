@@ -29,7 +29,7 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
 
 optimizer_vtable adam_vtable = {cnstr_double_gradient_buffers_state, free_double_gradient_buffers_state, apply_gradients, free_base_opt};
 
-inline optimizer* cnstr_adam_optimizer(const double beta1, const double beta2) {
+optimizer* cnstr_adam_optimizer(const double beta1, const double beta2) {
     optimizer* opt = malloc(sizeof(optimizer));
     double* d = malloc(sizeof(double) * 2);
     d[0] = beta1;

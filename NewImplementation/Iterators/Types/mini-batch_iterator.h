@@ -7,6 +7,6 @@
 
 #include "../iterator.h"
 
-range_iterator* cnstr_mini_batch_iterator(int size, int iterations, int batchSize);
+extern range_iterator* cnstr_mini_batch_iterator(int size, int iterations, int batchSize);
 
 #endif //MINI_BATCH_ITERATOR_H

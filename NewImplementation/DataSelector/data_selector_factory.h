@@ -15,6 +15,6 @@ typedef union data_selector_cnstr_args {
     int value;
 } data_selector_cnstr_args;
 
-data_selector* cnstr_data_selector(int type, data_selector_cnstr_args args);
+extern data_selector* cnstr_data_selector(int type, data_selector_cnstr_args args);
 
 #endif //NEWIMPLEMENTATION_DATA_SELECTOR_FACTORY_H

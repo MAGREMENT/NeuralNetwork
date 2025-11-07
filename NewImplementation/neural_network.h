@@ -42,28 +42,28 @@ typedef struct neural_network {
     cost_vtable* cost_vtable;
 } neural_network;
 
-neural_network* alloc_neural_network(int layerCount);
-void free_neural_network(neural_network* network, int freeConstructed);
+extern neural_network* alloc_neural_network(int layerCount);
+extern void free_neural_network(neural_network* network, int freeConstructed);
 
-int get_in_count(const neural_network* network);
-int get_out_count(const neural_network* network);
+extern int get_in_count(const neural_network* network);
+extern int get_out_count(const neural_network* network);
 
-double** alloc_gradient_buffers(const neural_network* network, int initToZero);
-void free_buffers(const neural_network* network, double** buffers);
+extern double** alloc_gradient_buffers(const neural_network* network, int initToZero);
+extern void free_buffers(const neural_network* network, double** buffers);
 
-void predict(const neural_network* network, const double* inputs, double* outputs);
-void learn(const neural_network* network, test_data data, range range, learning_args args);
-void iterative_learn(const neural_network* network, test_data data, learning_state* state, int iterations);
+extern void predict(const neural_network* network, const double* inputs, double* outputs);
+extern void learn(const neural_network* network, test_data data, range range, learning_args args);
+extern void iterative_learn(const neural_network* network, test_data data, learning_state* state, int iterations);
 
-learning_state* alloc_state(const neural_network* network);
-void free_state(const neural_network* network, learning_state* state);
+extern learning_state* alloc_state(const neural_network* network);
+extern void free_state(const neural_network* network, learning_state* state);
 
-void initialize(const neural_network* network);
+extern void initialize(const neural_network* network);
 
-double get_cost(const neural_network* network, const double* inputs, const double* expected);
-double get_avg_cost(const neural_network* network, test_data data);
+extern double get_cost(const neural_network* network, const double* inputs, const double* expected);
+extern double get_avg_cost(const neural_network* network, test_data data);
 
-double get_binary_accuracy(const neural_network* network, test_data test);
-double get_classification_accuracy(const neural_network* network, test_data test);
+extern double get_binary_accuracy(const neural_network* network, test_data test);
+extern double get_classification_accuracy(const neural_network* network, test_data test);
 
 #endif //NEWIMPLEMENTATION_NEURAL_NETWORK_H
