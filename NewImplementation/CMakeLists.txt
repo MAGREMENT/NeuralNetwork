@@ -45,7 +45,8 @@ set(SOURCES
         Util/double_util.c
         Optimizers/Types/proportional_momentum_optimizer.c
         Optimizers/Types/adagrad_optimizer.c
-        Optimizers/Types/adadelta_optimizer.c)
+        Optimizers/Types/adadelta_optimizer.c
+        i_o.c)
 
 if(MSVC)
     message(STATUS "MVSC detected - enabling CUDA")

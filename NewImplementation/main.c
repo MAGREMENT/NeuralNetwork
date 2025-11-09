@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "builder.h"
+#include "i_o.h"
 #include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
 #include "Layers/Types/activation_layer.h"
@@ -16,14 +17,8 @@
 #include "Util/rand_util.h"
 
 #ifdef _MSC_VER
-
 #include "Layers/Types/Cuda/cuda_dense_layer.cuh"
-
 #endif
-
-double big_arr1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1};
-
-double big_arr2[] = {0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1};
 
 void mnist_run();
 void unit_test();
@@ -88,6 +83,71 @@ void mnist_run() {
     free(labels);
 }
 
+void generate_binary_inputs_tests() {
+    const double expected[] = {
+        0, 0, 0,
+        1, 0, 0,
+        0, 1, 0,
+        1, 1, 0,
+        0, 0, 1,
+        1, 0, 1,
+        0, 1, 1,
+        1, 1, 1};
+
+    double inputs[2 * 2 * 2 * 3];
+
+    generate_binary_inputs(inputs, 3);
+    for (int i = 0; i < sizeof(inputs) / sizeof(double); i++) {
+        if (!def_deq(expected[i], inputs[i])) {
+            printf("Wrong value\n");
+            return;
+        }
+    }
+
+    const double o1Expected[] = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+
+    double o1[2 * 2 * 2 * 4];
+
+    generate_classify_sum_outputs(o1, inputs, 3);
+    for (int i = 0; i < sizeof(o1) / sizeof(double); i++) {
+        if (!def_deq(o1[i], o1Expected[i])) {
+            printf("Wrong value\n");
+            return;
+        }
+    }
+
+    const double o2Expected[] = {
+        0, 0,
+        1, 0,
+        1, 0,
+        0, 1,
+        1, 0,
+        0, 1,
+        0, 1,
+        1, 1
+    };
+
+    double o2[2 * 2 * 2 * 2];
+    generate_binary_sum_outputs(o2, inputs, 3);
+    for (int i = 0; i < sizeof(o2) / sizeof(double); i++) {
+        if (!def_deq(o2[i], o2Expected[i])) {
+            printf("Wrong value\n");
+            return;
+        }
+    }
+
+    printf("generate binary inputs test OK!\n");
+}
+
 void pooling_layer_test() {
     const double i1[] = {1, 9, 3, 4, 5, 10, 12, 4, 1};
     const double i2[] = {1, 2, 3, 8, 9, 6, 5, 4, 2, 1, 3, 4, -3, 2, 7, 8};
@@ -102,7 +162,7 @@ void pooling_layer_test() {
     for (int i = 0; i < 4; i++) {
         if (!def_deq(o1[i], e1[i])) {
             printf("Forward 1 fail\n");
-            return;
+            goto free;
         }
     }
 
@@ -117,15 +177,17 @@ void pooling_layer_test() {
     for (int i = 0; i < 9; i++) {
         if (!def_deq(o2[i], e2[i])) {
             printf("Forward 2 fail\n");
-            return;
+            goto free;
         }
     }
-
-    l->vtable->free(l);
 
     //TODO backward & i3 & avg
 
     printf("pooling layer test OK!\n");
+
+    free :
+
+    l->vtable->free(l);
 }
 
 typedef struct bal_b {
@@ -205,7 +267,9 @@ void optimizer_test(const int error, const int verbose) {
                 for (int j = 0; j < 4; j++) {
                     if (fabs(buffer[j]) > fabs(cost[j])) {
                         printf("Optimizer %d : Fail\n", i);
-                        return;
+                        opt->vtable->free_state(state, dummy);
+                        opt->vtable->free(opt);
+                        goto free;
                     }
                 }
             }
@@ -220,11 +284,14 @@ void optimizer_test(const int error, const int verbose) {
         if (verbose) printf("\n");
     }
 
-    free_neural_network(dummy, 1);
     printf("optimizer test OK!\n");
+
+    free :
+
+    free_neural_network(dummy, 1);
 }
 
-void bit_add_learn_test(const int verbose) {
+void binary_sum_learn_test(const int verbose) {
     const bal_b builds[] = {
         {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 1},
         {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.1}, 1},
@@ -248,10 +315,16 @@ void bit_add_learn_test(const int verbose) {
     b->cost_type = BINARY_CROSS_ENTROPY;
     b->shuffleDataOnIteration = 0;
 
+    double in[128 * 7];
+    double exp[128 * 3];
+
+    generate_binary_inputs(in, 7);
+    generate_binary_sum_outputs(exp, in, 7); //TODO add test for classify
+
     test_data test;
     test.count = 128;
-    test.inputs = big_arr1;
-    test.expected = big_arr2;
+    test.inputs = in;
+    test.expected = exp;
 
     for (int i = 0; i < sizeof(builds) / sizeof(bal_b); i++) {
         b_opt(b, builds[i].opt, builds[i].opt_args);
@@ -263,29 +336,36 @@ void bit_add_learn_test(const int verbose) {
         learning_state* state = alloc_state(n);
 
         double cost = get_avg_cost(n, test);
+        int fail = 0;
 
         for (int j = 0; j < 10; j++) {
             iterative_learn(n, test, state, 100);
 
             const double buffer = get_avg_cost(n, test);
             if (buffer >= cost) {
-                printf("bit learn cost fail for optimizer %d and iteration %d\n", i, j * 10);
-                return;
+                if (verbose) fail = 1;
+                else {
+                    printf("bit learn cost fail for optimizer %d and iteration %d\n", i, j * 10);
+                    goto free;
+                }
             }
 
             cost = buffer;
         }
 
         if (verbose) {
-            printf("Optimizer %d -> Cost : %f | Accuracy = %f\n", i, cost, get_binary_accuracy(n, test));
+            printf("Optimizer %d %s-> Cost : %f | Accuracy = %f\n", i, fail ? "(FAIL) " : "", cost, get_binary_accuracy(n, test));
         }
 
         free_state(n, state);
         free_neural_network(n, 1);
     }
 
-    free_builder(b);
     printf("bit add learn test OK!\n");
+
+    free :
+
+    free_builder(b);
 }
 
 void build_test() {
@@ -307,7 +387,7 @@ void build_test() {
 
     if (n->layerCount != 5) {
         printf("Wrong layer count\n");
-        return;
+        goto free;
     }
 
     if (n->layers[0]->in_count != 9 || n->layers[0]->out_count != 7 ||
@@ -316,7 +396,7 @@ void build_test() {
         n->layers[3]->in_count != 7 || n->layers[3]->out_count != 3 ||
         n->layers[4]->in_count != 3 || n->layers[4]->out_count != 3) {
         printf("Wrong layer i/o\n");
-        return;
+        goto free;
     }
 
     if (n->layers[0]->gradient_count != 9 * 7 + 7 ||
@@ -325,24 +405,26 @@ void build_test() {
         n->layers[3]->gradient_count != 7 * 3 + 3 ||
         n->layers[4]->gradient_count != 0) {
         printf("Wrong layer gradient count\n");
-        return;
+        goto free;
     }
 
     if (n->layers[0]->initialize != initialize_dense_he
         || n->layers[3]->initialize != initialize_dense_random) {
         printf("Wrong dense layer initialize func\n");
-        return;
+        goto free;
     }
 
     //TODO more tests
+    printf("builder test OK!\n");
+
+    free :
 
     free_neural_network(n, 1);
-    printf("builder test OK!\n");
 }
 
-void mt_dense_test(int verbose) {
-    const int inCount = 10000;
-    const int outCount = 10000;
+void mt_dense_test(const int count, const int verbose) {
+    const int inCount = count;
+    const int outCount = count;
 
     double* in = malloc(inCount * sizeof(double));
     double* out1 = malloc(outCount * sizeof(double));
@@ -412,7 +494,7 @@ void mt_dense_test(int verbose) {
         for (int i = 0; i < outCount; i++) {
             if (!def_deq(out1[i], out2[i])) {
                 printf("Not same value\n");
-                goto end;
+                goto free;
             }
         }
 
@@ -420,7 +502,7 @@ void mt_dense_test(int verbose) {
         for (int i = 0; i < outCount; i++) {
             if (!def_deq(out1[i], out3[i])) {
                 printf("Not same value\n");
-                goto end;
+                goto free;
             }
         }
 #endif
@@ -430,13 +512,14 @@ void mt_dense_test(int verbose) {
         printf("Single thread time : %f s\n", (double)singleTime / CLOCKS_PER_SEC);
         printf("Multi thread time : %f s\n", (double)multiTime / CLOCKS_PER_SEC);
 #ifdef _MSC_VER
-        printf("GPU thread time : %f s\n", (double)cudaTime / CLOCKS_PER_SEC);
+        printf("GPU time : %f s\n", (double)cudaTime / CLOCKS_PER_SEC);
 #endif
     }
 
-    end:
-
     printf("multi-thread dense layer test OK!\n");
+
+    free:
+
     free(single);
     free(multi);
 #ifdef _MSC_VER
@@ -470,15 +553,15 @@ void dense_test() {
 
     if (!def_deq(o[0], 1)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
     if (!def_deq(o[1], 4)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
     if (!def_deq(o[2], 5)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
 
     double o2[2];
@@ -487,11 +570,11 @@ void dense_test() {
 
     if (!def_deq(o2[0], 4)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
     if (!def_deq(o2[1], 10)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
 
     double o3[2];
@@ -500,11 +583,11 @@ void dense_test() {
 
     if (!def_deq(o2[0], o3[0])) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
     if (!def_deq(o2[1], o3[1])) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
 
     n->cost_vtable = cost_vtables + MEAN_SQUARE;
@@ -514,7 +597,7 @@ void dense_test() {
 
     if (!def_deq(cost, 4 + 9)) {
         printf("DENSE TEST FAIL !\n");
-        return;
+        goto free;
     }
 
     n->optimizer = cnstr_simple_optimizer(); //TODO to set_optimizer
@@ -527,14 +610,17 @@ void dense_test() {
 
         if (cost2 >= cost) {
             printf("Dense test cost lowering fail\n");
-            return;
+            goto free;
         }
 
         cost = cost2;
     }
 
-    free_neural_network(n, 1);
     printf("dense test OK!\n");
+
+    free:
+
+    free_neural_network(n, 1);
 }
 
 void predict_test() {
@@ -563,11 +649,15 @@ void predict_test() {
     for (int i = 0; i < 2; i++) {
         if (!def_deq(buffer, outputs[i])) {
             printf("Wrong predict output\n");
+            goto free;
         }
     }
 
-    free_neural_network(n, 1);
     printf("predict test OK!\n");
+
+    free :
+
+    free_neural_network(n, 1);
 }
 
 void conv_layer_forward_test() {
@@ -597,7 +687,7 @@ void conv_layer_forward_test() {
     for (int i = 0; i < 4; i++) {
         if (!def_deq(result[i], expected[i])) {
             printf("Wrong output value at index %i", i);
-            return;
+            goto free;
         }
     }
 
@@ -609,20 +699,23 @@ void conv_layer_forward_test() {
 
     if (p->output_size.width != 3 || p->output_size.height != 3 || p->output_size.depth != 2) {
         printf("Wrong output size\n");
-        return;
+        goto free;
     }
 
-    l->vtable->free(l);
-
     printf("conv layer forward test OK!\n");
+
+    free:
+
+    l->vtable->free(l);
 }
 
 void unit_test() {
+    generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    bit_add_learn_test(0);
+    binary_sum_learn_test(1);
     build_test();
-    mt_dense_test(1);
+    mt_dense_test(1000, 1);
     dense_test();
     predict_test();
     conv_layer_forward_test();

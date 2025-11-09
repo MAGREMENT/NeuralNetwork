@@ -66,4 +66,6 @@ extern double get_avg_cost(const neural_network* network, test_data data);
 extern double get_binary_accuracy(const neural_network* network, test_data test);
 extern double get_classification_accuracy(const neural_network* network, test_data test);
 
+extern void shuffle_test_data(test_data test, const neural_network* network, int times);
+
 #endif //NEWIMPLEMENTATION_NEURAL_NETWORK_H

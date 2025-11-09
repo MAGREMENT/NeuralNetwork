@@ -181,7 +181,7 @@ void learn(const neural_network* network, const test_data data, const range rang
     free_buffers(network, gradients);
 }
 
-static void shuffle_test_data(test_data test, const neural_network* network, const int times) {
+void shuffle_test_data(test_data test, const neural_network* network, const int times) {
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
 
