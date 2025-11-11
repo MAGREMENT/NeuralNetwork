@@ -45,8 +45,7 @@ void yolo() {
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
     test_data* data = alloc_transfer_flattened_data(big_arr3, 7, big_arr4, 8, 128);
 
-    //initialize(network);
-    set_all_weights_and_biases(network, 1, 1);
+    initialize(network);
 
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);

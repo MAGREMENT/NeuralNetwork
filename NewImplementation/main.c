@@ -299,9 +299,6 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
         neural_network* n = build(b);
         initialize(n);
 
-        set_all_weights_and_biases(n->layers[0], 1, 1);
-        set_all_weights_and_biases(n->layers[2], 1, 1);
-
         learning_state* state = alloc_state(n);
 
         double cost = get_avg_cost(n, test);

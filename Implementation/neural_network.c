@@ -330,8 +330,6 @@ static void setup_nv(const backpropagation_data* data,
         const input_data expected) {
 
     const int lastIndex = network->count - 1;
-    backpropagation_data d0 = data[0];
-    backpropagation_data d1 = data[1];
 
     for(int l = lastIndex; l >= 0; l--) {
         void* d = network->layers[l].processInputs(data[l].weightedInputs, network->layers[l].out_count);
