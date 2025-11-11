@@ -330,14 +330,16 @@ inline void separate_test_data(const test_data original, const int inCutoff, con
 
 int save_parameters(neural_network* network, const char* file) {
     FILE* fptr = fopen(file, "wb");
-    if (fptr == NULL) return 0;
+    int r = 0;
+
+    if (fptr == NULL) goto esc;
 
     for (int l = 0; l < network->layerCount; l++) {
         const layer* layer = network->layers[l];
         const int size[] = {layer->gradient_count};
 
         size_t result = fwrite(size, sizeof(int), 1, fptr);
-        if (result != sizeof(int)) return 0;
+        if (result != 1)  goto esc;
 
         if (layer->gradient_count == 0) continue;
 
@@ -347,34 +349,46 @@ int save_parameters(neural_network* network, const char* file) {
         result = fwrite(params, sizeof(double), layer->gradient_count, fptr);
 
         free(params);
-        if (result != sizeof(double) * layer->gradient_count) return 0;
+        if (result != layer->gradient_count) goto esc;
     }
 
-    return 1;
+    r = 1;
+
+    esc :
+
+    fclose(fptr);
+    return r;
 }
 
 int restore_parameters(neural_network* network, const char* file) {
     FILE* fptr = fopen(file, "rb");
-    if (fptr == NULL) return 0;
+    int r = 0;
+
+    if (fptr == NULL) goto esc;
 
     for (int l = 0; l < network->layerCount; l++) {
         const layer* layer = network->layers[l];
         int size[] = {layer->gradient_count};
 
         size_t result = fread(size, sizeof(int), 1, fptr);
-        if (result != sizeof(int) || size[0] != layer->gradient_count) return 0;
+        if (result != 1 || size[0] != layer->gradient_count) goto esc;
 
         if (layer->gradient_count == 0) continue;
 
         double* params = malloc(sizeof(double) * layer->gradient_count);
         result = fread(params, sizeof(double), layer->gradient_count, fptr);
 
-        const int ok = result != sizeof(double) * layer->gradient_count;
+        const int ok = result == layer->gradient_count;
         if (ok) layer->vtable->import_parameters(layer, params);
 
         free(params);
-        if (!ok) return 0;
+        if (!ok) goto esc;
     }
 
-    return 1;
+    r = 1;
+
+    esc :
+
+    fclose(fptr);
+    return r;
 }

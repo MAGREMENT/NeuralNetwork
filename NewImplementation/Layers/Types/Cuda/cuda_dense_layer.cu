@@ -61,6 +61,7 @@ static void free_cuda_dense_layer(layer* l) {
 
 layer_vtable cuda_dense_vtable = {.forward = cuda_dense_forward, .free = free_cuda_dense_layer};
 
+//TODO
 layer* cnstr_cuda_dense_layer(const int inputCount, const int outputCount, const int threads, void (*initialize)(const layer* l)) {
     auto l = (layer*)malloc(sizeof(layer));
     auto p = (cuda_dense_layer_params*)malloc(sizeof(cuda_dense_layer_params));

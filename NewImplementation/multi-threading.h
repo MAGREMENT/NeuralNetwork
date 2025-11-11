@@ -4,7 +4,6 @@
 
 #ifndef MULTI_THREADING_H
 #define MULTI_THREADING_H
-#include <windows.h>
 
 typedef struct parallel_range {
     int from;
@@ -20,6 +19,6 @@ extern void* alloc_critical_section();
 extern void enter_critical_section(void* section);
 extern void exit_critical_section(void* section);
 extern void free_critical_section(void* section);
-extern void exec_range_parallel(LPTHREAD_START_ROUTINE func, void* params, int total, int threadCount);
+extern void exec_range_parallel(unsigned long(* func)(void *), void* params, int total, int threadCount);
 
 #endif //MULTI_THREADING_H

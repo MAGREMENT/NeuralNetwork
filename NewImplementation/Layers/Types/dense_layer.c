@@ -140,6 +140,7 @@ layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*ini
 
 layer_vtable mt_dense_vtable = {mt_dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, dense_export, dense_import, free_dense_layer};
 
+//TODO
 layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, const int thread_count, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
     mt_dense_layer_params* p = malloc(sizeof(mt_dense_layer_params));

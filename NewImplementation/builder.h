@@ -10,11 +10,17 @@
 #include "Schedulers/scheduler_factory.h"
 #include "Util/Collections/list.h"
 
+typedef struct builder_params {
+    int dense_mt_threshold;
+    int mt_t_count;
+    int dense_gpu_threshold;
+    int gpu_t_count;
+} builder_params;
+
 typedef struct builder {
     list* list;
     int in_count;
 
-    int multiThreading;
     double learningRate;
     int shuffleDataOnIteration;
 
@@ -30,6 +36,9 @@ typedef struct builder {
     data_selector_cnstr_args ds_args;
 } builder;
 
+extern builder_params def_b_params();
+extern builder_params st_b_params();
+
 extern builder* alloc_builder(int inCount);
 extern void free_builder(builder* builder);
 
@@ -40,7 +49,7 @@ extern void b_ds(builder* builder, int type, data_selector_cnstr_args args);
 extern void b_dense(const builder* builder, int outputCount);
 extern void b_activation(const builder* builder, int type);
 
-extern neural_network* build(const builder* builder);
-extern neural_network* build_free(builder* builder);
+extern neural_network* build(const builder* builder, builder_params params);
+extern neural_network* build_free(builder* builder, builder_params params);
 
 #endif //BUILDER_H

@@ -66,7 +66,7 @@ void mnist_run() { //look for speed optimizations
     b->shuffleDataOnIteration = 1;
     b->learningRate = 0.01;
 
-    neural_network* n = build_free(b);
+    neural_network* n = build_free(b, st_b_params());
     initialize(n);
 
     shuffle_test_data(original, n, 3);
@@ -78,15 +78,85 @@ void mnist_run() { //look for speed optimizations
         get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
     learning_state* state = alloc_state(n);
 
-    for (int i = 0; i < 10; i++) {
+    clock_t start = clock();
+
+    for (int i = 0; i < 5; i++) {
         iterative_learn(n, training, state, 1);
         printf("Iteration %d : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n", i + 1,
         get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
     }
 
+    clock_t end = clock();
+
+    printf("Learning time : %f s", (double)(end - start) / CLOCKS_PER_SEC);
+
     free_neural_network(n, 1);
     free(images);
     free(labels);
+}
+
+void save_test() {
+    builder* b = alloc_builder(4);
+    b_dense(b, 4);
+    b_activation(b, SIGMOID);
+    b_dense(b, 5);
+    b_activation(b, SOFTMAX);
+
+    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
+    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
+    b_opt(b, SIMPLE, (optimizer_cnstr_args) {.value = 0.0});
+
+    b->cost_type = BINARY_CROSS_ENTROPY;
+    b->shuffleDataOnIteration = 0;
+
+    neural_network* n = build_free(b, st_b_params());
+    initialize(n);
+
+    double in[4 * 16];
+    double out[5 * 16];
+
+    generate_binary_inputs(in, 4);
+    generate_classify_sum_outputs(out, in, 4);
+    test_data test = {in, out, 16};
+
+    iterative_learn(n, test, NULL, 5);
+
+    const double c1 = get_avg_cost(n, test);
+    const double a1 = get_classification_accuracy(n, test);
+
+    const char file[] = "save_test.nn";
+    if (!save_parameters(n, file)) {
+        printf("Failed to save test parameters\n");
+        goto free;
+    }
+
+    set_all_weights_and_biases(n->layers[0], 10, 10);
+    set_all_weights_and_biases(n->layers[2], 10, 10);
+
+    if (!restore_parameters(n, file)) {
+        printf("Failed to restore parameters\n");
+        goto free;
+    }
+
+    const double c2 = get_avg_cost(n, test);
+    const double a2 = get_classification_accuracy(n, test);
+
+    if (!def_deq(c1, c2)) {
+        printf("Wrong cost\n");
+        goto free;
+    }
+
+    if (!def_deq(a1, a2)) {
+        printf("Wrong accuracy\n");
+        goto free;
+    }
+
+    printf("Save test OK!\n");
+
+    free :
+
+    remove(file);
+    free_neural_network(n, 1);
 }
 
 void generate_binary_inputs_tests() {
@@ -302,7 +372,7 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
         b_opt(b, builds[i].opt, builds[i].opt_args);
         b->learningRate = builds[i].learning_rate;
 
-        neural_network* n = build(b);
+        neural_network* n = build(b, st_b_params());
         initialize(n);
 
         learning_state* state = alloc_state(n);
@@ -424,7 +494,7 @@ void build_test() {
 
     b->cost_type = MEAN_SQUARE;
 
-    neural_network* n = build_free(b);
+    neural_network* n = build_free(b, st_b_params());
 
     if (n->layerCount != 5) {
         printf("Wrong layer count\n");
@@ -751,6 +821,7 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
+    save_test();
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);

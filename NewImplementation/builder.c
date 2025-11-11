@@ -9,6 +9,10 @@
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
 
+#ifdef _MSC_VER
+#include "Layers/Types/Cuda/cuda_dense_layer.cuh"
+#endif
+
 typedef struct dense_element {
     int out_count;
 } dense_element;
@@ -27,14 +31,28 @@ typedef struct builder_element {
     builder_union element;
 } builder_element;
 
+builder_params def_b_params() {
+    return (builder_params) {
+        250 * 250,
+        4,
+        500 * 500,
+        256
+    };
+}
+
+extern builder_params st_b_params() {
+    return (builder_params) {
+        .dense_mt_threshold = INT_MAX,
+        .dense_gpu_threshold = INT_MAX
+    };
+}
+
 builder* alloc_builder(const int inCount) {
     builder* b = malloc(sizeof(builder));
     b->list = alloc_list(sizeof(builder_element));
 
     b->in_count = inCount;
 
-    //TODO implement
-    b->multiThreading = 1;
     b->learningRate = 1;
     b->shuffleDataOnIteration = 0;
 
@@ -105,7 +123,7 @@ static void* get_initialize(const builder* builder, const int i) {
     return initialize;
 }
 
-neural_network* build(const builder* builder) {
+neural_network* build(const builder* builder, const builder_params params) {
     if (builder->in_count <= 0) return NULL;
 
     neural_network* n = alloc_neural_network(builder->list->count);
@@ -127,9 +145,20 @@ neural_network* build(const builder* builder) {
                 const dense_element de = el.element.dense;
                 void (*initialize)(const layer*) = get_initialize(builder, i);
 
-                n->layers[i] = cnstr_dense_layer(in_count, de.out_count, initialize);
-                in_count = de.out_count;
+                const int operationCount = in_count * de.out_count;
+#ifdef _MSC_VER
+                if (operationCount >= params.dense_gpu_threshold) {
+                    n->layers[i] = cnstr_cuda_dense_layer(in_count, de.out_count, params.gpu_t_count, initialize);
+                    goto d_end;
+                }
+#endif
+                if (operationCount >= params.dense_mt_threshold)
+                    n->layers[i] = cnstr_multi_thread_dense_layer(in_count, de.out_count, params.mt_t_count, initialize);
+                else n->layers[i] = cnstr_dense_layer(in_count, de.out_count, initialize);
 
+                d_end :
+
+                in_count = de.out_count;
                 break;
             case ACTIVATION :
                 const activation_element ae = el.element.activation;
@@ -154,8 +183,8 @@ neural_network* build(const builder* builder) {
     return n;
 }
 
-neural_network* build_free(builder* builder) {
-    neural_network* result = build(builder);
+neural_network* build_free(builder* builder, const builder_params params) {
+    neural_network* result = build(builder, params);
     free_builder(builder);
     return result;
 }
