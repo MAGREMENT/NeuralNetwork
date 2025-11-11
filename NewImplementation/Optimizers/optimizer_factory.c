@@ -15,6 +15,17 @@
 #include "Types/proportional_momentum_optimizer.h"
 #include "Types/rms_prop_optimizer.h"
 
+char* opt_names[] = {
+    "Simple",
+    "Free Momentum",
+    "Proportional Momentum",
+    "Simplified Nesterov",
+    "RMSProp",
+    "Adam",
+    "AdaGrad",
+    "AdaDelta"
+};
+
 optimizer* cnstr_optimizer(const int type, const optimizer_cnstr_args args) {
     switch (type) {
         case SIMPLE : return cnstr_simple_optimizer();

@@ -190,11 +190,11 @@ void pooling_layer_test() {
     l->vtable->free(l);
 }
 
-typedef struct bal_b {
+typedef struct opt_builder {
     int opt;
     optimizer_cnstr_args opt_args;
     double learning_rate;
-} bal_b;
+} opt_builder;
 
 static void get_simple_cost_arr(neural_network* dummy, const double* in, double* predicted, const double* expected, double* cost) {
     predict(dummy, in, predicted);
@@ -203,7 +203,7 @@ static void get_simple_cost_arr(neural_network* dummy, const double* in, double*
     }
 }
 
-static void print_costs(double* costs, int count) {
+static void print_costs(double* costs, const int count) {
     if (count == 0) return;
 
     printf("%.4f", costs[0]);
@@ -216,7 +216,7 @@ static void print_costs(double* costs, int count) {
 }
 
 void optimizer_test(const int error, const int verbose) {
-    const bal_b builds[] = {
+    const opt_builder builds[] = {
         {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 0.1},
         {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.2}, 0.1},
         {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
@@ -239,8 +239,8 @@ void optimizer_test(const int error, const int verbose) {
     double predicted[4];
     double cost[4];
 
-    for (int i = 0; i < sizeof(builds) / sizeof(bal_b); ++i) {
-        if (verbose) printf("Optimizer %d : \n", i);
+    for (int i = 0; i < sizeof(builds) / sizeof(opt_builder); ++i) {
+        if (verbose) printf("%s : \n", opt_names[builds[i].opt]);
 
         p->weights[0] = 1;
         p->weights[1] = 1;
@@ -266,7 +266,7 @@ void optimizer_test(const int error, const int verbose) {
             if (error) {
                 for (int j = 0; j < 4; j++) {
                     if (fabs(buffer[j]) > fabs(cost[j])) {
-                        printf("Optimizer %d : Fail\n", i);
+                        printf("%s : Fail\n", opt_names[builds[i].opt]);
                         opt->vtable->free_state(state, dummy);
                         opt->vtable->free(opt);
                         goto free;
@@ -291,8 +291,49 @@ void optimizer_test(const int error, const int verbose) {
     free_neural_network(dummy, 1);
 }
 
+int a(builder* b, const opt_builder builds[], const int buildCount, const test_data test, const int verbose, double (*get_acc)(const neural_network*, test_data)) {
+    for (int i = 0; i < buildCount; i++) {
+        b_opt(b, builds[i].opt, builds[i].opt_args);
+        b->learningRate = builds[i].learning_rate;
+
+        neural_network* n = build(b);
+        initialize(n);
+
+        learning_state* state = alloc_state(n);
+
+        double cost = get_avg_cost(n, test);
+        int fail = 0;
+
+        for (int j = 0; j < 10; j++) {
+            iterative_learn(n, test, state, 100);
+
+            const double buffer = get_avg_cost(n, test);
+            if (buffer >= cost) {
+                if (verbose) fail = 1;
+                else {
+                    printf("bit learn cost fail for %s and iteration %d\n", opt_names[builds[i].opt], j * 10);
+                    free_state(n, state);
+                    free_neural_network(n, 1);
+                    return 1;
+                }
+            }
+
+            cost = buffer;
+        }
+
+        if (verbose) {
+            printf("%s %s-> Cost : %f | Accuracy = %f\n", opt_names[builds[i].opt], fail ? "(FAIL) " : "", cost, get_acc(n, test));
+        }
+
+        free_state(n, state);
+        free_neural_network(n, 1);
+    }
+
+    return 0;
+}
+
 void binary_sum_learn_test(const int verbose) {
-    const bal_b builds[] = {
+    const opt_builder builds[] = {
         {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 1},
         {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.1}, 1},
         {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 1},
@@ -319,48 +360,42 @@ void binary_sum_learn_test(const int verbose) {
     double exp[128 * 3];
 
     generate_binary_inputs(in, 7);
-    generate_binary_sum_outputs(exp, in, 7); //TODO add test for classify
+    generate_binary_sum_outputs(exp, in, 7);
 
     test_data test;
     test.count = 128;
     test.inputs = in;
     test.expected = exp;
 
-    for (int i = 0; i < sizeof(builds) / sizeof(bal_b); i++) {
-        b_opt(b, builds[i].opt, builds[i].opt_args);
-        b->learningRate = builds[i].learning_rate;
+    if (verbose) printf("\n");
+    if (a(b, builds, sizeof(builds) / sizeof(opt_builder), test, verbose, get_binary_accuracy)) goto free;
 
-        neural_network* n = build(b);
-        initialize(n);
+    free_builder(b);
+    b = alloc_builder(7);
+    b_dense(b, 4);
+    b_activation(b, SIGMOID);
+    b_dense(b, 8);
+    b_activation(b, SOFTMAX);
 
-        learning_state* state = alloc_state(n);
+    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
+    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
 
-        double cost = get_avg_cost(n, test);
-        int fail = 0;
+    b->cost_type = BINARY_CROSS_ENTROPY;
+    b->shuffleDataOnIteration = 0;
 
-        for (int j = 0; j < 10; j++) {
-            iterative_learn(n, test, state, 100);
+    double exp2[128 * 8];
 
-            const double buffer = get_avg_cost(n, test);
-            if (buffer >= cost) {
-                if (verbose) fail = 1;
-                else {
-                    printf("bit learn cost fail for optimizer %d and iteration %d\n", i, j * 10);
-                    goto free;
-                }
-            }
+    generate_classify_sum_outputs(exp2, in, 7);
 
-            cost = buffer;
-        }
+    test.count = 128;
+    test.inputs = in;
+    test.expected = exp2;
 
-        if (verbose) {
-            printf("Optimizer %d %s-> Cost : %f | Accuracy = %f\n", i, fail ? "(FAIL) " : "", cost, get_binary_accuracy(n, test));
-        }
+    if (verbose) printf("\n---------\n\n");
 
-        free_state(n, state);
-        free_neural_network(n, 1);
-    }
+    if (a(b, builds, sizeof(builds) / sizeof(opt_builder), test, verbose, get_classification_accuracy)) goto free;
 
+    if (verbose) printf("\n");
     printf("bit add learn test OK!\n");
 
     free :
