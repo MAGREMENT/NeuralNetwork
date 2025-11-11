@@ -19,8 +19,8 @@ typedef struct layer_vtable {
     void (*backward)(const layer* l, const double* inputs, const double* deltas, double* outputs);
     void (*deltas_to_gradients)(const layer* l, const double* inputs, const double* deltas, double* gradients);
     void (*apply_gradients)(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args);
-    void (*export_parameters)(const layer* l, double* parameters); //TODO
-    void (*import_parameters)(const layer* l, const double* parameters);//TODO
+    void (*export_parameters)(const layer* l, double* parameters);
+    void (*import_parameters)(const layer* l, const double* parameters);
     void (*free)(layer* l);
 } layer_vtable;
 
