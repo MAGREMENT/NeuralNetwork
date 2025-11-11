@@ -34,7 +34,7 @@ static void tanh_backward(const layer* l, const double* inputs, const double* de
     for (int i = 0; i < l->out_count; i++) {
         const double e2 = exp(2 * inputs[i]);
         const double t = (e2 - 1) / (e2 + 1);
-        outputs[i] = 1 - t * t;
+        outputs[i] = deltas[i] * (1 - t * t);
     }
 }
 
@@ -46,7 +46,7 @@ static void relu_forward(const layer* l, const double* inputs, double* outputs) 
 
 static void relu_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     for (int i = 0; i < l->out_count; i++) {
-        outputs[i] = inputs[i] > 0 ? 1 : 0;
+        outputs[i] = deltas[i] * (inputs[i] > 0 ? 1 : 0);
     }
 }
 
@@ -58,7 +58,7 @@ static void leaky_relu_forward(const layer* l, const double* inputs, double* out
 
 static void leaky_relu_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     for (int i = 0; i < l->out_count; i++) {
-        outputs[i] = inputs[i] > 0 ? 1 : LEAK;
+        outputs[i] = deltas[i] * (inputs[i] > 0 ? 1 : LEAK);
     }
 }
 
@@ -72,7 +72,7 @@ static void silu_forward(const layer* l, const double* inputs, double* outputs) 
 static void silu_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     for (int i = 0; i < l->out_count; i++) {
         const double sig = 1 / (1 + exp(-inputs[i]));
-        outputs[i] = inputs[i] * sig * (1 - sig) + sig;
+        outputs[i] = deltas[i] * (inputs[i] * sig * (1 - sig) + sig);
     }
 }
 

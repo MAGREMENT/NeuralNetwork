@@ -26,10 +26,10 @@ int main() {
 void yolo() {
     clock_t start = clock();
 
-    const int numbers[] = {7, 4, 3};
+    const int numbers[] = {7, 4, 8};
     neural_network* network = alloc_network(3, numbers);
     apply_default_hyper_params(network);
-    set_activation_type(network, SIGMOID, SIGMOID);
+    set_activation_type(network, SIGMOID, SOFTMAX);
     set_cost_type(network, BINARY_CROSS_ENTROPY);
     set_scheduler(network, constr_constant_scheduler());
     set_optimizer(network, create_nesterov_optimizer(0.9));
@@ -43,9 +43,10 @@ void yolo() {
     return EXIT_SUCCESS;*/
 
     //test_data* data = positive_generate_for_2D(1, 100, 2, parable_10_cut);
-    test_data* data = alloc_transfer_flattened_data(big_arr1, 7, big_arr2, 3, 128);
+    test_data* data = alloc_transfer_flattened_data(big_arr3, 7, big_arr4, 8, 128);
 
-    initialize(network);
+    //initialize(network);
+    set_all_weights_and_biases(network, 1, 1);
 
     gradient_diagnostic* diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
     print_diagnostic(network, diag);
@@ -63,7 +64,7 @@ void yolo() {
 
     printf("%f\n", avg_cost(network, data));
 
-    double accuracy = 0;
+    /*double accuracy = 0;
     for (int i = 0; i < data->count; i++) {
         input_data result;
         result.count = 3;
@@ -79,7 +80,7 @@ void yolo() {
         if (ok) accuracy++;
     }
 
-    printf("%f\n", accuracy / data->count * 100);
+    printf("%f\n", accuracy / data->count * 100);*/
 
     free_gradient_diagnostic(diag);
     diag = alloc_run_gradient_diagnostic(network, data, -5, 5);
