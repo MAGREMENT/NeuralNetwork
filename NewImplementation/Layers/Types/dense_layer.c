@@ -104,7 +104,21 @@ static void apply_gradients_to_dense(const layer* l, const double* gradients, co
     opt->vtable->apply_gradients(opt, p->biases, gradients + l->in_count * l->out_count, l->out_count, args);
 }
 
-layer_vtable dense_vtable = {dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, free_dense_layer};
+static void dense_export(const layer* l, double* parameters) {
+    const dense_layer_params* p = l->params;
+
+    memcpy(parameters, p->weights, sizeof(double) * l->in_count * l->out_count);
+    memcpy(parameters + l->in_count * l->out_count, p->biases, sizeof(double) * l->out_count);
+}
+
+static void dense_import(const layer* l, const double* parameters) {
+    const dense_layer_params* p = l->params;
+
+    memcpy(p->weights, parameters, sizeof(double) * l->in_count * l->out_count);
+    memcpy(p->biases, parameters + l->in_count * l->out_count, sizeof(double) * l->out_count);
+}
+
+layer_vtable dense_vtable = {dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, dense_export, dense_import, free_dense_layer};
 
 layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));
@@ -124,7 +138,7 @@ layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*ini
     return l;
 }
 
-layer_vtable mt_dense_vtable = {mt_dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, free_dense_layer};
+layer_vtable mt_dense_vtable = {mt_dense_forward, dense_backward, dense_delta_to_gradients, apply_gradients_to_dense, dense_export, dense_import, free_dense_layer};
 
 layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, const int thread_count, void (*initialize)(const layer* l)) {
     layer* l = malloc(sizeof(layer));

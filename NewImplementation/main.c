@@ -24,15 +24,14 @@ void mnist_run();
 void unit_test();
 
 int main(void) {
-    //mnist_run();
-    unit_test();
+    mnist_run();
+    //unit_test();
     return EXIT_SUCCESS;
 }
 
-//TODO fix somehow
-void mnist_run() {
+void mnist_run() { //look for speed optimizations
     //max : 10000
-    const int count = 100;
+    const int count = 10000;
 
     const int iCount = 784 * count;
     const int lCount = 10 * count;
@@ -48,34 +47,41 @@ void mnist_run() {
     fread(labels, sizeof(double), lCount, oFile);
     fclose(oFile);
 
-    test_data test = {images, labels, count};
+    test_data original = {images, labels, count};
     builder* b = alloc_builder(784);
 
     b_dense(b, 200);
-    b_activation(b, RELU);
+    b_activation(b, LEAKY_RELU);
     b_dense(b, 100);
-    b_activation(b, RELU);
+    b_activation(b, LEAKY_RELU);
     b_dense(b, 10);
     b_activation(b, SOFTMAX);
 
-    b_opt(b, SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8});
+    b_opt(b, ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}});
     b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
     b_ds(b, MINI_BATCH, (data_selector_cnstr_args) {.value = 64});
 
     b->cost_type = BINARY_CROSS_ENTROPY;
 
     b->shuffleDataOnIteration = 1;
-    b->learningRate = 0.1;
+    b->learningRate = 0.01;
 
     neural_network* n = build_free(b);
     initialize(n);
 
-    printf("Iteration 0 : Cost -> %f | Accuracy -> %f\n", get_avg_cost(n, test), get_classification_accuracy(n, test));
+    shuffle_test_data(original, n, 3);
+    test_data training;
+    test_data testing;
+    separate_test_data(original, 784, 10, &training, &testing, 0.8);
+
+    printf("Iteration 0 : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n",
+        get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
     learning_state* state = alloc_state(n);
 
     for (int i = 0; i < 10; i++) {
-        iterative_learn(n, test, state, 1);
-        printf("Iteration %d : Cost -> %f | Accuracy -> %f\n", i + 1, get_avg_cost(n, test), get_classification_accuracy(n, test));
+        iterative_learn(n, training, state, 1);
+        printf("Iteration %d : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n", i + 1,
+        get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
     }
 
     free_neural_network(n, 1);
@@ -373,7 +379,7 @@ void binary_sum_learn_test(const int verbose) {
     free_builder(b);
     b = alloc_builder(7);
     b_dense(b, 4);
-    b_activation(b, SIGMOID);
+    b_activation(b, LEAKY_RELU);
     b_dense(b, 8);
     b_activation(b, SOFTMAX);
 

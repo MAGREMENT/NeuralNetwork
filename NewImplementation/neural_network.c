@@ -4,6 +4,8 @@
 
 #include "neural_network.h"
 
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -311,4 +313,68 @@ double get_classification_accuracy(const neural_network* network, const test_dat
     }
 
     return acc / test.count * 100;
+}
+
+inline void separate_test_data(const test_data original, const int inCutoff, const int outCutoff, test_data* training, test_data* testing, const double split) {
+    const int trainingCount = (int)round(split * original.count);
+    const int testCount =  original.count - trainingCount;
+
+    training->inputs = original.inputs;
+    training->expected = original.expected;
+    training->count = trainingCount;
+
+    testing->inputs = original.inputs + trainingCount * inCutoff;
+    testing->expected = original.expected + trainingCount * outCutoff;
+    testing->count = testCount;
+}
+
+int save_parameters(neural_network* network, const char* file) {
+    FILE* fptr = fopen(file, "wb");
+    if (fptr == NULL) return 0;
+
+    for (int l = 0; l < network->layerCount; l++) {
+        const layer* layer = network->layers[l];
+        const int size[] = {layer->gradient_count};
+
+        size_t result = fwrite(size, sizeof(int), 1, fptr);
+        if (result != sizeof(int)) return 0;
+
+        if (layer->gradient_count == 0) continue;
+
+        double* params = malloc(sizeof(double) * layer->gradient_count);
+        layer->vtable->export_parameters(layer, params);
+
+        result = fwrite(params, sizeof(double), layer->gradient_count, fptr);
+
+        free(params);
+        if (result != sizeof(double) * layer->gradient_count) return 0;
+    }
+
+    return 1;
+}
+
+int restore_parameters(neural_network* network, const char* file) {
+    FILE* fptr = fopen(file, "rb");
+    if (fptr == NULL) return 0;
+
+    for (int l = 0; l < network->layerCount; l++) {
+        const layer* layer = network->layers[l];
+        int size[] = {layer->gradient_count};
+
+        size_t result = fread(size, sizeof(int), 1, fptr);
+        if (result != sizeof(int) || size[0] != layer->gradient_count) return 0;
+
+        if (layer->gradient_count == 0) continue;
+
+        double* params = malloc(sizeof(double) * layer->gradient_count);
+        result = fread(params, sizeof(double), layer->gradient_count, fptr);
+
+        const int ok = result != sizeof(double) * layer->gradient_count;
+        if (ok) layer->vtable->import_parameters(layer, params);
+
+        free(params);
+        if (!ok) return 0;
+    }
+
+    return 1;
 }

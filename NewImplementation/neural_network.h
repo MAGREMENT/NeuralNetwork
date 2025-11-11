@@ -67,5 +67,9 @@ extern double get_binary_accuracy(const neural_network* network, test_data test)
 extern double get_classification_accuracy(const neural_network* network, test_data test);
 
 extern void shuffle_test_data(test_data test, const neural_network* network, int times);
+extern void separate_test_data(test_data original, int inCutoff, int outCutoff, test_data* training, test_data* testing, double split);
+
+extern int save_parameters(neural_network* network, const char* file);
+extern int restore_parameters(neural_network* network, const char* file);
 
 #endif //NEWIMPLEMENTATION_NEURAL_NETWORK_H

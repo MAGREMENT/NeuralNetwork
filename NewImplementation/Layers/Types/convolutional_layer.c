@@ -66,7 +66,27 @@ static void apply_gradients_to_conv(const layer* l, const double* gradients, con
     opt->vtable->apply_gradients(opt, p->biases, gradients + kFullSize, oSize, args);
 }
 
-layer_vtable conv_vtable = {forward_conv_layer, conv_backward, conv_delta_to_gradients, apply_gradients_to_conv, free_conv_layer};
+static void conv_export(const layer* l, double* parameters) {
+    const conv_layer_params* p = l->params;
+
+    const int kSize = p->kernel_size.width * p->kernel_size.height * p->input_size.depth * p->output_size.depth;
+    const int bSize = p->output_size.width * p->output_size.height * p->output_size.depth;
+
+    memcpy(parameters, p->kernels, sizeof(double) * kSize);
+    memcpy(parameters + kSize, p->biases, sizeof(double) * bSize);
+}
+
+static void conv_import(const layer* l, const double* parameters) {
+    const conv_layer_params* p = l->params;
+
+    const int kSize = p->kernel_size.width * p->kernel_size.height * p->input_size.depth * p->output_size.depth;
+    const int bSize = p->output_size.width * p->output_size.height * p->output_size.depth;
+
+    memcpy(p->kernels, parameters, sizeof(double) * kSize);
+    memcpy(p->biases, parameters + kSize, sizeof(double) * bSize);
+}
+
+layer_vtable conv_vtable = {forward_conv_layer, conv_backward, conv_delta_to_gradients, apply_gradients_to_conv, conv_export, conv_import, free_conv_layer};
 
 layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));

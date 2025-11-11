@@ -101,12 +101,12 @@ static void softmax_backward(const layer* l, const double* inputs, const double*
 }
 
 layer_vtable store[] = {
-    {sigmoid_forward, sigmoid_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {tanh_forward, tanh_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {relu_forward, relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {leaky_relu_forward, leaky_relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {silu_forward, silu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free}
+    {sigmoid_forward, sigmoid_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
+    {tanh_forward, tanh_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
+    {relu_forward, relu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
+    {leaky_relu_forward, leaky_relu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
+    {silu_forward, silu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
+    {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free}
 };
 
 layer* cnstr_activation_layer(const int type, const int outputCount) {
