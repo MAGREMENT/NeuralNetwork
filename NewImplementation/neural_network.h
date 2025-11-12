@@ -12,11 +12,6 @@
 #include "Layers/layer.h"
 #include "Schedulers/scheduler.h"
 
-typedef struct learning_args {
-    double learningRate;
-    void* optimizer_state;
-} learning_args;
-
 typedef struct test_data {
     double* inputs;
     double* expected;
@@ -26,6 +21,9 @@ typedef struct test_data {
 typedef struct learning_state {
     int iteration;
     void* optimizerState;
+
+    double** gradient_buffers;
+    double** iv_buffers;
 } learning_state;
 
 typedef struct neural_network {
@@ -52,8 +50,10 @@ extern double** alloc_gradient_buffers(const neural_network* network, int initTo
 extern void free_buffers(const neural_network* network, double** buffers);
 
 extern void predict(const neural_network* network, const double* inputs, double* outputs);
-extern void learn(const neural_network* network, test_data data, range range, learning_args args);
+extern void learn(const neural_network* network, test_data data, range range, learning_state* state, double learningRate);
+extern void learn_stateless(const neural_network* network, test_data data, range range, double learningRate);
 extern void iterative_learn(const neural_network* network, test_data data, learning_state* state, int iterations);
+extern void iterative_learn_stateless(const neural_network* network, test_data data, int iterations);
 
 extern learning_state* alloc_state(const neural_network* network);
 extern void free_state(const neural_network* network, learning_state* state);
@@ -69,7 +69,7 @@ extern double get_classification_accuracy(const neural_network* network, test_da
 extern void shuffle_test_data(test_data test, const neural_network* network, int times);
 extern void separate_test_data(test_data original, int inCutoff, int outCutoff, test_data* training, test_data* testing, double split);
 
-extern int save_parameters(neural_network* network, const char* file);
-extern int restore_parameters(neural_network* network, const char* file);
+extern int save_parameters(const neural_network* network, const char* file);
+extern int restore_parameters(const neural_network* network, const char* file);
 
 #endif //NEWIMPLEMENTATION_NEURAL_NETWORK_H

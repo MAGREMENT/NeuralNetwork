@@ -23,13 +23,15 @@
 void mnist_run();
 void unit_test();
 
+//TODO small test framework
+
 int main(void) {
     mnist_run();
     //unit_test();
     return EXIT_SUCCESS;
 }
 
-void mnist_run() { //look for speed optimizations
+void mnist_run() {
     //max : 10000
     const int count = 10000;
 
@@ -66,7 +68,7 @@ void mnist_run() { //look for speed optimizations
     b->shuffleDataOnIteration = 1;
     b->learningRate = 0.01;
 
-    neural_network* n = build_free(b, st_b_params());
+    neural_network* n = build_free(b, def_b_params());
     initialize(n);
 
     shuffle_test_data(original, n, 3);
@@ -119,7 +121,7 @@ void save_test() {
     generate_classify_sum_outputs(out, in, 4);
     test_data test = {in, out, 16};
 
-    iterative_learn(n, test, NULL, 5);
+    iterative_learn_stateless(n, test,5);
 
     const double c1 = get_avg_cost(n, test);
     const double a1 = get_classification_accuracy(n, test);
@@ -544,6 +546,9 @@ void mt_dense_test(const int count, const int verbose) {
     double* out3 = malloc(outCount * sizeof(double));
 #endif
 
+    double* grads1 = malloc((inCount * outCount + outCount) * sizeof(double));
+    double* grads2 = malloc((inCount * outCount + outCount) * sizeof(double));
+
     for (int i = 0; i < inCount; i++) {
         in[i] = rand_d(-5, 5);
     }
@@ -604,7 +609,7 @@ void mt_dense_test(const int count, const int verbose) {
 
         for (int i = 0; i < outCount; i++) {
             if (!def_deq(out1[i], out2[i])) {
-                printf("Not same value\n");
+                printf("Not same forward value\n");
                 goto free;
             }
         }
@@ -612,11 +617,33 @@ void mt_dense_test(const int count, const int verbose) {
 #ifdef _MSC_VER
         for (int i = 0; i < outCount; i++) {
             if (!def_deq(out1[i], out3[i])) {
-                printf("Not same value\n");
+                printf("Not same forward value\n");
                 goto free;
             }
         }
 #endif
+
+        single->vtable->backward(single, NULL, in, out1);
+
+        multi->vtable->backward(multi, NULL, in, out2);
+
+        for (int i = 0; i < inCount; i++) {
+            if (!def_deq(out1[i], out2[i])) {
+                printf("Not same backward value\n");
+                goto free;
+            }
+        }
+
+        single->vtable->deltas_to_gradients(single, in, out1, grads1);
+
+        multi->vtable->deltas_to_gradients(multi, in, out1, grads2);
+
+        for (int i = 0; i < inCount * outCount + outCount; i++) {
+            if (!def_deq(grads1[i], grads2[i])) {
+                printf("Not same dtg value\n");
+                goto free;
+            }
+        }
     }
 
     if (verbose) {
@@ -640,6 +667,8 @@ void mt_dense_test(const int count, const int verbose) {
     free(in);
     free(out1);
     free(out2);
+    free(grads1);
+    free(grads2);
 }
 
 void dense_test() {
@@ -712,11 +741,11 @@ void dense_test() {
     }
 
     n->optimizer = cnstr_simple_optimizer(); //TODO to set_optimizer
-    const learning_args args = {0.001, NULL};
+    const double learningRate = 0.01;
 
     for (int epoch = 0; epoch < 10; epoch++) {
 
-        learn(n, (test_data){i, e, 1}, (range){1, 0, 1}, args);
+        learn_stateless(n, (test_data){i, e, 1}, (range){1, 0, 1}, learningRate);
         const double cost2 = get_cost(n, i, e);
 
         if (cost2 >= cost) {
@@ -825,9 +854,9 @@ void unit_test() {
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    binary_sum_learn_test(1);
+    binary_sum_learn_test(0);
     build_test();
-    mt_dense_test(1000, 1);
+    mt_dense_test(1000, 0);
     dense_test();
     predict_test();
     conv_layer_forward_test();

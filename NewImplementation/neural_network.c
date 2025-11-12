@@ -97,6 +97,12 @@ double** alloc_gradient_buffers(const neural_network* network, const int initToZ
     return gradients;
 }
 
+static void set_gradient_buffers_to_zero(const neural_network* network, double** gradients) {
+    for (int i = 0; i < network->layerCount; i++) {
+        memset(gradients[i], 0, network->layers[i]->gradient_count * sizeof(double));
+    }
+}
+
 void free_buffers(const neural_network* network, double** buffers) {
     for (int i = 0; i < network->layerCount; i++) {
         free(buffers[i]);
@@ -113,12 +119,12 @@ static void average_gradients(const neural_network* network, double** buffers, c
     }
 }
 
-static void get_gradients(const neural_network* network, const test_data data, const range range, double** gradients) {
+static void get_gradients(const neural_network* network, const test_data data, const range range, learning_state* state) {
     const int lastIndex = network->layerCount - 1;
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
 
-    double** intermediateValues = alloc_layer_output_buffers(network);
+    double** intermediateValues = state->iv_buffers;
 
     for (int r = range.from; r < range.to; r++) {
         const double* inputs = data.inputs + r * in_count;
@@ -140,7 +146,7 @@ static void get_gradients(const neural_network* network, const test_data data, c
 
             if (l->gradient_count > 0) {
                 const double* in = i == 0 ? inputs : intermediateValues[i - 1];
-                l->vtable->deltas_to_gradients(l, in, currentDeltas, gradients[i]);
+                l->vtable->deltas_to_gradients(l, in, currentDeltas, state->gradient_buffers[i]);
             }
 
             if (i == 0) break;
@@ -154,16 +160,14 @@ static void get_gradients(const neural_network* network, const test_data data, c
             }
         }
     }
-
-    free_buffers(network, intermediateValues);
 }
 
-static void apply_gradients(const neural_network* network, double** gradients, const range range, const learning_args args) {
-    average_gradients(network, gradients, range.to - range.from);
-    optimizer_args opt_args = {args.learningRate, 0, range.iteration, args.optimizer_state};
+static void apply_gradients(const neural_network* network, const range range, const learning_state* state, const double learningRate) {
+    average_gradients(network, state->gradient_buffers, range.to - range.from);
+    optimizer_args opt_args = {learningRate, 0, range.iteration, state->optimizerState};
 
     for (int i = 0; i < network->layerCount; i++) {
-        const double* g = gradients[i];
+        const double* g = state->gradient_buffers[i];
         if (g == NULL) continue;
 
         const layer* l = network->layers[i];
@@ -174,13 +178,17 @@ static void apply_gradients(const neural_network* network, double** gradients, c
     }
 }
 
-void learn(const neural_network* network, const test_data data, const range range, const learning_args args) {
-    double** gradients = alloc_gradient_buffers(network, 1);
+void learn(const neural_network* network, const test_data data, const range range, learning_state* state, const double learningRate) {
+    set_gradient_buffers_to_zero(network, state->gradient_buffers);
 
-    get_gradients(network, data, range, gradients);
-    apply_gradients(network, gradients, range, args);
+    get_gradients(network, data, range, state);
+    apply_gradients(network, range, state, learningRate);
+}
 
-    free_buffers(network, gradients);
+void learn_stateless(const neural_network* network, const test_data data, const range range, double learningRate) {
+    learning_state* state = alloc_state(network);
+    learn(network, data, range, state, learningRate);
+    free_state(network, state);
 }
 
 void shuffle_test_data(test_data test, const neural_network* network, const int times) {
@@ -207,12 +215,6 @@ void shuffle_test_data(test_data test, const neural_network* network, const int 
 }
 
 void iterative_learn(const neural_network* network, const test_data data, learning_state* state, const int iterations) {
-    int freeState = 0;
-    if (state == NULL) {
-        state = alloc_state(network);
-        freeState = 1;
-    }
-
     range_iterator* iterator = network->data_selector->vtable.cnstr_iterator(network->data_selector, data.count, iterations);
     int lastIteration = state->iteration;
     while (iterator->next(iterator)) {
@@ -224,12 +226,17 @@ void iterative_learn(const neural_network* network, const test_data data, learni
             lastIteration = currentIteration;
         }
 
-        learn(network, data, iterator->current, (learning_args) {learningRate, state->optimizerState});
+        learn(network, data, iterator->current, state, learningRate);
     }
 
     iterator->free(iterator);
-    if (freeState) free_state(network, state);
-    else state->iteration += iterations;
+    state->iteration += iterations;
+}
+
+void iterative_learn_stateless(const neural_network* network, const test_data data, const int iterations) {
+    learning_state* state = alloc_state(network);
+    iterative_learn(network, data, state, iterations);
+    free_state(network, state);
 }
 
 learning_state* alloc_state(const neural_network* network) {
@@ -237,11 +244,16 @@ learning_state* alloc_state(const neural_network* network) {
     state->iteration = 0;
     state->optimizerState = network->optimizer->vtable->cnstr_state(network->optimizer, network);
 
+    state->gradient_buffers = alloc_gradient_buffers(network, 0);
+    state->iv_buffers = alloc_layer_output_buffers(network);
+
     return state;
 }
 
 void free_state(const neural_network* network, learning_state* state) {
     network->optimizer->vtable->free_state(state->optimizerState, network);
+    free_buffers(network, state->gradient_buffers);
+    free_buffers(network, state->iv_buffers);
     free(state);
 }
 
@@ -328,7 +340,7 @@ inline void separate_test_data(const test_data original, const int inCutoff, con
     testing->count = testCount;
 }
 
-int save_parameters(neural_network* network, const char* file) {
+int save_parameters(const neural_network* network, const char* file) {
     FILE* fptr = fopen(file, "wb");
     int r = 0;
 
@@ -360,7 +372,7 @@ int save_parameters(neural_network* network, const char* file) {
     return r;
 }
 
-int restore_parameters(neural_network* network, const char* file) {
+int restore_parameters(const neural_network* network, const char* file) {
     FILE* fptr = fopen(file, "rb");
     int r = 0;
 
