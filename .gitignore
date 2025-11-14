@@ -1,19 +1,7 @@
 *.user
-Implementation/.idea
-NewImplementation/.idea
-.idea
-Superset/.idea
 
-Implementation/cmake-build-debug/**
-NewImplementation/cmake-build-debug/**
-
-NewImplementation/Data/**
-
-Superset/Model/obj
-Superset/Model/bin
-
-Superset/Tests/obj
-Superset/Tests/bin
-
-Superset/WpfApp/obj
-Superset/WpfApp/bin
+**/cmake-build-debug/**
+**/.idea
+**/Data
+**/bin
+**/obj
