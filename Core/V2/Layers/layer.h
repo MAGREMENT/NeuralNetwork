@@ -9,7 +9,9 @@
 
 enum layer_types {
     DENSE,
-    ACTIVATION
+    ACTIVATION,
+    CONVOLUTIONAL,
+    POOLING
 };
 
 typedef struct layer layer;

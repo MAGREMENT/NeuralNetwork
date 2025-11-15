@@ -14,7 +14,9 @@ enum optimizers {
     RMS_PROP,
     ADAM,
     ADAGRAD,
-    ADADELTA
+    ADADELTA,
+    ADAMAX,
+    ADAMW
 };
 
 extern char* opt_names[];
@@ -24,9 +26,16 @@ typedef struct double2 {
     double v2;
 } double2;
 
+typedef struct double3 {
+    double v1;
+    double v2;
+    double v3;
+} double3;
+
 typedef union optimizer_cnstr_args {
     double value;
-    double2 values;
+    double2 value2;
+    double3 value3;
 } optimizer_cnstr_args;
 
 extern optimizer* cnstr_optimizer(int type, optimizer_cnstr_args args);

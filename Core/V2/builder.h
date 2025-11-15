@@ -8,6 +8,7 @@
 #include "DataSelector/data_selector_factory.h"
 #include "Optimizers/optimizer_factory.h"
 #include "Schedulers/scheduler_factory.h"
+#include "Util/size.h"
 #include "Util/Collections/list.h"
 
 typedef struct builder_params {
@@ -19,7 +20,7 @@ typedef struct builder_params {
 
 typedef struct builder {
     list* list;
-    int in_count;
+    size3D in_size;
 
     double learningRate;
     int shuffleDataOnIteration;
@@ -39,7 +40,8 @@ typedef struct builder {
 extern builder_params def_b_params();
 extern builder_params st_b_params();
 
-extern builder* alloc_builder(int inCount);
+extern builder* alloc_builder(int inSize);
+extern builder* alloc_builder_3D(size3D inSize);
 extern void free_builder(builder* builder);
 
 extern void b_opt(builder* builder, int type, optimizer_cnstr_args args);
@@ -48,6 +50,8 @@ extern void b_ds(builder* builder, int type, data_selector_cnstr_args args);
 
 extern void b_dense(const builder* builder, int outputCount);
 extern void b_activation(const builder* builder, int type);
+extern void b_conv(const builder* builder, size2D kernelSize, int kernelCount, int stride, int padding);
+extern void b_pooling(const builder* builder, int type, size2D windowSize, int stride, int padding);
 
 extern neural_network* build(const builder* builder, builder_params params);
 extern neural_network* build_free(builder* builder, builder_params params);

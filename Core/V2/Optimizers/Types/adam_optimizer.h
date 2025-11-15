@@ -9,6 +9,4 @@
 
 extern optimizer* cnstr_adam_optimizer(double beta1, double beta2);
 
-//TODO AdamW AdaMax Nadam
-
 #endif //NEWIMPLEMENTATION_ADAM_OPTIMIZER_H

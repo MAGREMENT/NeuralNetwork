@@ -6,8 +6,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <tgmath.h>
 
 #include "../../Util/math_util.h"
+#include "../../Util/rand_util.h"
 
 static void free_conv_layer(layer* l) {
     conv_layer_params* p = l->params;
@@ -88,7 +90,7 @@ static void conv_import(const layer* l, const double* parameters) {
 
 layer_vtable conv_vtable = {forward_conv_layer, conv_backward, conv_delta_to_gradients, apply_gradients_to_conv, conv_export, conv_import, free_conv_layer};
 
-layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
+layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding, void (*initialize)(const layer* l)) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));
     p->kernel_size = kernelSize;
     p->input_size = inputSize;
@@ -111,6 +113,7 @@ layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const i
     l->in_count = inputSize.width * inputSize.height * inputSize.depth;
     l->out_count = p->output_size.depth * p->output_size.width * p->output_size.height;
     l->gradient_count = kSize + bSize;
+    l->initialize = initialize;
 
     l->vtable = &conv_vtable;
 
@@ -129,4 +132,50 @@ void set_kernels_and_biases(const layer* l, const double kernels, const double b
     for (size_t i = 0; i < size; i++) {
         p->biases[i] = biases;
     }
+}
+
+static int get_kernel_count(const conv_layer_params* p) {
+    return p->kernel_size.width * p->kernel_size.height * p->input_size.depth * p->output_size.depth;
+}
+
+static void biasesToZero(const conv_layer_params* p) {
+    const int count = p->output_size.depth * p->output_size.width * p->output_size.height;
+    for (int i = 0; i < count; i++) {
+        p->biases[i] = 0;
+    }
+}
+
+void initialize_conv_random(const layer* layer) {
+    const conv_layer_params* p = layer->params;
+    const int total = get_kernel_count(p);
+
+    for (int i = 0; i < total; i++) {
+        p->kernels[i] = rand_d_std_nrml_distr() * 0.01;
+    }
+
+    biasesToZero(p);
+}
+
+void initialize_conv_he(const layer* layer) {
+    const conv_layer_params* p = layer->params;
+    const int total = get_kernel_count(p);
+
+    const double scale = sqrt(2.0 / (p->kernel_size.width * p->kernel_size.height * p->input_size.depth));
+    for (int i = 0; i < total; i++) {
+        p->kernels[i] = rand_d_std_nrml_distr() * scale;
+    }
+
+    biasesToZero(p);
+}
+
+void initialize_conv_xavier(const layer* layer) {
+    const conv_layer_params* p = layer->params;
+    const int total = get_kernel_count(p);
+
+    const double scale = sqrt(1.0 / (p->kernel_size.width * p->kernel_size.height * p->input_size.depth));
+    for (int i = 0; i < total; i++) {
+        p->kernels[i] = rand_d_std_nrml_distr() * scale;
+    }
+
+    biasesToZero(p);
 }

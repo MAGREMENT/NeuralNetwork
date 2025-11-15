@@ -7,7 +7,9 @@
 #include "asserter.h"
 #include "neural_network.h"
 #include "Layers/Types/activation_layer.h"
+#include "Layers/Types/convolutional_layer.h"
 #include "Layers/Types/dense_layer.h"
+#include "Layers/Types/pooling_layer.h"
 
 #ifdef _MSC_VER
 #include "Layers/Types/Cuda/cuda_dense_layer.cuh"
@@ -21,9 +23,25 @@ typedef struct activation_element {
     int type;
 } activation_element;
 
+typedef struct conv_element {
+    size2D kernel_size;
+    int kernel_count;
+    int stride;
+    int padding;
+} conv_element;
+
+typedef struct pooling_element {
+    int type;
+    size2D window_size;
+    int stride;
+    int padding;
+} pooling_element;
+
 typedef union builder_union {
     dense_element dense;
     activation_element activation;
+    conv_element conv;
+    pooling_element pooling;
 } builder_union ;
 
 typedef struct builder_element {
@@ -47,11 +65,15 @@ extern builder_params st_b_params() {
     };
 }
 
-builder* alloc_builder(const int inCount) {
+inline builder* alloc_builder(int inSize) {
+    return alloc_builder_3D((size3D){inSize, 0, 0});
+}
+
+builder* alloc_builder_3D(const size3D inSize) {
     builder* b = malloc(sizeof(builder));
     b->list = alloc_list(sizeof(builder_element));
 
-    b->in_count = inCount;
+    b->in_size = inSize;
 
     b->learningRate = 1;
     b->shuffleDataOnIteration = 0;
@@ -98,9 +120,27 @@ inline void b_activation(const builder* builder, const int type) {
     l_add(builder->list, builder_element, el);
 }
 
-static void* get_initialize(const builder* builder, const int i) {
+inline void b_conv(const builder* builder, size2D kernelSize, int kernelCount, int stride, int padding) {
+    builder_element el;
+    el.type = CONVOLUTIONAL;
+    el.element.conv.kernel_size = kernelSize;
+    el.element.conv.kernel_count = kernelCount;
+    el.element.conv.stride = stride;
+    el.element.conv.padding = padding;
+    l_add(builder->list, builder_element, el);
+}
+inline void b_pooling(const builder* builder, int type, size2D windowSize, int stride, int padding) {
+    builder_element el;
+    el.type = POOLING;
+    el.element.pooling.type = type;
+    el.element.pooling.window_size = windowSize;
+    el.element.pooling.stride = stride;
+    el.element.pooling.padding = padding;
+    l_add(builder->list, builder_element, el);
+}
 
-    void (*initialize)(const layer*) = initialize_dense_random;
+static void* get_initialize(const builder* builder, const int i, void (*def)(const layer*), void (*xavier)(const layer*), void (*he)(const layer*)) {
+    void (*initialize)(const layer*) = def;
     for (int j = i + 1; j < builder->list->count; j++) {
         const builder_element buffer = l_get(builder->list, builder_element, j);
         if (buffer.type != ACTIVATION) continue;
@@ -108,10 +148,10 @@ static void* get_initialize(const builder* builder, const int i) {
         const activation_element next = buffer.element.activation;
         switch (next.type) {
             case SIGMOID : case TANH :
-                initialize = initialize_dense_xavier;
+                initialize = xavier;
                 break;
             case RELU : case LEAKY_RELU :
-                initialize = initialize_dense_he;
+                initialize = he;
                 break;
             default :
                 break;
@@ -123,8 +163,17 @@ static void* get_initialize(const builder* builder, const int i) {
     return initialize;
 }
 
+static int get_total_size(const size3D size) {
+    int total = 1;
+    if (size.width > 0) total *= size.width;
+    if (size.height > 0) total *= size.height;
+    if (size.depth > 0) total *= size.depth;
+
+    return total;
+}
+
 neural_network* build(const builder* builder, const builder_params params) {
-    if (builder->in_count <= 0) return NULL;
+    if (builder->in_size.width <= 0) return NULL;
 
     neural_network* n = alloc_neural_network(builder->list->count);
 
@@ -136,39 +185,59 @@ neural_network* build(const builder* builder, const builder_params params) {
     if (builder->scheduler >= 0) n->scheduler = cnstr_scheduler(builder->scheduler, builder->sch_args);
 
     int softmax_bce_optimization = 0;
+    int in;
+    void (*initialize)(const layer*);
 
-    int in_count = builder->in_count;
+    size3D inSize = builder->in_size;
     for (int i = 0; i < builder->list->count; i++) {
         const builder_element el = l_get(builder->list, builder_element, i);
         switch (el.type) {
             case DENSE :
                 const dense_element de = el.element.dense;
-                void (*initialize)(const layer*) = get_initialize(builder, i);
 
-                const int operationCount = in_count * de.out_count;
+                initialize = get_initialize(builder, i, initialize_dense_random, initialize_dense_xavier, initialize_dense_he);
+                in = get_total_size(inSize);
+
+                const int operationCount = in * de.out_count;
+
 #ifdef _MSC_VER
                 if (operationCount >= params.dense_gpu_threshold) {
-                    n->layers[i] = cnstr_cuda_dense_layer(in_count, de.out_count, params.gpu_t_count, initialize);
+                    n->layers[i] = cnstr_cuda_dense_layer(in, de.out_count, params.gpu_t_count, initialize);
                     goto d_end;
                 }
 #endif
+
                 if (operationCount >= params.dense_mt_threshold)
-                    n->layers[i] = cnstr_multi_thread_dense_layer(in_count, de.out_count, params.mt_t_count, initialize);
-                else n->layers[i] = cnstr_dense_layer(in_count, de.out_count, initialize);
+                    n->layers[i] = cnstr_multi_thread_dense_layer(in, de.out_count, params.mt_t_count, initialize);
+                else n->layers[i] = cnstr_dense_layer(in, de.out_count, initialize);
 
                 d_end :
 
-                in_count = de.out_count;
+                inSize = (size3D){de.out_count, 0, 0};
                 break;
             case ACTIVATION :
                 const activation_element ae = el.element.activation;
-                const int out = i == 0 ? builder->in_count - 1 : n->layers[i - 1]->out_count;
+                in = get_total_size(inSize);
 
                 if (i == builder->list->count - 1 && ae.type == SOFTMAX && builder->cost_type == BINARY_CROSS_ENTROPY) {
                     softmax_bce_optimization = 1;
-                    n->layers[i] = cnstr_softmax_bce_layer(out);
-                } else n->layers[i] = cnstr_activation_layer(ae.type, out);
+                    n->layers[i] = cnstr_softmax_bce_layer(in);
+                } else n->layers[i] = cnstr_activation_layer(ae.type, in);
 
+                break;
+            case CONVOLUTIONAL :
+                const conv_element ce = el.element.conv;
+                initialize = get_initialize(builder, i, initialize_conv_random, initialize_conv_xavier, initialize_conv_he);
+
+                layer* l = cnstr_conv_layer(inSize, ce.kernel_size, ce.kernel_count, ce.stride, ce.padding, initialize);
+                n->layers[i] = l;
+                inSize = ((conv_layer_params*)l->params)->output_size;
+
+                break;
+            case POOLING :
+                const pooling_element pe = el.element.pooling;
+
+                n->layers[i] = cnstr_pooling_layer(pe.type, inSize, pe.window_size, pe.stride, pe.padding);
                 break;
             default:
                 assert(0); //Should not happen

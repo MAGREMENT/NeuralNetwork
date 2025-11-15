@@ -59,7 +59,7 @@ void mnist_run() {
     b_dense(b, 10);
     b_activation(b, SOFTMAX);
 
-    b_opt(b, ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}});
+    b_opt(b, ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}});
     b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
     b_ds(b, MINI_BATCH, (data_selector_cnstr_args) {.value = 64});
 
@@ -300,9 +300,11 @@ void optimizer_test(const int error, const int verbose) {
         {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
         {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.3}, 0.1},
         {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}}, 0.1},
+        {ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 0.1},
         {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 0.1},
-        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 0.1}
+        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
+        {ADAMAX, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 0.1},
+        {ADAMW, (optimizer_cnstr_args) {.value3 = (double3) {0.9, 0.999, 0.01}}, 0.1},
     };
 
     neural_network* dummy = alloc_neural_network(1);
@@ -417,9 +419,11 @@ void binary_sum_learn_test(const int verbose) {
         {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 1},
         {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8}, 1},
         {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {ADAM, (optimizer_cnstr_args) {.values = (double2) {0.9, 0.999}}, 1},
+        {ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 1},
         {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 1},
-        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 1}
+        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 1},
+        {ADAMAX, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 1},
+        {ADAMW, (optimizer_cnstr_args) {.value3 = (double3) {0.9, 0.999, 0.01}}, 1}
     };
 
     builder* b = alloc_builder(7);
@@ -803,7 +807,7 @@ void predict_test() {
 void conv_layer_forward_test() {
     size3D is = {3, 3, 1};
     size2D ks = {2, 2};
-    layer* l = cnstr_conv_layer(is, ks,1, 1, 0);
+    layer* l = cnstr_conv_layer(is, ks,1, 1, 0, initialize_conv_random);
 
     set_kernels_and_biases(l, 0, 0);
     conv_layer_params* p = l->params;
@@ -834,7 +838,7 @@ void conv_layer_forward_test() {
     l->vtable->free(l);
 
     is = (size3D) {4, 4, 3};
-    l = cnstr_conv_layer(is, ks,2, 2, 1);
+    l = cnstr_conv_layer(is, ks,2, 2, 1, initialize_conv_random);
     p = l->params;
 
     if (p->output_size.width != 3 || p->output_size.height != 3 || p->output_size.depth != 2) {
@@ -854,7 +858,7 @@ void unit_test() {
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    binary_sum_learn_test(0);
+    binary_sum_learn_test(1);
     build_test();
     mt_dense_test(1000, 0);
     dense_test();

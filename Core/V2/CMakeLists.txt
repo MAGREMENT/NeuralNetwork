@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.30)
 set(CMAKE_C_STANDARD 23)
 
+option (FOR_DEVELOPMENT "For development" OFF)
+
 project(NewImplementation C)
 
 set(SOURCES
@@ -46,7 +48,9 @@ set(SOURCES
         Optimizers/Types/proportional_momentum_optimizer.c
         Optimizers/Types/adagrad_optimizer.c
         Optimizers/Types/adadelta_optimizer.c
-        i_o.c)
+        i_o.c
+        Optimizers/Types/adamax_optimizer.c
+        Optimizers/Types/adamw_optimizer.c)
 
 if(MSVC)
     message(STATUS "MVSC detected - enabling CUDA")
@@ -64,6 +68,14 @@ if(MSVC)
 
     enable_language(CXX)
     enable_language(CUDA)
+
+    if(FOR_DEVELOPMENT)
+        message(STATUS "Setting up ASAN")
+
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    endif()
 endif()
 
 add_executable(NewImplementation ${SOURCES})
