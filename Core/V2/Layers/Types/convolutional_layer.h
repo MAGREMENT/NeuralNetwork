@@ -17,8 +17,7 @@ typedef struct conv_layer_params {
     int stride;
     int padding;
 
-    double* kernels;
-    double* biases;
+    int kernel_volume;
 } conv_layer_params;
 
 extern layer* cnstr_conv_layer(size3D inputSize, size2D kernelSize, int kernelCount, int stride, int padding, void (*initialize)(const layer* l));

@@ -148,8 +148,8 @@ static void backward_avg_pooling_layer(const layer* l, const double* inputs, con
 }
 
 layer_vtable pooling_vtable_store[] = {
-    {forward_max_pooling_layer, backward_max_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {forward_avg_pooling_layer, backward_avg_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free}
+    {forward_max_pooling_layer, NULL, backward_max_pooling_layer, no_delta_to_gradients, default_layer_free},
+    {forward_avg_pooling_layer, NULL, backward_avg_pooling_layer, no_delta_to_gradients, default_layer_free}
 };
 
 layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D windowSize, const int stride, const int padding) {

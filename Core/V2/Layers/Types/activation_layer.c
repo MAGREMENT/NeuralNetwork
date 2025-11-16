@@ -101,12 +101,12 @@ static void softmax_backward(const layer* l, const double* inputs, const double*
 }
 
 layer_vtable store[] = {
-    {sigmoid_forward, sigmoid_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {tanh_forward, tanh_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {relu_forward, relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {leaky_relu_forward, leaky_relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {silu_forward, silu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
-    {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free}
+    {sigmoid_forward, NULL, sigmoid_backward, no_delta_to_gradients, default_layer_free},
+    {tanh_forward, NULL, tanh_backward, no_delta_to_gradients, default_layer_free},
+    {relu_forward, NULL, relu_backward, no_delta_to_gradients, default_layer_free},
+    {leaky_relu_forward, NULL, leaky_relu_backward, no_delta_to_gradients, default_layer_free},
+    {silu_forward, NULL, silu_backward, no_delta_to_gradients, default_layer_free},
+    {softmax_forward, NULL, softmax_backward, no_delta_to_gradients, default_layer_free}
 };
 
 layer* cnstr_activation_layer(const int type, const int outputCount) {
@@ -115,7 +115,9 @@ layer* cnstr_activation_layer(const int type, const int outputCount) {
     l->data = NULL;
     l->in_count = outputCount;
     l->out_count = outputCount;
+
     l->parameters_count = 0;
+    l->parameters = NULL;
 
     l->vtable = store + type;
     l->initialize = no_initialization;
@@ -125,7 +127,7 @@ layer* cnstr_activation_layer(const int type, const int outputCount) {
 
 static void no_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {}
 
-layer_vtable softmax_bce_vtable = {softmax_forward, no_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free};
+layer_vtable softmax_bce_vtable = {softmax_forward, NULL, no_backward, no_delta_to_gradients, default_layer_free};
 
 layer* cnstr_softmax_bce_layer(const int outputCount) {
     layer* l = malloc(sizeof(layer));

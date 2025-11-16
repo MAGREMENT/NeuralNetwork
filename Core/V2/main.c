@@ -312,8 +312,6 @@ void optimizer_test(const int error, const int verbose) {
     dummy->layers[0] = l;
     initialize(dummy);
 
-    dense_layer_params* p = l->data;
-
     double in[] = {1};
     double expected[] = {-7, 15, 0, 3};
     double predicted[4];
@@ -322,10 +320,10 @@ void optimizer_test(const int error, const int verbose) {
     for (int i = 0; i < sizeof(builds) / sizeof(opt_builder); ++i) {
         if (verbose) printf("%s : \n", opt_names[builds[i].opt]);
 
-        p->weights[0] = 1;
-        p->weights[1] = 1;
-        p->weights[2] = 1;
-        p->weights[3] = 1;
+        l->parameters[0] = 1;
+        l->parameters[1] = 1;
+        l->parameters[2] = 1;
+        l->parameters[3] = 1;
 
         optimizer* opt = cnstr_optimizer(builds[i].opt, builds[i].opt_args);
         void* state = opt->vtable->cnstr_state(opt, dummy);
@@ -336,7 +334,7 @@ void optimizer_test(const int error, const int verbose) {
 
         for (int iteration = 0; iteration < 10; iteration++) {
             args.iteration += 1;
-            opt->vtable->apply_gradients(opt, p->weights, cost, 4, args);
+            opt->vtable->apply_gradients(opt, l->parameters, cost, 4, args);
 
             if (verbose) printf("Iteration %d : \n", iteration + 1);
 
@@ -560,34 +558,30 @@ void mt_dense_test(const int count, const int verbose) {
     layer* single = cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero);
     layer* multi = cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero);
 
-    dense_layer_params* sp = single->data;
-    dense_layer_params* mp = multi->data;
-
     clock_t singleTime = 0;
     clock_t multiTime = 0;
 
 #ifdef _MSC_VER
     layer* cuda = cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero);
-    dense_layer_params* cp = cuda->data;
     clock_t cudaTime = 0;
 #endif
 
     for (int iteration = 0; iteration < 5; iteration++) {
         for (int i = 0; i < inCount * outCount; i++) {
             const double d = rand_d(-5, 5);
-            sp->weights[i] = d;
-            mp->weights[i] = d;
+            single->parameters[i] = d;
+            multi->parameters[i] = d;
 #ifdef _MSC_VER
-            cp->weights[i] = d;
+            cuda->parameters[i] = d;
 #endif
         }
 
         for (int i = 0; i < outCount; i++) {
             const double d = rand_d(-5, 5);
-            sp->biases[i] = d;
-            mp->biases[i] = d;
+            single->parameters[inCount * outCount + i] = d;
+            multi->parameters[inCount * outCount + i] = d;
 #ifdef _MSC_VER
-            cp->biases[i] = d;
+            cuda->parameters[inCount * outCount + i] = d;
 #endif
         }
 
@@ -817,10 +811,10 @@ void conv_layer_forward_test() {
         return;
     }
 
-    p->kernels[0] = 1;
-    p->kernels[1] = 2;
-    p->kernels[2] = -1;
-    p->kernels[3] = 0;
+    l->parameters[0] = 1;
+    l->parameters[1] = 2;
+    l->parameters[2] = -1;
+    l->parameters[3] = 0;
 
     double input[] = {1, 6, 2, 5, 3, 1, 7, 0, 4};
     double expected[] = {8, 7, 4, 5};
@@ -858,7 +852,7 @@ void unit_test() {
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    binary_sum_learn_test(0);
+    binary_sum_learn_test(1);
     build_test();
     mt_dense_test(1000, 0);
     dense_test();

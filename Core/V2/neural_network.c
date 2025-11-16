@@ -173,12 +173,20 @@ static void apply_gradients(const neural_network* network, const range range, co
         const layer* l = network->layers[i];
         if (l->parameters_count > 0) {
             opt_args.layerIndex = i;
-            l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
+            network->optimizer->vtable->apply_gradients(network->optimizer, l->parameters, g, l->parameters_count, opt_args);
         }
     }
 }
 
+static void on_learn_start(const neural_network* network) {
+    for (int i = 0; i < network->layerCount; i++) {
+        const layer* l = network->layers[i];
+        if (l->vtable->on_learn_start != NULL) l->vtable->on_learn_start(l);
+    }
+}
+
 void learn(const neural_network* network, const test_data data, const range range, learning_state* state, const double learningRate) {
+    on_learn_start(network);
     set_gradient_buffers_to_zero(network, state->gradient_buffers);
 
     get_gradients(network, data, range, state);

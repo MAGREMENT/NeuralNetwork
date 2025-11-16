@@ -52,10 +52,12 @@ set(SOURCES
         Optimizers/Types/adamax_optimizer.c
         Optimizers/Types/adamw_optimizer.c
         Layers/Types/dropout_layer.c
-        Layers/Types/dropout_layer.h)
+        Layers/Types/dropout_layer.h
+        Util/Collections/bitset.c
+        Util/Collections/bitset.h)
 
 if(MSVC)
-    message(STATUS "MVSC detected - enabling CUDA")
+    message(STATUS "MVSC detected -> Enabling CUDA")
 
     #To use CUDA in Windows, you need :
     #   - To use the MSVC compiler. Install Visual Studio 2022 Build Tools with the Desktop C++ kit.
@@ -72,7 +74,7 @@ if(MSVC)
     enable_language(CUDA)
 
     if(FOR_DEVELOPMENT)
-        message(STATUS "Setting up ASAN")
+        message(STATUS "For development -> Setting up ASAN")
 
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")

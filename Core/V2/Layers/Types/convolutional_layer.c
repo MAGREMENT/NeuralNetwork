@@ -11,20 +11,15 @@
 #include "../../Util/math_util.h"
 #include "../../Util/rand_util.h"
 
-static void free_conv_layer(layer* l) {
-    conv_layer_params* p = l->data;
-
-    free(p->kernels);
-    free(p->biases);
-    free(p);
-    free(l);
+static double* get_biases(const layer* l, const conv_layer_params* p) {
+    return l->parameters + p->kernel_volume;
 }
 
 static void forward_conv_layer(const layer* l, const double* inputs, double* outputs) {
     const conv_layer_params* p = l->data;
 
-    memcpy(outputs, p->biases, p->output_size.width * p->output_size.height * p->output_size.depth * sizeof(double));
-    valid_correlate_add(inputs, p->input_size, p->kernels, p->kernel_size, outputs, p->output_size, p->padding, p->stride);
+    memcpy(outputs, get_biases(l, p), p->output_size.width * p->output_size.height * p->output_size.depth * sizeof(double));
+    valid_correlate_add(inputs, p->input_size, l->parameters, p->kernel_size, outputs, p->output_size, p->padding, p->stride);
 }
 
 //TODO test
@@ -34,7 +29,7 @@ static void conv_backward(const layer* l, const double* inputs, const double* de
 
     memset(outputs, 0, sizeof(double) * p->input_size.width * p->input_size.height * p->input_size.depth);
     for (int d = 0; d < p->output_size.depth; d++) {
-        full_convolve_add(deltas, p->output_size, p->kernels + kSize * d, p->kernel_size,
+        full_convolve_add(deltas, p->output_size, l->parameters + kSize * d, p->kernel_size,
             outputs, p->input_size, p->padding, p->stride);
     }
 }
@@ -58,17 +53,7 @@ static void conv_delta_to_gradients(const layer* l, const double* inputs, const 
         to3D(p->kernel_size, p->output_size.depth), p->padding, p->stride);
 }
 
-static void apply_gradients_to_conv(const layer* l, const double* gradients, const optimizer* opt, optimizer_args args) {
-    const conv_layer_params* p = l->data;
-
-    const int kFullSize = p->kernel_size.width * p->kernel_size.height * p->input_size.depth * p->output_size.depth;
-    const int oSize = p->output_size.width * p->output_size.height * p->output_size.depth;
-
-    opt->vtable->apply_gradients(opt, p->kernels, gradients, kFullSize, args);
-    opt->vtable->apply_gradients(opt, p->biases, gradients + kFullSize, oSize, args);
-}
-
-layer_vtable conv_vtable = {forward_conv_layer, conv_backward, conv_delta_to_gradients, apply_gradients_to_conv, free_conv_layer};
+layer_vtable conv_vtable = {forward_conv_layer, NULL, conv_backward, conv_delta_to_gradients, default_layer_free};
 
 layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding, void (*initialize)(const layer* l)) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));
@@ -81,20 +66,20 @@ layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const i
     p->output_size.width = (inputSize.width - kernelSize.width + 2 * padding) / stride + 1;
     p->output_size.height = (inputSize.height - kernelSize.height + 2 * padding) / stride + 1;
 
-    const int kSize = kernelSize.width * kernelSize.height * inputSize.depth * kernelCount;
-    p->kernels = malloc(sizeof(double) * kSize);
-
+    p->kernel_volume = kernelSize.width * kernelSize.height * inputSize.depth * kernelCount;
     const int bSize = p->output_size.width * p->output_size.height * p->output_size.depth;
-    p->biases = malloc(sizeof(double) * bSize);
 
     layer* l = malloc(sizeof(layer));
 
     l->data = p;
+
     l->in_count = inputSize.width * inputSize.height * inputSize.depth;
     l->out_count = p->output_size.depth * p->output_size.width * p->output_size.height;
-    l->parameters_count = kSize + bSize;
-    l->initialize = initialize;
 
+    l->parameters_count = p->kernel_volume + bSize;
+    l->parameters = malloc(sizeof(double) * l->parameters_count);
+
+    l->initialize = initialize;
     l->vtable = &conv_vtable;
 
     return l;
@@ -102,60 +87,45 @@ layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const i
 
 void set_kernels_and_biases(const layer* l, const double kernels, const double biases) {
     const conv_layer_params* p = l->data;
+    double* b = get_biases(l, p);
 
-    size_t size = p->kernel_size.width * p->kernel_size.height * p->input_size.depth;
-    for (size_t i = 0; i < size; i++) {
-        p->kernels[i] = kernels;
+    for (int i = 0; i < p->kernel_volume; i++) {
+        l->parameters[i] = kernels;
     }
 
-    size = l->out_count;
-    for (size_t i = 0; i < size; i++) {
-        p->biases[i] = biases;
-    }
-}
-
-static int get_kernel_count(const conv_layer_params* p) {
-    return p->kernel_size.width * p->kernel_size.height * p->input_size.depth * p->output_size.depth;
-}
-
-static void biasesToZero(const conv_layer_params* p) {
-    const int count = p->output_size.depth * p->output_size.width * p->output_size.height;
-    for (int i = 0; i < count; i++) {
-        p->biases[i] = 0;
+    for (int i = 0; i < l->out_count; i++) {
+        b[i] = biases;
     }
 }
 
 void initialize_conv_random(const layer* layer) {
     const conv_layer_params* p = layer->data;
-    const int total = get_kernel_count(p);
 
-    for (int i = 0; i < total; i++) {
-        p->kernels[i] = rand_d_std_nrml_distr() * 0.01;
+    for (int i = 0; i < p->kernel_volume; i++) {
+        layer->parameters[i] = rand_d_std_nrml_distr() * 0.01;
     }
 
-    biasesToZero(p);
+    memset(get_biases(layer, p), 0, sizeof(double) * layer->out_count);
 }
 
 void initialize_conv_he(const layer* layer) {
     const conv_layer_params* p = layer->data;
-    const int total = get_kernel_count(p);
 
     const double scale = sqrt(2.0 / (p->kernel_size.width * p->kernel_size.height * p->input_size.depth));
-    for (int i = 0; i < total; i++) {
-        p->kernels[i] = rand_d_std_nrml_distr() * scale;
+    for (int i = 0; i < p->kernel_volume; i++) {
+        layer->parameters[i] = rand_d_std_nrml_distr() * scale;
     }
 
-    biasesToZero(p);
+    memset(get_biases(layer, p), 0, sizeof(double) * layer->out_count);
 }
 
 void initialize_conv_xavier(const layer* layer) {
     const conv_layer_params* p = layer->data;
-    const int total = get_kernel_count(p);
 
     const double scale = sqrt(1.0 / (p->kernel_size.width * p->kernel_size.height * p->input_size.depth));
-    for (int i = 0; i < total; i++) {
-        p->kernels[i] = rand_d_std_nrml_distr() * scale;
+    for (int i = 0; i < p->kernel_volume; i++) {
+        layer->parameters[i] = rand_d_std_nrml_distr() * scale;
     }
 
-    biasesToZero(p);
+    memset(get_biases(layer, p), 0, sizeof(double) * layer->out_count);
 }
