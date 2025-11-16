@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 set(CMAKE_C_STANDARD 23)
 
-option (FOR_DEVELOPMENT "For development" OFF)
+option (FOR_DEVELOPMENT "For development" ON)
 
 project(NewImplementation C)
 
@@ -50,7 +50,9 @@ set(SOURCES
         Optimizers/Types/adadelta_optimizer.c
         i_o.c
         Optimizers/Types/adamax_optimizer.c
-        Optimizers/Types/adamw_optimizer.c)
+        Optimizers/Types/adamw_optimizer.c
+        Layers/Types/dropout_layer.c
+        Layers/Types/dropout_layer.h)
 
 if(MSVC)
     message(STATUS "MVSC detected - enabling CUDA")

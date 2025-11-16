@@ -9,7 +9,7 @@
 inline void no_initialization(const layer* l) {}
 
 inline void default_layer_free(layer* l) {
-    free(l->params);
+    free(l->data);
     free(l);
 }
 

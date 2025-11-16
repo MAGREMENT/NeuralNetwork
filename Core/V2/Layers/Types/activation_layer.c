@@ -101,21 +101,21 @@ static void softmax_backward(const layer* l, const double* inputs, const double*
 }
 
 layer_vtable store[] = {
-    {sigmoid_forward, sigmoid_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {tanh_forward, tanh_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {relu_forward, relu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {leaky_relu_forward, leaky_relu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {silu_forward, silu_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free}
+    {sigmoid_forward, sigmoid_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {tanh_forward, tanh_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {relu_forward, relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {leaky_relu_forward, leaky_relu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {silu_forward, silu_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {softmax_forward, softmax_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free}
 };
 
 layer* cnstr_activation_layer(const int type, const int outputCount) {
     layer* l = malloc(sizeof(layer));
 
-    l->params = NULL;
+    l->data = NULL;
     l->in_count = outputCount;
     l->out_count = outputCount;
-    l->gradient_count = 0;
+    l->parameters_count = 0;
 
     l->vtable = store + type;
     l->initialize = no_initialization;
@@ -125,15 +125,17 @@ layer* cnstr_activation_layer(const int type, const int outputCount) {
 
 static void no_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {}
 
-layer_vtable softmax_bce_vtable = {softmax_forward, no_backward, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free};
+layer_vtable softmax_bce_vtable = {softmax_forward, no_backward, no_delta_to_gradients, apply_no_gradients, default_layer_free};
 
 layer* cnstr_softmax_bce_layer(const int outputCount) {
     layer* l = malloc(sizeof(layer));
 
-    l->params = NULL;
+    l->data = NULL;
     l->in_count = outputCount;
     l->out_count = outputCount;
-    l->gradient_count = 0;
+
+    l->parameters_count = 0;
+    l->parameters = NULL;
 
     l->vtable = &softmax_bce_vtable;
     l->initialize = no_initialization;

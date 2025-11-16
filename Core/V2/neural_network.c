@@ -90,8 +90,8 @@ double** alloc_gradient_buffers(const neural_network* network, const int initToZ
 
     for (int i = 0; i < network->layerCount; i++) {
         const layer* l = network->layers[i];
-        gradients[i] = l->gradient_count <= 0 ? NULL : malloc(sizeof(double) * l->gradient_count);
-        if (initToZero) memset(gradients[i], 0, l->gradient_count * sizeof(double));
+        gradients[i] = l->parameters_count <= 0 ? NULL : malloc(sizeof(double) * l->parameters_count);
+        if (initToZero) memset(gradients[i], 0, l->parameters_count * sizeof(double));
     }
 
     return gradients;
@@ -99,7 +99,7 @@ double** alloc_gradient_buffers(const neural_network* network, const int initToZ
 
 static void set_gradient_buffers_to_zero(const neural_network* network, double** gradients) {
     for (int i = 0; i < network->layerCount; i++) {
-        memset(gradients[i], 0, network->layers[i]->gradient_count * sizeof(double));
+        memset(gradients[i], 0, network->layers[i]->parameters_count * sizeof(double));
     }
 }
 
@@ -113,7 +113,7 @@ void free_buffers(const neural_network* network, double** buffers) {
 
 static void average_gradients(const neural_network* network, double** buffers, const int count) {
     for (int i = 0; i < network->layerCount; i++) {
-        for (int o = 0; o < network->layers[i]->gradient_count; o++) {
+        for (int o = 0; o < network->layers[i]->parameters_count; o++) {
             buffers[i][o] /= count;
         }
     }
@@ -144,7 +144,7 @@ static void get_gradients(const neural_network* network, const test_data data, c
         for (int i = lastIndex; i >= 0; i--) {
             const layer* l = network->layers[i];
 
-            if (l->gradient_count > 0) {
+            if (l->parameters_count > 0) {
                 const double* in = i == 0 ? inputs : intermediateValues[i - 1];
                 l->vtable->deltas_to_gradients(l, in, currentDeltas, state->gradient_buffers[i]);
             }
@@ -171,7 +171,7 @@ static void apply_gradients(const neural_network* network, const range range, co
         if (g == NULL) continue;
 
         const layer* l = network->layers[i];
-        if (l->gradient_count > 0) {
+        if (l->parameters_count > 0) {
             opt_args.layerIndex = i;
             l->vtable->apply_gradients(l, g, network->optimizer, opt_args);
         }
@@ -348,20 +348,15 @@ int save_parameters(const neural_network* network, const char* file) {
 
     for (int l = 0; l < network->layerCount; l++) {
         const layer* layer = network->layers[l];
-        const int size[] = {layer->gradient_count};
+        const int size[] = {layer->parameters_count};
 
         size_t result = fwrite(size, sizeof(int), 1, fptr);
         if (result != 1)  goto esc;
 
-        if (layer->gradient_count == 0) continue;
+        if (layer->parameters_count == 0) continue;
 
-        double* params = malloc(sizeof(double) * layer->gradient_count);
-        layer->vtable->export_parameters(layer, params);
-
-        result = fwrite(params, sizeof(double), layer->gradient_count, fptr);
-
-        free(params);
-        if (result != layer->gradient_count) goto esc;
+        result = fwrite(layer->parameters, sizeof(double), layer->parameters_count, fptr);
+        if (result != layer->parameters_count) goto esc;
     }
 
     r = 1;
@@ -380,21 +375,15 @@ int restore_parameters(const neural_network* network, const char* file) {
 
     for (int l = 0; l < network->layerCount; l++) {
         const layer* layer = network->layers[l];
-        int size[] = {layer->gradient_count};
+        int size[] = {layer->parameters_count};
 
         size_t result = fread(size, sizeof(int), 1, fptr);
-        if (result != 1 || size[0] != layer->gradient_count) goto esc;
+        if (result != 1 || size[0] != layer->parameters_count) goto esc;
 
-        if (layer->gradient_count == 0) continue;
+        if (layer->parameters_count == 0) continue;
 
-        double* params = malloc(sizeof(double) * layer->gradient_count);
-        result = fread(params, sizeof(double), layer->gradient_count, fptr);
-
-        const int ok = result == layer->gradient_count;
-        if (ok) layer->vtable->import_parameters(layer, params);
-
-        free(params);
-        if (!ok) goto esc;
+        result = fread(layer->parameters, sizeof(double), layer->parameters_count, fptr);
+        if (result != layer->parameters_count) goto esc;
     }
 
     r = 1;

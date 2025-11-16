@@ -33,7 +33,7 @@ __global__ void kernel_dense_forward(const double *in, const double *w, const do
 }
 
 static void cuda_dense_forward(const layer* l, const double* inputs, double* outputs) {
-    const auto p = (cuda_dense_layer_params*)l->params;
+    const auto p = (cuda_dense_layer_params*)l->data;
 
     cudaMemcpy(p->gpu_in, inputs, l->in_count * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(p->gpu_weights, p->base.weights, l->in_count * l->out_count * sizeof(double), cudaMemcpyHostToDevice);
@@ -46,7 +46,7 @@ static void cuda_dense_forward(const layer* l, const double* inputs, double* out
 }
 
 static void free_cuda_dense_layer(layer* l) {
-    auto p = (cuda_dense_layer_params*)l->params;
+    auto p = (cuda_dense_layer_params*)l->data;
 
     cudaFree(p->gpu_in);
     cudaFree(p->gpu_out);
@@ -69,10 +69,10 @@ layer* cnstr_cuda_dense_layer(const int inputCount, const int outputCount, const
     p->base.weights = (double*)malloc(sizeof(double) * inputCount * outputCount);
     p->base.biases = (double*)malloc(sizeof(double) * outputCount);
 
-    l->params = p;
+    l->data = p;
     l->in_count = inputCount;
     l->out_count = outputCount;
-    l->gradient_count = inputCount * outputCount + outputCount;
+    l->parameters_count = inputCount * outputCount + outputCount;
 
     l->initialize = initialize;
     l->vtable = &cuda_dense_vtable;

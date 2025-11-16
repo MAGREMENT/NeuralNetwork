@@ -26,8 +26,8 @@ void unit_test();
 //TODO small test framework
 
 int main(void) {
-    mnist_run();
-    //unit_test();
+    //mnist_run();
+    unit_test();
     return EXIT_SUCCESS;
 }
 
@@ -312,7 +312,7 @@ void optimizer_test(const int error, const int verbose) {
     dummy->layers[0] = l;
     initialize(dummy);
 
-    dense_layer_params* p = l->params;
+    dense_layer_params* p = l->data;
 
     double in[] = {1};
     double expected[] = {-7, 15, 0, 3};
@@ -516,11 +516,11 @@ void build_test() {
         goto free;
     }
 
-    if (n->layers[0]->gradient_count != 9 * 7 + 7 ||
-        n->layers[1]->gradient_count != 0 ||
-        n->layers[2]->gradient_count != 0 ||
-        n->layers[3]->gradient_count != 7 * 3 + 3 ||
-        n->layers[4]->gradient_count != 0) {
+    if (n->layers[0]->parameters_count != 9 * 7 + 7 ||
+        n->layers[1]->parameters_count != 0 ||
+        n->layers[2]->parameters_count != 0 ||
+        n->layers[3]->parameters_count != 7 * 3 + 3 ||
+        n->layers[4]->parameters_count != 0) {
         printf("Wrong layer gradient count\n");
         goto free;
     }
@@ -560,15 +560,15 @@ void mt_dense_test(const int count, const int verbose) {
     layer* single = cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero);
     layer* multi = cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero);
 
-    dense_layer_params* sp = single->params;
-    dense_layer_params* mp = multi->params;
+    dense_layer_params* sp = single->data;
+    dense_layer_params* mp = multi->data;
 
     clock_t singleTime = 0;
     clock_t multiTime = 0;
 
 #ifdef _MSC_VER
     layer* cuda = cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero);
-    dense_layer_params* cp = cuda->params;
+    dense_layer_params* cp = cuda->data;
     clock_t cudaTime = 0;
 #endif
 
@@ -810,7 +810,7 @@ void conv_layer_forward_test() {
     layer* l = cnstr_conv_layer(is, ks,1, 1, 0, initialize_conv_random);
 
     set_kernels_and_biases(l, 0, 0);
-    conv_layer_params* p = l->params;
+    conv_layer_params* p = l->data;
 
     if (p->output_size.width != 2 || p->output_size.height != 2 || p->output_size.depth != 1) {
         printf("Wrong output size\n");
@@ -839,7 +839,7 @@ void conv_layer_forward_test() {
 
     is = (size3D) {4, 4, 3};
     l = cnstr_conv_layer(is, ks,2, 2, 1, initialize_conv_random);
-    p = l->params;
+    p = l->data;
 
     if (p->output_size.width != 3 || p->output_size.height != 3 || p->output_size.depth != 2) {
         printf("Wrong output size\n");
@@ -858,7 +858,7 @@ void unit_test() {
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    binary_sum_learn_test(1);
+    binary_sum_learn_test(0);
     build_test();
     mt_dense_test(1000, 0);
     dense_test();

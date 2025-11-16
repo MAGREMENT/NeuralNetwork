@@ -231,7 +231,7 @@ neural_network* build(const builder* builder, const builder_params params) {
 
                 layer* l = cnstr_conv_layer(inSize, ce.kernel_size, ce.kernel_count, ce.stride, ce.padding, initialize);
                 n->layers[i] = l;
-                inSize = ((conv_layer_params*)l->params)->output_size;
+                inSize = ((conv_layer_params*)l->data)->output_size;
 
                 break;
             case POOLING :

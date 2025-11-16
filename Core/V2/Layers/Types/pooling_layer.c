@@ -9,7 +9,7 @@
 #include <string.h>
 
 static void forward_max_pooling_layer(const layer* l, const double* inputs, double* outputs) {
-    const pooling_layer_params* p = l->params;
+    const pooling_layer_params* p = l->data;
 
     const int inArea = p->input_size.width * p->input_size.height;
     const int outArea = p->output_size.width * p->output_size.height;
@@ -42,7 +42,7 @@ static void forward_max_pooling_layer(const layer* l, const double* inputs, doub
 }
 
 static void forward_avg_pooling_layer(const layer* l, const double* inputs, double* outputs) {
-    const pooling_layer_params* p = l->params;
+    const pooling_layer_params* p = l->data;
 
     const int inArea = p->input_size.width * p->input_size.height;
     const int outArea = p->output_size.width * p->output_size.height;
@@ -76,7 +76,7 @@ static void forward_avg_pooling_layer(const layer* l, const double* inputs, doub
 }
 
 static void backward_max_pooling_layer(const layer* l, const double* inputs, const double* deltas, double* outputs) {
-    const pooling_layer_params* p = l->params;
+    const pooling_layer_params* p = l->data;
     const int inArea = p->input_size.width * p->input_size.height;
     const int outArea = p->output_size.width * p->output_size.height;
 
@@ -114,7 +114,7 @@ static void backward_max_pooling_layer(const layer* l, const double* inputs, con
 }
 
 static void backward_avg_pooling_layer(const layer* l, const double* inputs, const double* deltas, double* outputs) {
-    const pooling_layer_params* p = l->params;
+    const pooling_layer_params* p = l->data;
 
     const int inArea = p->input_size.width * p->input_size.height;
     const int outArea = p->output_size.width * p->output_size.height;
@@ -148,8 +148,8 @@ static void backward_avg_pooling_layer(const layer* l, const double* inputs, con
 }
 
 layer_vtable pooling_vtable_store[] = {
-    {forward_max_pooling_layer, backward_max_pooling_layer, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free},
-    {forward_avg_pooling_layer, backward_avg_pooling_layer, no_delta_to_gradients, apply_no_gradients, no_export, no_import, default_layer_free}
+    {forward_max_pooling_layer, backward_max_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free},
+    {forward_avg_pooling_layer, backward_avg_pooling_layer, no_delta_to_gradients, apply_no_gradients, default_layer_free}
 };
 
 layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D windowSize, const int stride, const int padding) {
@@ -167,8 +167,11 @@ layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D 
 
     l->in_count = inputSize.width * inputSize.height * inputSize.depth;
     l->out_count = p->output_size.width * p->output_size.height * p->output_size.depth;
-    l->gradient_count = 0;
-    l->params = p;
+
+    l->parameters_count = 0;
+    l->parameters = NULL;
+
+    l->data = p;
 
     l->vtable = pooling_vtable_store + type;
 
