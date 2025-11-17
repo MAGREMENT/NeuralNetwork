@@ -52,9 +52,9 @@ set(SOURCES
         Optimizers/Types/adamax_optimizer.c
         Optimizers/Types/adamw_optimizer.c
         Layers/Types/dropout_layer.c
-        Layers/Types/dropout_layer.h
         Util/Collections/bitset.c
-        Util/Collections/bitset.h)
+        Util/Collections/queue.c
+        Util/range.c)
 
 if(MSVC)
     message(STATUS "MVSC detected -> Enabling CUDA")

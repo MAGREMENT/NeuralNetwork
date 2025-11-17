@@ -743,7 +743,7 @@ void dense_test() {
 
     for (int epoch = 0; epoch < 10; epoch++) {
 
-        learn_stateless(n, (test_data){i, e, 1}, (range){1, 0, 1}, learningRate);
+        learn_stateless(n, (test_data){i, e, 1}, (iteration_range){1, 0, 1}, learningRate);
         const double cost2 = get_cost(n, i, e);
 
         if (cost2 >= cost) {

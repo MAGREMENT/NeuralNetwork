@@ -119,7 +119,7 @@ static void average_gradients(const neural_network* network, double** buffers, c
     }
 }
 
-static void get_gradients(const neural_network* network, const test_data data, const range range, learning_state* state) {
+static void get_gradients(const neural_network* network, const test_data data, const iteration_range range, learning_state* state) {
     const int lastIndex = network->layerCount - 1;
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
@@ -162,7 +162,7 @@ static void get_gradients(const neural_network* network, const test_data data, c
     }
 }
 
-static void apply_gradients(const neural_network* network, const range range, const learning_state* state, const double learningRate) {
+static void apply_gradients(const neural_network* network, const iteration_range range, const learning_state* state, const double learningRate) {
     average_gradients(network, state->gradient_buffers, range.to - range.from);
     optimizer_args opt_args = {learningRate, 0, range.iteration, state->optimizerState};
 
@@ -185,7 +185,7 @@ static void on_learn_start(const neural_network* network) {
     }
 }
 
-void learn(const neural_network* network, const test_data data, const range range, learning_state* state, const double learningRate) {
+void learn(const neural_network* network, const test_data data, const iteration_range range, learning_state* state, const double learningRate) {
     on_learn_start(network);
     set_gradient_buffers_to_zero(network, state->gradient_buffers);
 
@@ -193,7 +193,7 @@ void learn(const neural_network* network, const test_data data, const range rang
     apply_gradients(network, range, state, learningRate);
 }
 
-void learn_stateless(const neural_network* network, const test_data data, const range range, double learningRate) {
+void learn_stateless(const neural_network* network, const test_data data, const iteration_range range, double learningRate) {
     learning_state* state = alloc_state(network);
     learn(network, data, range, state, learningRate);
     free_state(network, state);

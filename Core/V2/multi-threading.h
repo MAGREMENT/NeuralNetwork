@@ -5,20 +5,25 @@
 #ifndef MULTI_THREADING_H
 #define MULTI_THREADING_H
 
-typedef struct parallel_range {
-    int from;
-    int to;
-} parallel_range;
+#include "Util/range.h"
 
 typedef struct parallel_range_data {
     void* params;
-    parallel_range range;
+    range range;
 } parallel_range_data;
 
-extern void* alloc_critical_section();
+typedef void thread_pool;
+
+extern void init_critical_section(void* section);
 extern void enter_critical_section(void* section);
 extern void exit_critical_section(void* section);
-extern void free_critical_section(void* section);
+extern void delete_critical_section(void* section);
+
+thread_pool* alloc_thread_pool(int threadCount);
+void free_thread_pool(thread_pool* pool);
+void add_job(thread_pool* pool, void(*func)(void*), void* params);
+
 extern void exec_range_parallel(unsigned long(* func)(void *), void* params, int total, int threadCount);
+extern void exec_range_parallel_th(void (*func)(void*), void* params, int total, thread_pool* pool);
 
 #endif //MULTI_THREADING_H

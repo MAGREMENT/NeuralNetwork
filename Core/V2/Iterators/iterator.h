@@ -1,11 +1,11 @@
 #ifndef ITERATOR_H
 #define ITERATOR_H
 
-typedef struct range {
+typedef struct iteration_range {
     int iteration;
     int from;
     int to;
-} range;
+} iteration_range;
 
 typedef struct range_iterator range_iterator;
 
@@ -14,7 +14,7 @@ struct range_iterator {
     int (*next)(range_iterator* self);
     void (*free)(range_iterator* self);
     void (*reset)(range_iterator* self);
-    range current;
+    iteration_range current;
 };
 
 extern void default_free_iterator(range_iterator *iterator);

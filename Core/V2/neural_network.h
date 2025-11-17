@@ -50,8 +50,8 @@ extern double** alloc_gradient_buffers(const neural_network* network, int initTo
 extern void free_buffers(const neural_network* network, double** buffers);
 
 extern void predict(const neural_network* network, const double* inputs, double* outputs);
-extern void learn(const neural_network* network, test_data data, range range, learning_state* state, double learningRate);
-extern void learn_stateless(const neural_network* network, test_data data, range range, double learningRate);
+extern void learn(const neural_network* network, test_data data, iteration_range range, learning_state* state, double learningRate);
+extern void learn_stateless(const neural_network* network, test_data data, iteration_range range, double learningRate);
 extern void iterative_learn(const neural_network* network, test_data data, learning_state* state, int iterations);
 extern void iterative_learn_stateless(const neural_network* network, test_data data, int iterations);
 
