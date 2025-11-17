@@ -24,6 +24,22 @@ inline void delete_critical_section(void* section) {
     DeleteCriticalSection(section);
 }
 
+typedef struct windows_job_group {
+    long counter;
+    HANDLE event;
+} windows_job_group;
+
+inline void init_job_group(job_group* g, const int count) {
+    windows_job_group* group = g;
+    group->counter = 0;
+    group->event = CreateEvent(NULL, FALSE, FALSE, NULL);
+}
+
+inline void delete_job_group(job_group* g) {
+    const windows_job_group* group = g;
+    CloseHandle(group->event);
+}
+
 enum thread_job_types {
     EXEC,
     STOP
@@ -33,6 +49,7 @@ typedef struct thread_job {
     int type;
     void (*func)(void *);
     void* params;
+    job_group* group;
 } thread_job;
 
 typedef struct windows_tp {
@@ -65,7 +82,14 @@ static unsigned long windows_tp_exec(void* params) {
     while (1) {
         const thread_job job = take_job(tp);
         if (job.type == STOP) break;
+
         job.func(job.params);
+        if (job.group != NULL) {
+            windows_job_group* group = job.group;
+            if (InterlockedDecrement(&group->counter) == 0) {
+                SetEvent(group->event);
+            }
+        }
     }
 
     return 0;
@@ -113,11 +137,11 @@ void free_thread_pool(thread_pool* pool) {
     free(w_pool);
 }
 
-void add_job(thread_pool* pool, void(*func)(void*), void* params) {
+void add_job(thread_pool* pool, void(*func)(void*), void* params, job_group* group) {
     const windows_tp* w_pool = pool;
 
     EnterCriticalSection(w_pool->cs);
-    const thread_job job = {EXEC, func, params};
+    const thread_job job = {EXEC, func, params, group};
     q_enq(w_pool->jobs, thread_job, job);
     LeaveCriticalSection(w_pool->cs);
 
@@ -154,10 +178,13 @@ void exec_range_parallel(unsigned long(* func)(void *), void* params, const int 
     free(data);
 }
 
-void exec_range_parallel_th(void (*func)(void*), void* params, int total, thread_pool* pool) {
-    windows_tp* w_pool = pool;
+void exec_range_parallel_th(void (*func)(void*), void* params, const int total, thread_pool* pool) {
+    const windows_tp* w_pool = pool;
     parallel_range_data* data = malloc(sizeof(parallel_range_data) * w_pool->count);
     range_split_iterator it = range_split(total, w_pool->count);
+
+    windows_job_group g;
+    init_job_group(&g, w_pool->count);
 
     for (int i = 0; i < w_pool->count; i++) {
         parallel_range_data* pd = data + i;
@@ -165,8 +192,11 @@ void exec_range_parallel_th(void (*func)(void*), void* params, int total, thread
         pd->params = params;
         pd->range = range_split_next(&it);
 
-        add_job(pool, func, pd);
+        add_job(pool, func, pd, &g);
     }
 
+    WaitForSingleObject(g.event, INFINITE);
+
+    delete_job_group(&g);
     free(data);
 }

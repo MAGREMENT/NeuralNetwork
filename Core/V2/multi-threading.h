@@ -13,15 +13,19 @@ typedef struct parallel_range_data {
 } parallel_range_data;
 
 typedef void thread_pool;
+typedef void job_group;
 
 extern void init_critical_section(void* section);
 extern void enter_critical_section(void* section);
 extern void exit_critical_section(void* section);
 extern void delete_critical_section(void* section);
 
+extern void init_job_group(job_group* g, int count);
+extern void delete_job_group(job_group* g);
+
 thread_pool* alloc_thread_pool(int threadCount);
 void free_thread_pool(thread_pool* pool);
-void add_job(thread_pool* pool, void(*func)(void*), void* params);
+void add_job(thread_pool* pool, void(*func)(void*), void* params, job_group* group);
 
 extern void exec_range_parallel(unsigned long(* func)(void *), void* params, int total, int threadCount);
 extern void exec_range_parallel_th(void (*func)(void*), void* params, int total, thread_pool* pool);
