@@ -101,12 +101,12 @@ static void softmax_backward(const layer* l, const double* inputs, const double*
 }
 
 layer_vtable store[] = {
-    {sigmoid_forward, NULL, sigmoid_backward, no_delta_to_gradients, default_layer_free},
-    {tanh_forward, NULL, tanh_backward, no_delta_to_gradients, default_layer_free},
-    {relu_forward, NULL, relu_backward, no_delta_to_gradients, default_layer_free},
-    {leaky_relu_forward, NULL, leaky_relu_backward, no_delta_to_gradients, default_layer_free},
-    {silu_forward, NULL, silu_backward, no_delta_to_gradients, default_layer_free},
-    {softmax_forward, NULL, softmax_backward, no_delta_to_gradients, default_layer_free}
+    {NULL, sigmoid_forward, NULL, sigmoid_backward, no_delta_to_gradients, default_layer_free},
+    {NULL, tanh_forward, NULL, tanh_backward, no_delta_to_gradients, default_layer_free},
+    {NULL, relu_forward, NULL, relu_backward, no_delta_to_gradients, default_layer_free},
+    {NULL, leaky_relu_forward, NULL, leaky_relu_backward, no_delta_to_gradients, default_layer_free},
+    {NULL, silu_forward, NULL, silu_backward, no_delta_to_gradients, default_layer_free},
+    {NULL, softmax_forward, NULL, softmax_backward, no_delta_to_gradients, default_layer_free}
 };
 
 layer* cnstr_activation_layer(const int type, const int outputCount) {

@@ -43,7 +43,15 @@ inline int get_out_count(const neural_network* network) {
     return network->layers[network->layerCount - 1]->out_count;
 }
 
+static void on_predict_start(const neural_network* network) {
+    for (int i = 0; i < network->layerCount; i++) {
+        const layer* l = network->layers[i];
+        if (l->vtable->on_predict_start != NULL) l->vtable->on_predict_start(l);
+    }
+}
+
 void predict(const neural_network* network, const double* inputs, double* outputs) {
+    on_predict_start(network);
     if (network->layerCount == 1) {
         network->layers[0]->vtable->forward(network->layers[0], inputs, outputs);
         return;

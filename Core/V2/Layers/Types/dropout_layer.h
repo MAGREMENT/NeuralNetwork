@@ -9,7 +9,7 @@
 
 enum dropout_types {
     INVERTED,
-    CLASSIC
+    CLASSIC //TODO
 };
 
 layer* cnstr_dropout_layer(int type, int outCount, double rate);

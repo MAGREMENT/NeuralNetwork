@@ -7,7 +7,7 @@
 #include <stddef.h>
 
 #define q_enq(q, c, d) shift_rear(q); ((c*)q->arr)[q->rear] = d
-#define q_deq(q, c) ((c*)shift_front(q))[0]
+#define q_deq(q, c) ((c*)shift_front(q))[q->front]
 
 typedef struct queue {
     void* arr;

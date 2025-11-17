@@ -42,14 +42,14 @@ void shift_rear(queue* queue) {
     if (is_full(queue)) {
         const int old_c = queue->capacity;
         queue->capacity *= 2;
-        void** buffer = malloc(queue->el_size * queue->capacity);
+        void* buffer = malloc(queue->el_size * queue->capacity);
 
         if (queue->rear >= queue->front) {
             memcpy(buffer, queue->arr, old_c * queue->el_size);
         } else {
             const int temp = old_c - queue->front;
-            memcpy(buffer, queue->arr + queue->front, temp * queue->el_size);
-            memcpy(buffer + temp, queue->arr, (queue->rear + 1) * queue->el_size);
+            memcpy(buffer, (char*)queue->arr + queue->front * queue->el_size, temp * queue->el_size);
+            memcpy((char*)buffer + temp * queue->el_size, queue->arr, (queue->rear + 1) * queue->el_size);
         }
 
         free(queue->arr);
@@ -66,5 +66,5 @@ void* shift_front(queue* queue) {
     if (queue->front == queue->capacity - 1) queue->front = 0;
     else queue->front++;
 
-    return queue->arr + queue->front;
+    return queue->arr;
 }

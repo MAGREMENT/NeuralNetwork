@@ -5,8 +5,6 @@
 #ifndef NEWIMPLEMENTATION_LAYER_H
 #define NEWIMPLEMENTATION_LAYER_H
 
-#include "../Optimizers/optimizer.h"
-
 enum layer_types {
     DENSE,
     ACTIVATION,
@@ -17,6 +15,7 @@ enum layer_types {
 typedef struct layer layer;
 
 typedef struct layer_vtable {
+    void (*on_predict_start)(const layer* l);
     void (*forward)(const layer* l, const double* inputs, double* outputs);
     void (*on_learn_start)(const layer* l);
     void (*backward)(const layer* l, const double* inputs, const double* deltas, double* outputs);

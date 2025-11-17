@@ -9,7 +9,6 @@
 #include "../../Util/rand_util.h"
 #include "../../Util/Collections/bitset.h"
 
-//TODO finish + take care of disabling dropout when inference
 typedef struct dropout_layer_data {
     double rate;
     int* bitset;
@@ -19,6 +18,11 @@ static void free_dropout_layer(layer* l) {
     const dropout_layer_data* d = l->data;
     free(d->bitset);
     default_layer_free(l);
+}
+
+static void on_dropout_predict_start(const layer* l) {
+    const dropout_layer_data* d = l->data;
+    full_set(d->bitset, l->out_count);
 }
 
 static void on_dropout_learn_start(const layer* l) {
@@ -35,7 +39,7 @@ static void inverted_dropout_pass(const layer* l, const double* inputs, double* 
     const double scale = 1.0 / (1.0 - d->rate);
 
     for (int i = 0; i < l->out_count; i++) {
-        outputs[i] = is_set(d->bitset, i) ? 0 : inputs[i] * scale;
+        outputs[i] = is_set(d->bitset, i) ? inputs[i] * scale : 0;
     }
 }
 
@@ -48,7 +52,7 @@ static void inverted_dropout_backward(const layer* l, const double* inputs, cons
 }
 
 layer_vtable dropout_vtables[] = {
-    {inverted_dropout_forward, on_dropout_learn_start, inverted_dropout_backward, no_delta_to_gradients, free_dropout_layer}
+    {on_dropout_predict_start, inverted_dropout_forward, on_dropout_learn_start, inverted_dropout_backward, no_delta_to_gradients, free_dropout_layer}
 };
 
 layer* cnstr_dropout_layer(const int type, const int outCount, const double rate) {

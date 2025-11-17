@@ -7,6 +7,7 @@
 
 extern int* alloc_bitset(int capacity);
 extern int is_set(const int* bitset, int index);
+extern void full_set(int* bitset, int capacity);
 extern void set(int* bitset, int index);
 extern void unset(int* bitset, int index);
 
