@@ -127,7 +127,7 @@ layer* cnstr_activation_layer(const int type, const int outputCount) {
 
 static void no_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {}
 
-layer_vtable softmax_bce_vtable = {softmax_forward, NULL, no_backward, no_delta_to_gradients, default_layer_free};
+layer_vtable softmax_bce_vtable = {NULL, softmax_forward, NULL, no_backward, no_delta_to_gradients, default_layer_free};
 
 layer* cnstr_softmax_bce_layer(const int outputCount) {
     layer* l = malloc(sizeof(layer));

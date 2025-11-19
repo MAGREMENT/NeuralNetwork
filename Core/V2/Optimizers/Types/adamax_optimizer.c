@@ -19,7 +19,10 @@ static void apply_gradients(const optimizer* opt, double* to, const double* grad
     for (int i = 0; i < count; i++) {
         const double grad = gradients[i];
         v1[i] = beta1 * v1[i] + (1 - beta1) * grad;
-        u2[i] = max(beta2 * u2[i], fabs(grad));
+
+        const double bu2 = beta2 * u2[i];
+        const double ag = fabs(grad);
+        u2[i] = bu2 > ag ? bu2 : ag;
 
         const double m = v1[i] / beta1t;
 

@@ -12,13 +12,13 @@
 queue* alloc_queue(const int initialCapacity, const size_t el_size) {
     assert(initialCapacity > 0);
 
-    queue* queue = malloc(sizeof(queue));
-    queue->capacity = initialCapacity;
-    queue->el_size = el_size;
-    queue->arr = malloc(initialCapacity * el_size);
-    queue->front = 0;
-    queue->rear = 0;
-    return queue;
+    queue* q = malloc(sizeof(queue));
+    q->capacity = initialCapacity;
+    q->el_size = el_size;
+    q->arr = malloc(initialCapacity * el_size);
+    q->front = 0;
+    q->rear = 0;
+    return q;
 }
 
 void free_queue(queue* queue) {
@@ -63,8 +63,9 @@ void shift_rear(queue* queue) {
 void* shift_front(queue* queue) {
     if (is_empty(queue)) return queue->arr;
 
+    void* before = (char*)queue->arr + queue->front * queue->el_size;
     if (queue->front == queue->capacity - 1) queue->front = 0;
     else queue->front++;
 
-    return queue->arr;
+    return before;
 }

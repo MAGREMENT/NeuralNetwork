@@ -91,6 +91,19 @@ inline void free_builder(builder* builder) {
     free(builder);
 }
 
+builder* from_yaml(const yaml_line* list, int count) {
+    return NULL; //TODO
+}
+
+void to_yaml(const builder* builder, list* list) {
+    int indentation = 0;
+
+    l_add(list, yaml_line, cnstr_yl(indentation, "builder", ""));
+    indentation++;
+
+    //TODO
+}
+
 inline void b_opt(builder* builder, const int type, const optimizer_cnstr_args args) {
     builder->optimizer = type;
     builder->opt_args = args;

@@ -5,6 +5,7 @@
 #ifndef BUILDER_H
 #define BUILDER_H
 
+#include "yaml.h"
 #include "DataSelector/data_selector_factory.h"
 #include "Optimizers/optimizer_factory.h"
 #include "Schedulers/scheduler_factory.h"
@@ -43,6 +44,9 @@ extern builder_params st_b_params();
 extern builder* alloc_builder(int inSize);
 extern builder* alloc_builder_3D(size3D inSize);
 extern void free_builder(builder* builder);
+
+builder* from_yaml(const yaml_line* list, int count);
+void to_yaml(const builder* builder, list* list);
 
 extern void b_opt(builder* builder, int type, optimizer_cnstr_args args);
 extern void b_sch(builder* builder, int type, scheduler_cnstr_args args);

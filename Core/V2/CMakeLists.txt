@@ -54,7 +54,11 @@ set(SOURCES
         Layers/Types/dropout_layer.c
         Util/Collections/bitset.c
         Util/Collections/queue.c
-        Util/range.c)
+        Util/range.c
+        yaml.c
+        tester.c
+        Util/console.c
+        Util/console.h)
 
 if(MSVC)
     message(STATUS "MVSC detected -> Enabling CUDA")

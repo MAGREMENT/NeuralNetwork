@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,6 +9,7 @@
 #include "i_o.h"
 #include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
+#include "tester.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
 #include "Layers/Types/pooling_layer.h"
@@ -15,6 +17,7 @@
 #include "Util/double_util.h"
 #include "Util/math_util.h"
 #include "Util/rand_util.h"
+#include "Util/Collections/queue.h"
 
 #ifdef _MSC_VER
 #include "Layers/Types/Cuda/cuda_dense_layer.cuh"
@@ -22,12 +25,12 @@
 
 void mnist_run();
 void unit_test();
-
-//TODO small test framework
+void unit_test2();
 
 int main(void) {
     //mnist_run();
-    unit_test();
+    //unit_test(); //TODO convert
+    unit_test2();
     return EXIT_SUCCESS;
 }
 
@@ -92,9 +95,43 @@ void mnist_run() {
 
     printf("Learning time : %f s", (double)(end - start) / CLOCKS_PER_SEC);
 
+    free_state(n, state);
     free_neural_network(n, 1);
     free(images);
     free(labels);
+}
+
+TEST(queue_test) {
+    queue* q = alloc_queue(3, sizeof(int));
+
+    ASSERT_M(is_empty(q), "Queue should be empty")
+    ASSERT_M(!is_full(q), "Queue should not be full")
+
+    q_enq(q, int, 1);
+
+    ASSERT_M(!is_empty(q), "Queue should not be empty")
+    ASSERT_M(!is_full(q), "Queue should not be full")
+
+    q_enq(q, int, 2);
+    int buffer = q_deq(q, int);
+
+    ASSERT_M(buffer == 1, "Buffer should be 1")
+    ASSERT_M(!is_empty(q), "Queue should not be empty")
+    ASSERT_M(!is_full(q), "Queue should not be full")
+
+    q_enq(q, int, 1);
+
+    ASSERT_M(!is_empty(q), "Queue should not be empty")
+    ASSERT_M(!is_full(q), "Queue should not be full")
+
+    TEARDOWN
+    free_queue(q);
+}
+
+void unit_test2() {
+    CONTEXT
+    ADD_TEST(queue_test);
+    RUN
 }
 
 void save_test() {
