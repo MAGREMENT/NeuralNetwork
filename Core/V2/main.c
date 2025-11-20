@@ -7,6 +7,7 @@
 
 #include "builder.h"
 #include "i_o.h"
+#include "multi-threading.h"
 #include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
 #include "tester.h"
@@ -119,22 +120,42 @@ TEST(queue_test) {
     ASSERT_M(!is_empty(q), "Queue should not be empty")
     ASSERT_M(!is_full(q), "Queue should not be full")
 
-    q_enq(q, int, 1);
+    q_enq(q, int, 3);
 
     ASSERT_M(!is_empty(q), "Queue should not be empty")
     ASSERT_M(!is_full(q), "Queue should not be full")
+
+    q_enq(q, int, 4);
+
+    ASSERT_M(!is_empty(q), "Queue should not be empty")
+    ASSERT_M(is_full(q), "Queue should be full")
+
+    q_enq(q, int, 5);
+
+    ASSERT_M(!is_empty(q), "Queue should not be empty")
+    ASSERT_M(!is_full(q), "Queue should not be full")
+
+    buffer = q_deq(q, int);
+
+    ASSERT_M(buffer == 2, "Buffer should be 2")
+
+    buffer = q_deq(q, int);
+
+    ASSERT_M(buffer == 3, "Buffer should be 3")
+
+    buffer = q_deq(q, int);
+
+    ASSERT_M(buffer == 4, "Buffer should be 4")
+
+    buffer = q_deq(q, int);
+
+    ASSERT_M(buffer == 5, "Buffer should be 5")
 
     TEARDOWN
     free_queue(q);
 }
 
-void unit_test2() {
-    CONTEXT
-    ADD_TEST(queue_test);
-    RUN
-}
-
-void save_test() {
+TEST(save_test) {
     builder* b = alloc_builder(4);
     b_dense(b, 4);
     b_activation(b, SIGMOID);
@@ -164,38 +185,71 @@ void save_test() {
     const double a1 = get_classification_accuracy(n, test);
 
     const char file[] = "save_test.nn";
-    if (!save_parameters(n, file)) {
-        printf("Failed to save test parameters\n");
-        goto free;
-    }
+    ASSERT_M(save_parameters(n, file), "Failed to save test parameters")
 
     set_all_weights_and_biases(n->layers[0], 10, 10);
     set_all_weights_and_biases(n->layers[2], 10, 10);
 
-    if (!restore_parameters(n, file)) {
-        printf("Failed to restore parameters\n");
-        goto free;
-    }
+    ASSERT_M(restore_parameters(n, file), "Failed to restore parameters")
 
     const double c2 = get_avg_cost(n, test);
     const double a2 = get_classification_accuracy(n, test);
 
-    if (!def_deq(c1, c2)) {
-        printf("Wrong cost\n");
-        goto free;
-    }
+    ASSERT_M(def_deq(c1, c2), "Wrong cost")
+    ASSERT_M(def_deq(a1, a2), "Wrong accuracy")
 
-    if (!def_deq(a1, a2)) {
-        printf("Wrong accuracy\n");
-        goto free;
-    }
-
-    printf("Save test OK!\n");
-
-    free :
-
+    TEARDOWN
     remove(file);
     free_neural_network(n, 1);
+}
+
+typedef struct arr_tp_test{
+    const int* arr;
+    int* result;
+    int n;
+} arr_tp_test;
+
+void copy_arr_tp_test(void* params) {
+    arr_tp_test* arr = params;
+    arr->result[arr->n] = arr->arr[arr->n];
+}
+
+TEST(threadpool_test) {
+    thread_pool* tp = alloc_thread_pool(4);
+    job_group* group = alloc_job_group(6);
+
+    const int n[] = {1, 2, 3, 4, 5, 6};
+    int r[6];
+    arr_tp_test arrs[] = {
+        {n, r, 0},
+        {n, r, 1},
+        {n, r, 2},
+        {n, r, 3},
+        {n, r, 4},
+        {n, r, 5},
+    };
+
+    for (int i = 0; i < 6; i++) {
+        add_job(tp, copy_arr_tp_test, arrs + i, group);
+    }
+
+    wait_for_group(group);
+
+    for (int i = 0; i < 6; i++) {
+        ASSERT_M(n[i] == r[i], "Wrong result");
+    }
+
+    TEARDOWN
+    free_thread_pool(tp);
+    free_job_group(group);
+}
+
+void unit_test2() {
+    CONTEXT
+    ADD_TEST(queue_test);
+    ADD_TEST(save_test);
+    ADD_TEST(threadpool_test);
+    RUN
 }
 
 void generate_binary_inputs_tests() {
@@ -885,7 +939,6 @@ void conv_layer_forward_test() {
 }
 
 void unit_test() {
-    save_test();
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);

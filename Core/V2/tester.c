@@ -22,8 +22,8 @@ void run_tests(test_context* context) {
         c.func(context);
 
         char* result = context->results[context->curr];
-        if (result == NULL) printf("\033[32mOK !\033[0m");
-        else printf("\033[31mFAIL ! %s\033[0m", result);
+        if (result == NULL) printf("\033[32mOK !\033[0m\n");
+        else printf("\033[31mFAIL ! %s\033[0m\n", result);
     }
 
     free(context->results);

@@ -12,16 +12,17 @@ typedef struct parallel_range_data {
     range range;
 } parallel_range_data;
 
-typedef void thread_pool;
-typedef void job_group;
+typedef struct job_group job_group;
+typedef struct thread_pool thread_pool;
 
 extern void init_critical_section(void* section);
 extern void enter_critical_section(void* section);
 extern void exit_critical_section(void* section);
 extern void delete_critical_section(void* section);
 
-extern void init_job_group(job_group* g, int count);
-extern void delete_job_group(job_group* g);
+extern job_group* alloc_job_group(int count);
+extern void free_job_group(job_group* g);
+extern void wait_for_group(job_group* g);
 
 thread_pool* alloc_thread_pool(int threadCount);
 void free_thread_pool(thread_pool* pool);
