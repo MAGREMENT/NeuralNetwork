@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 layer* cnstr_cuda_dense_layer(int inputCount, int outputCount, int threads, void (*initialize)(const layer* l));
+extern void on_parameters_change(layer* l);
 
 #ifdef __cplusplus
 }

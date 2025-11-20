@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../multi-threading.h"
+
 #include "../../Util/rand_util.h"
 
 static double* get_biases(const layer* l) {
@@ -62,6 +62,11 @@ static void mt_dense_forward(const layer* l, const double* inputs, double* outpu
     exec_range_parallel(async_dense_forward, &pdfp, l->out_count, threadCount);
 }
 
+static void wmt_dense_forward(const layer* l, const double* inputs, double* outputs) {
+    parallel_dense_forward_params pdfp = (parallel_dense_forward_params) {l, inputs, outputs};
+    exec_range_parallel_worker(async_dense_forward, &pdfp, l->out_count, l->data);
+}
+
 static void dense_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
     for(int i = 0; i < l->in_count; i++) {
         double value = 0;
@@ -105,6 +110,11 @@ static void mt_dense_backward(const layer* l, const double* inputs, const double
     exec_range_parallel(async_dense_backward, &pdfp, l->in_count, threadCount);
 }
 
+static void wmt_dense_backward(const layer* l, const double* inputs, const double* deltas, double* outputs) {
+    parallel_dense_backward_params pdfp = (parallel_dense_backward_params) {l, deltas, outputs};
+    exec_range_parallel_worker(async_dense_backward, &pdfp, l->in_count, l->data);
+}
+
 static void dense_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
     for(int o = 0; o < l->out_count; o++) {
         for (int i = 0; i < l->in_count; i++) {
@@ -144,12 +154,16 @@ static void mt_dense_delta_to_gradients(const layer* l, const double* inputs, co
     exec_range_parallel(async_dense_delta_to_gradients, &pdfp, l->out_count, threadCount);
 }
 
-layer_vtable dense_vtable = {NULL, dense_forward, NULL, dense_backward, dense_delta_to_gradients, default_layer_free};
+static void wmt_dense_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients) {
+    parallel_dense_dtg_params pdfp = (parallel_dense_dtg_params) {l, inputs, deltas, gradients};
+    exec_range_parallel_worker(async_dense_delta_to_gradients, &pdfp, l->out_count, l->data);
+}
 
-layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
+layer_vtable dense_vtable = {NULL, dense_forward, NULL, dense_backward, dense_delta_to_gradients, empty_layer_free};
+
+static layer* cnstr_base_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l), layer_vtable* vtable) {
     layer* l = malloc(sizeof(layer));
 
-    l->data = NULL;
     l->in_count = inputCount;
     l->out_count = outputCount;
 
@@ -157,29 +171,33 @@ layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*ini
     l->parameters = malloc(sizeof(double) * l->parameters_count);
 
     l->initialize = initialize;
-    l->vtable = &dense_vtable;
+    l->vtable = vtable;
 
+    return l;
+}
+
+layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l)) {
+    layer* l = cnstr_base_dense_layer(inputCount, outputCount, initialize, &dense_vtable);
+    l->data = NULL;
     return l;
 }
 
 layer_vtable mt_dense_vtable = {NULL, mt_dense_forward, NULL, mt_dense_backward, mt_dense_delta_to_gradients, default_layer_free};
 
 layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, const int thread_count, void (*initialize)(const layer* l)) {
-    layer* l = malloc(sizeof(layer));
+    layer* l = cnstr_base_dense_layer(inputCount, outputCount, initialize, &mt_dense_vtable);
     int* tc = malloc(sizeof(int));
     *tc = thread_count;
 
     l->data = tc;
+    return l;
+}
 
-    l->in_count = inputCount;
-    l->out_count = outputCount;
+layer_vtable wmt_dense_vtable = {NULL, wmt_dense_forward, NULL, wmt_dense_backward, wmt_dense_delta_to_gradients, empty_layer_free};
 
-    l->parameters_count = inputCount * outputCount + outputCount;
-    l->parameters = malloc(sizeof(double) * l->parameters_count);
-
-    l->initialize = initialize;
-    l->vtable = &mt_dense_vtable;
-
+layer* cnstr_worker_multi_thread_dense_layer(const int inputCount, const int outputCount, worker_context* context, void (*initialize)(const layer* l)) {
+    layer* l = cnstr_base_dense_layer(inputCount, outputCount, initialize, &wmt_dense_vtable);
+    l->data = context;
     return l;
 }
 

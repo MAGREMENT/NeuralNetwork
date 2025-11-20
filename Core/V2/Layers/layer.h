@@ -37,7 +37,9 @@ struct layer {
 };
 
 extern void no_initialization(const layer* l);
+
 extern void default_layer_free(layer* l);
+extern void empty_layer_free(layer* l);
 
 extern void no_delta_to_gradients(const layer* l, const double* inputs, const double* deltas, double* gradients);
 

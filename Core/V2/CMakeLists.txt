@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 set(CMAKE_C_STANDARD 23)
 
-option (FOR_DEVELOPMENT "For development" ON)
+option (FOR_DEVELOPMENT "For development" OFF)
 
 project(NewImplementation C)
 
@@ -57,8 +57,7 @@ set(SOURCES
         Util/range.c
         yaml.c
         tester.c
-        Util/console.c
-        Util/console.h)
+        Util/console.c)
 
 if(MSVC)
     message(STATUS "MVSC detected -> Enabling CUDA")

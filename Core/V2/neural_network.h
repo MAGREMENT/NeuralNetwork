@@ -26,6 +26,10 @@ typedef struct learning_state {
     double** iv_buffers;
 } learning_state;
 
+typedef struct neural_network_vtable {
+    void (*free_params) (neural_network*);
+} neural_network_vtable;
+
 typedef struct neural_network {
     int layerCount;
     layer** layers;
@@ -38,6 +42,9 @@ typedef struct neural_network {
     data_selector* data_selector;
 
     cost_vtable* cost_vtable;
+
+    void* params;
+    neural_network_vtable* vtable;
 } neural_network;
 
 extern neural_network* alloc_neural_network(int layerCount);

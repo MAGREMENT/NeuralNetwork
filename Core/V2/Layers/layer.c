@@ -8,6 +8,12 @@
 
 inline void no_initialization(const layer* l) {}
 
+inline void empty_layer_free(layer* l) {
+    free(l->parameters);
+    free(l);
+}
+
+
 inline void default_layer_free(layer* l) {
     free(l->data);
     free(l->parameters);

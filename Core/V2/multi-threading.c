@@ -40,6 +40,11 @@ inline void free_job_group(job_group* g) {
     free(g);
 }
 
+inline void reset_group(job_group* g, const int count) {
+    //No need to reset the event Handle, since it's in auto-reset mode
+    g->counter = count;
+}
+
 inline void wait_for_group(job_group* g) {
     WaitForSingleObject(g->event, INFINITE);
 }
@@ -51,7 +56,7 @@ enum thread_job_types {
 
 typedef struct thread_job {
     int type;
-    void (*func)(void *);
+    unsigned long (*func)(void*);
     void* params;
     job_group* group;
 } thread_job;
@@ -80,7 +85,7 @@ static thread_job take_job(thread_pool* pool) {
 }
 
 static unsigned long exec(void* params) {
-    const thread_pool* tp = params;
+    thread_pool* tp = params;
     while (1) {
         const thread_job job = take_job(tp);
         if (job.type == STOP) break;
@@ -102,6 +107,7 @@ thread_pool* alloc_thread_pool(const int threadCount) {
     pool->jobs = alloc_queue(threadCount, sizeof(thread_job));
     pool->threads = malloc(sizeof(HANDLE) * threadCount);
     pool->count = threadCount;
+    pool->stopping = 0;
 
     InitializeCriticalSection(&pool->cs);
     InitializeConditionVariable(&pool->cv);
@@ -136,7 +142,7 @@ void free_thread_pool(thread_pool* pool) {
     free(pool);
 }
 
-void add_job(thread_pool* pool, void(*func)(void*), void* params, job_group* group) {
+void add_job(thread_pool* pool, unsigned long (*func)(void*), void* params, job_group* group) {
     EnterCriticalSection(&pool->cs);
     const thread_job job = {EXEC, func, params, group};
     q_enq(pool->jobs, thread_job, job);
@@ -175,24 +181,21 @@ void exec_range_parallel(unsigned long(* func)(void *), void* params, const int 
     free(data);
 }
 
-void exec_range_parallel_th(void (*func)(void*), void* params, const int total, thread_pool* pool) {
-    const thread_pool* w_pool = pool;
-    parallel_range_data* data = malloc(sizeof(parallel_range_data) * w_pool->count);
-    range_split_iterator it = range_split(total, w_pool->count);
+void exec_range_parallel_worker(unsigned long (*func)(void*), void* params, const int total, const worker_context* context) {
+    parallel_range_data* data = malloc(sizeof(parallel_range_data) * context->pool->count);
+    range_split_iterator it = range_split(total, context->pool->count);
 
-    job_group* g = alloc_job_group(w_pool->count);
+    reset_group(context->group, context->pool->count);
 
-    for (int i = 0; i < w_pool->count; i++) {
+    for (int i = 0; i < context->pool->count; i++) {
         parallel_range_data* pd = data + i;
 
         pd->params = params;
         pd->range = range_split_next(&it);
 
-        add_job(pool, func, pd, g);
+        add_job(context->pool, func, pd, context->group);
     }
 
-    WaitForSingleObject(g->event, INFINITE);
-
-    free_job_group(g);
+    WaitForSingleObject(context->group->event, INFINITE);
     free(data);
 }

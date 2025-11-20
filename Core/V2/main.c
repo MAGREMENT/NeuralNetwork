@@ -30,8 +30,8 @@ void unit_test2();
 
 int main(void) {
     //mnist_run();
-    //unit_test(); //TODO convert
-    unit_test2();
+    unit_test(); //TODO convert
+    //unit_test2();
     return EXIT_SUCCESS;
 }
 
@@ -86,7 +86,7 @@ void mnist_run() {
 
     clock_t start = clock();
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         iterative_learn(n, training, state, 1);
         printf("Iteration %d : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n", i + 1,
         get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
@@ -209,9 +209,10 @@ typedef struct arr_tp_test{
     int n;
 } arr_tp_test;
 
-void copy_arr_tp_test(void* params) {
+unsigned long copy_arr_tp_test(void* params) {
     arr_tp_test* arr = params;
     arr->result[arr->n] = arr->arr[arr->n];
+    return 0;
 }
 
 TEST(threadpool_test) {
@@ -635,8 +636,9 @@ void mt_dense_test(const int count, const int verbose) {
     double* in = malloc(inCount * sizeof(double));
     double* out1 = malloc(outCount * sizeof(double));
     double* out2 = malloc(outCount * sizeof(double));
-#ifdef _MSC_VER
     double* out3 = malloc(outCount * sizeof(double));
+#ifdef _MSC_VER
+    double* out4 = malloc(outCount * sizeof(double));
 #endif
 
     double* grads1 = malloc((inCount * outCount + outCount) * sizeof(double));
@@ -649,8 +651,12 @@ void mt_dense_test(const int count, const int verbose) {
     layer* single = cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero);
     layer* multi = cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero);
 
+    worker_context wc = (worker_context) {alloc_thread_pool(8), alloc_job_group(8)};
+    layer* wmt = cnstr_worker_multi_thread_dense_layer(inCount, outCount, &wc, initialize_dense_to_zero);
+
     clock_t singleTime = 0;
     clock_t multiTime = 0;
+    clock_t wmtTime = 0;
 
 #ifdef _MSC_VER
     layer* cuda = cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero);
@@ -662,6 +668,7 @@ void mt_dense_test(const int count, const int verbose) {
             const double d = rand_d(-5, 5);
             single->parameters[i] = d;
             multi->parameters[i] = d;
+            wmt->parameters[i] = d;
 #ifdef _MSC_VER
             cuda->parameters[i] = d;
 #endif
@@ -671,10 +678,15 @@ void mt_dense_test(const int count, const int verbose) {
             const double d = rand_d(-5, 5);
             single->parameters[inCount * outCount + i] = d;
             multi->parameters[inCount * outCount + i] = d;
+            wmt->parameters[inCount * outCount + i] = d;
 #ifdef _MSC_VER
             cuda->parameters[inCount * outCount + i] = d;
 #endif
         }
+
+#ifdef _MSC_VER
+        on_parameters_change(cuda);
+#endif
 
         clock_t s = clock();
         single->vtable->forward(single, in, out1);
@@ -688,9 +700,15 @@ void mt_dense_test(const int count, const int verbose) {
 
         multiTime += e - s;
 
+        s = clock();
+        wmt->vtable->forward(wmt, in, out3);
+        e = clock();
+
+        wmtTime += e - s;
+
 #ifdef _MSC_VER
         s = clock();
-        cuda->vtable->forward(cuda, in, out3);
+        cuda->vtable->forward(cuda, in, out4);
         e = clock();
 
         cudaTime += e - s;
@@ -703,9 +721,16 @@ void mt_dense_test(const int count, const int verbose) {
             }
         }
 
-#ifdef _MSC_VER
         for (int i = 0; i < outCount; i++) {
             if (!def_deq(out1[i], out3[i])) {
+                printf("Not same forward value\n");
+                goto free;
+            }
+        }
+
+#ifdef _MSC_VER
+        for (int i = 0; i < outCount; i++) {
+            if (!def_deq(out1[i], out4[i])) {
                 printf("Not same forward value\n");
                 goto free;
             }
@@ -738,6 +763,7 @@ void mt_dense_test(const int count, const int verbose) {
     if (verbose) {
         printf("Single thread time : %f s\n", (double)singleTime / CLOCKS_PER_SEC);
         printf("Multi thread time : %f s\n", (double)multiTime / CLOCKS_PER_SEC);
+        printf("Worker multi thread time : %f s\n", (double)wmtTime / CLOCKS_PER_SEC);
 #ifdef _MSC_VER
         printf("GPU time : %f s\n", (double)cudaTime / CLOCKS_PER_SEC);
 #endif
@@ -942,9 +968,9 @@ void unit_test() {
     generate_binary_inputs_tests();
     pooling_layer_test();
     optimizer_test(1, 0);
-    binary_sum_learn_test(1);
+    binary_sum_learn_test(0);
     build_test();
-    mt_dense_test(1000, 0);
+    mt_dense_test(1000, 1);
     dense_test();
     predict_test();
     conv_layer_forward_test();

@@ -51,7 +51,7 @@ typedef struct builder_element {
 
 builder_params def_b_params() {
     return (builder_params) {
-        250 * 250,
+        100 * 100,
         4,
         500 * 500,
         256
@@ -185,6 +185,15 @@ static int get_total_size(const size3D size) {
     return total;
 }
 
+static void free_wc_params(neural_network* n) {
+    worker_context* wc = n->params;
+    free_thread_pool(wc->pool);
+    free_job_group(wc->group);
+    free(wc);
+}
+
+neural_network_vtable wc_table = {free_wc_params};
+
 neural_network* build(const builder* builder, const builder_params params) {
     if (builder->in_size.width <= 0) return NULL;
 
@@ -200,6 +209,8 @@ neural_network* build(const builder* builder, const builder_params params) {
     int softmax_bce_optimization = 0;
     int in;
     void (*initialize)(const layer*);
+
+    worker_context* context = NULL;
 
     size3D inSize = builder->in_size;
     for (int i = 0; i < builder->list->count; i++) {
@@ -220,8 +231,17 @@ neural_network* build(const builder* builder, const builder_params params) {
                 }
 #endif
 
-                if (operationCount >= params.dense_mt_threshold)
-                    n->layers[i] = cnstr_multi_thread_dense_layer(in, de.out_count, params.mt_t_count, initialize);
+                if (operationCount >= params.dense_mt_threshold) {
+                    if (context == NULL) {
+                        context = malloc(sizeof(worker_context));
+                        context->pool = alloc_thread_pool(params.mt_t_count);
+                        context->group = alloc_job_group(params.mt_t_count);
+
+                        n->params = context;
+                        n->vtable = &wc_table;
+                    }
+                    n->layers[i] = cnstr_worker_multi_thread_dense_layer(in, de.out_count, context, initialize);
+                }
                 else n->layers[i] = cnstr_dense_layer(in, de.out_count, initialize);
 
                 d_end :

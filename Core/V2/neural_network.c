@@ -12,11 +12,22 @@
 #include "Util/double_util.h"
 #include "Util/rand_util.h"
 
+static void base_free_params(neural_network* n) {}
+
+neural_network_vtable base_table = {base_free_params};
+
 neural_network* alloc_neural_network(const int layerCount) {
     neural_network* result = malloc(sizeof(neural_network));
+
     result->layerCount = layerCount;
     result->layers = malloc(layerCount * sizeof(layer*));
+
     result->optimizer = NULL;
+    result->scheduler = NULL;
+    result->data_selector = NULL;
+
+    result->params = NULL;
+    result->vtable = &base_table;
 
     return result;
 }
@@ -29,9 +40,12 @@ void free_neural_network(neural_network* network, const int freeConstructed) {
         }
 
         free(network->optimizer);
+        free(network->scheduler);
+        free(network->data_selector);
     }
 
     free(network->layers);
+    network->vtable->free_params(network);
     free(network);
 }
 
