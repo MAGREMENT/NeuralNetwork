@@ -29,8 +29,8 @@ void unit_test();
 void unit_test2();
 
 int main(void) {
-    //mnist_run();
-    unit_test(); //TODO convert
+    mnist_run();
+    //unit_test(); //TODO convert
     //unit_test2();
     return EXIT_SUCCESS;
 }
@@ -633,157 +633,146 @@ void mt_dense_test(const int count, const int verbose) {
     const int inCount = count;
     const int outCount = count;
 
-    double* in = malloc(inCount * sizeof(double));
-    double* out1 = malloc(outCount * sizeof(double));
-    double* out2 = malloc(outCount * sizeof(double));
-    double* out3 = malloc(outCount * sizeof(double));
+    worker_context wc = (worker_context) {alloc_thread_pool(8), alloc_job_group(8)};
+    layer* layers[] = {
+        cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero),
+        cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero),
+        cnstr_worker_multi_thread_dense_layer(inCount, outCount, &wc, initialize_dense_to_zero),
 #ifdef _MSC_VER
-    double* out4 = malloc(outCount * sizeof(double));
+        cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero)
 #endif
+    };
 
-    double* grads1 = malloc((inCount * outCount + outCount) * sizeof(double));
-    double* grads2 = malloc((inCount * outCount + outCount) * sizeof(double));
+    const int layerCount = sizeof(layers) / sizeof(layer*);
+    const int operations = 3;
+
+    double* in = malloc(inCount * sizeof(double));
+    double** outs = malloc(layerCount * sizeof(double*));
+    double** grads = malloc(layerCount * sizeof(double*));
+    clock_t* times = malloc(layerCount * operations * sizeof(clock_t));
+
+    for (int i = 0; i < layerCount; i++) {
+        outs[i] = malloc(outCount * sizeof(double));
+        grads[i] = malloc(layers[i]->parameters_count * sizeof(double));
+        for (int j = 0; j < operations; j++) {
+            times[i * operations + j] = 0;
+        }
+    }
 
     for (int i = 0; i < inCount; i++) {
         in[i] = rand_d(-5, 5);
     }
 
-    layer* single = cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero);
-    layer* multi = cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero);
-
-    worker_context wc = (worker_context) {alloc_thread_pool(8), alloc_job_group(8)};
-    layer* wmt = cnstr_worker_multi_thread_dense_layer(inCount, outCount, &wc, initialize_dense_to_zero);
-
-    clock_t singleTime = 0;
-    clock_t multiTime = 0;
-    clock_t wmtTime = 0;
-
-#ifdef _MSC_VER
-    layer* cuda = cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero);
-    clock_t cudaTime = 0;
-#endif
+    clock_t s, e;
 
     for (int iteration = 0; iteration < 5; iteration++) {
         for (int i = 0; i < inCount * outCount; i++) {
             const double d = rand_d(-5, 5);
-            single->parameters[i] = d;
-            multi->parameters[i] = d;
-            wmt->parameters[i] = d;
-#ifdef _MSC_VER
-            cuda->parameters[i] = d;
-#endif
+            for (int j = 0; j < layerCount; j++) {
+                layers[j]->parameters[i] = d;
+            }
         }
 
         for (int i = 0; i < outCount; i++) {
             const double d = rand_d(-5, 5);
-            single->parameters[inCount * outCount + i] = d;
-            multi->parameters[inCount * outCount + i] = d;
-            wmt->parameters[inCount * outCount + i] = d;
-#ifdef _MSC_VER
-            cuda->parameters[inCount * outCount + i] = d;
-#endif
-        }
-
-#ifdef _MSC_VER
-        on_parameters_change(cuda);
-#endif
-
-        clock_t s = clock();
-        single->vtable->forward(single, in, out1);
-        clock_t e = clock();
-
-        singleTime += e - s;
-
-        s = clock();
-        multi->vtable->forward(multi, in, out2);
-        e = clock();
-
-        multiTime += e - s;
-
-        s = clock();
-        wmt->vtable->forward(wmt, in, out3);
-        e = clock();
-
-        wmtTime += e - s;
-
-#ifdef _MSC_VER
-        s = clock();
-        cuda->vtable->forward(cuda, in, out4);
-        e = clock();
-
-        cudaTime += e - s;
-#endif
-
-        for (int i = 0; i < outCount; i++) {
-            if (!def_deq(out1[i], out2[i])) {
-                printf("Not same forward value\n");
-                goto free;
-            }
-        }
-
-        for (int i = 0; i < outCount; i++) {
-            if (!def_deq(out1[i], out3[i])) {
-                printf("Not same forward value\n");
-                goto free;
+            for (int j = 0; j < layerCount; j++) {
+                layers[j]->parameters[inCount * outCount + i] = d;
             }
         }
 
 #ifdef _MSC_VER
-        for (int i = 0; i < outCount; i++) {
-            if (!def_deq(out1[i], out4[i])) {
-                printf("Not same forward value\n");
-                goto free;
-            }
+        for (int j = 0; j < layerCount; j++) {
+            if (layers[j]->vtable->on_parameters_change != NULL) layers[j]->vtable->on_parameters_change(layers[j]);
         }
 #endif
 
-        single->vtable->backward(single, NULL, in, out1);
+        int op = 0;
 
-        multi->vtable->backward(multi, NULL, in, out2);
+        for (int j = 0; j < layerCount; j++) {
+            const layer* l = layers[j];
+            s = clock();
+            l->vtable->forward(l, in, outs[j]);
+            e = clock();
+            times[j * operations + op] = e - s;
+        }
 
-        for (int i = 0; i < inCount; i++) {
-            if (!def_deq(out1[i], out2[i])) {
-                printf("Not same backward value\n");
-                goto free;
+        for (int j = 1; j < layerCount; j++) {
+            for (int i = 0; i < outCount; i++) {
+                if (!def_deq(outs[0][i], outs[j][i])) {
+                    printf("Not same forward value\n");
+                    goto free;
+                }
             }
         }
 
-        single->vtable->deltas_to_gradients(single, in, out1, grads1);
+        op++;
 
-        multi->vtable->deltas_to_gradients(multi, in, out1, grads2);
+        for (int j = 0; j < layerCount; j++) {
+            const layer* l = layers[j];
+            s = clock();
+            l->vtable->backward(l, NULL, in, outs[j]);
+            e = clock();
+            times[j * operations + op] = e - s;
+        }
 
-        for (int i = 0; i < inCount * outCount + outCount; i++) {
-            if (!def_deq(grads1[i], grads2[i])) {
-                printf("Not same dtg value\n");
-                goto free;
+        for (int j = 1; j < layerCount; j++) {
+            for (int i = 0; i < outCount; i++) {
+                if (!def_deq(outs[0][i], outs[j][i])) {
+                    printf("Not same backward value\n");
+                    goto free;
+                }
+            }
+        }
+
+        op++;
+
+        for (int j = 0; j < layerCount; j++) {
+            const layer* l = layers[j];
+            s = clock();
+            l->vtable->deltas_to_gradients(l, in, outs[j], grads[j]);
+            e = clock();
+            times[j * operations + op] = e - s;
+        }
+
+        for (int j = 1; j < layerCount; j++) {
+            for (int i = 0; i < outCount; i++) {
+                if (!def_deq(grads[0][i], grads[j][i])) {
+                    printf("Not same dtg value\n");
+                    goto free;
+                }
             }
         }
     }
 
     if (verbose) {
-        printf("Single thread time : %f s\n", (double)singleTime / CLOCKS_PER_SEC);
-        printf("Multi thread time : %f s\n", (double)multiTime / CLOCKS_PER_SEC);
-        printf("Worker multi thread time : %f s\n", (double)wmtTime / CLOCKS_PER_SEC);
-#ifdef _MSC_VER
-        printf("GPU time : %f s\n", (double)cudaTime / CLOCKS_PER_SEC);
-#endif
+        const char* opNames[] = {"Forward", "Backward", "DTG"};
+        const char* layerNames[] = {"Single-Thread", "Multi-Thread", "Worker", "GPU"};
+        for (int op = 0; op < operations; op++) {
+            printf("%s\n", opNames[op]);
+            for (int j = 0; j < layerCount; j++) {
+                printf("%s time : %f s\n", layerNames[j], (double)times[j * operations + op] / CLOCKS_PER_SEC);
+            }
+            printf("\n\n");
+        }
     }
 
     printf("multi-thread dense layer test OK!\n");
 
     free:
 
-    free(single);
-    free(multi);
-#ifdef _MSC_VER
-    free(cuda);
-    free(out3);
-#endif
+
+    free_thread_pool(wc.pool);
+    free_job_group(wc.group);
     free(in);
-    free(out1);
-    free(out2);
-    free(grads1);
-    free(grads2);
+    for (int j = 0; j < layerCount; j++) {
+        layers[j]->vtable->free(layers[j]);
+        free(outs[j]);
+        free(grads[j]);
+    }
+
+    free(times);
+    free(outs);
+    free(grads);
 }
 
 void dense_test() {
@@ -970,7 +959,7 @@ void unit_test() {
     optimizer_test(1, 0);
     binary_sum_learn_test(0);
     build_test();
-    mt_dense_test(1000, 1);
+    mt_dense_test(10000, 1);
     dense_test();
     predict_test();
     conv_layer_forward_test();

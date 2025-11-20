@@ -39,7 +39,7 @@ __global__ void kernel_dense_backward(const double *d, const double *p, double *
 
         for(int o = 0; o < out_count; o++) {
             const double w = p[i * out_count + o];
-            v += d[0] * w;
+            v += d[o] * w;
         }
 
         in[i] = v;
@@ -111,7 +111,8 @@ static void free_cuda_dense_layer(layer* l) {
     free(l);
 }
 
-layer_vtable cuda_dense_vtable = {NULL, cuda_dense_forward, NULL, cuda_dense_backward, cuda_dense_delta_to_gradients, free_cuda_dense_layer};
+layer_vtable cuda_dense_vtable = {NULL, cuda_dense_forward, NULL, cuda_dense_backward, cuda_dense_delta_to_gradients,
+    on_parameters_change, free_cuda_dense_layer};
 
 layer* cnstr_cuda_dense_layer(const int inputCount, const int outputCount, const int threads, void (*initialize)(const layer* l)) {
     const auto l = (layer*)malloc(sizeof(layer));

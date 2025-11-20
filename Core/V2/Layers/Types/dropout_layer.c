@@ -52,7 +52,7 @@ static void inverted_dropout_backward(const layer* l, const double* inputs, cons
 }
 
 layer_vtable dropout_vtables[] = {
-    {on_dropout_predict_start, inverted_dropout_forward, on_dropout_learn_start, inverted_dropout_backward, no_delta_to_gradients, free_dropout_layer}
+    {on_dropout_predict_start, inverted_dropout_forward, on_dropout_learn_start, inverted_dropout_backward, no_delta_to_gradients, NULL, free_dropout_layer}
 };
 
 layer* cnstr_dropout_layer(const int type, const int outCount, const double rate) {
