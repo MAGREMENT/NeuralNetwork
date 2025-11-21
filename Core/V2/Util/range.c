@@ -13,7 +13,7 @@ inline range range_split_next(range_split_iterator* iterator) {
 
     iterator->curr += iterator->per;
     if (iterator->add > 0) {
-        iterator->per++;
+        iterator->curr++;
         iterator->add--;
     }
 

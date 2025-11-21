@@ -54,7 +54,7 @@ void mnist_run() {
     fclose(oFile);
 
     test_data original = {images, labels, count};
-    builder* b = alloc_builder(784);
+    builder* b = alloc_builder_3D((size3D){28, 28, 1});
 
     b_dense(b, 200);
     b_activation(b, LEAKY_RELU);
@@ -62,6 +62,17 @@ void mnist_run() {
     b_activation(b, LEAKY_RELU);
     b_dense(b, 10);
     b_activation(b, SOFTMAX);
+
+    /*b_conv(b, (size2D){3, 3}, 8, 1, 1);
+    b_activation(b, LEAKY_RELU);
+    b_pooling(b, POOLING_MAX, (size2D){2, 2}, 1, 0);
+    b_conv(b, (size2D){3, 3}, 16, 1, 1);
+    b_activation(b, LEAKY_RELU);
+    b_pooling(b, POOLING_MAX, (size2D){2, 2}, 1, 0);
+    b_dense(b, 128);
+    b_activation(b, LEAKY_RELU);
+    b_dense(b, 10);
+    b_activation(b, SOFTMAX);*/
 
     b_opt(b, ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}});
     b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});

@@ -195,6 +195,7 @@ static void apply_gradients(const neural_network* network, const iteration_range
         const layer* l = network->layers[i];
         if (l->parameters_count > 0) {
             opt_args.layerIndex = i;
+            //TODO use threadpool here too
             network->optimizer->vtable->apply_gradients(network->optimizer, l->parameters, g, l->parameters_count, opt_args);
         }
     }

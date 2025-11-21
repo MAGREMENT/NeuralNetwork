@@ -52,16 +52,13 @@ typedef struct builder_element {
 builder_params def_b_params() {
     return (builder_params) {
         100 * 100,
-        4,
-        500 * 500,
-        256
+        8,
     };
 }
 
 extern builder_params st_b_params() {
     return (builder_params) {
         .dense_mt_threshold = INT_MAX,
-        .dense_gpu_threshold = INT_MAX
     };
 }
 
@@ -224,13 +221,6 @@ neural_network* build(const builder* builder, const builder_params params) {
 
                 const int operationCount = in * de.out_count;
 
-#ifdef _MSC_VER
-                if (operationCount >= params.dense_gpu_threshold) {
-                    n->layers[i] = cnstr_cuda_dense_layer(in, de.out_count, params.gpu_t_count, initialize);
-                    goto d_end;
-                }
-#endif
-
                 if (operationCount >= params.dense_mt_threshold) {
                     if (context == NULL) {
                         context = malloc(sizeof(worker_context));
@@ -243,10 +233,8 @@ neural_network* build(const builder* builder, const builder_params params) {
                     n->layers[i] = cnstr_worker_multi_thread_dense_layer(in, de.out_count, context, initialize);
                 }
                 else n->layers[i] = cnstr_dense_layer(in, de.out_count, initialize);
-
-                d_end :
-
                 inSize = (size3D){de.out_count, 0, 0};
+
                 break;
             case ACTIVATION :
                 const activation_element ae = el.element.activation;
@@ -262,15 +250,16 @@ neural_network* build(const builder* builder, const builder_params params) {
                 const conv_element ce = el.element.conv;
                 initialize = get_initialize(builder, i, initialize_conv_random, initialize_conv_xavier, initialize_conv_he);
 
-                layer* l = cnstr_conv_layer(inSize, ce.kernel_size, ce.kernel_count, ce.stride, ce.padding, initialize);
-                n->layers[i] = l;
-                inSize = ((conv_layer_params*)l->data)->output_size;
+                n->layers[i] = cnstr_conv_layer(inSize, ce.kernel_size, ce.kernel_count, ce.stride, ce.padding, initialize);
+                inSize = ((conv_layer_params*)n->layers[i]->data)->output_size;
 
                 break;
             case POOLING :
                 const pooling_element pe = el.element.pooling;
 
                 n->layers[i] = cnstr_pooling_layer(pe.type, inSize, pe.window_size, pe.stride, pe.padding);
+                inSize = ((pooling_layer_params*)n->layers[i]->data)->output_size;
+
                 break;
             default:
                 assert(0); //Should not happen

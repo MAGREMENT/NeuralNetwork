@@ -43,7 +43,7 @@ typedef struct neural_network {
 
     cost_vtable* cost_vtable;
 
-    void* params;
+    void* params; //TODO just transform into threadpool
     neural_network_vtable* vtable;
 } neural_network;
 

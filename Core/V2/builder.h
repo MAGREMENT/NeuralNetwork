@@ -15,8 +15,6 @@
 typedef struct builder_params {
     int dense_mt_threshold;
     int mt_t_count;
-    int dense_gpu_threshold;
-    int gpu_t_count;
 } builder_params;
 
 typedef struct builder {

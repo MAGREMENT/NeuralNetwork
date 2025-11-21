@@ -174,6 +174,7 @@ layer* cnstr_pooling_layer(const int type, const size3D inputSize, const size2D 
     l->data = p;
 
     l->vtable = pooling_vtable_store + type;
+    l->initialize = no_initialization;
 
     return l;
 }
