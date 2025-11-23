@@ -101,6 +101,16 @@ static unsigned long exec(void* params) {
     return 0;
 }
 
+inline int get_processor_count() {
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    return sysinfo.dwNumberOfProcessors;
+}
+
+inline int get_thread_count(thread_pool* pool) {
+    return pool->count;
+}
+
 thread_pool* alloc_thread_pool(const int threadCount) {
     thread_pool* pool = malloc(sizeof(thread_pool));
 
@@ -126,10 +136,11 @@ thread_pool* alloc_thread_pool(const int threadCount) {
 }
 
 void free_thread_pool(thread_pool* pool) {
+    if (pool == NULL) return;
+
     pool->stopping = 1;
 
     WakeAllConditionVariable(&pool->cv);
-
     WaitForMultipleObjects(pool->count, pool->threads, TRUE, INFINITE);
 
     for (int i = 0; i < pool->count; i++) {
@@ -137,6 +148,7 @@ void free_thread_pool(thread_pool* pool) {
     }
 
     DeleteCriticalSection(&pool->cs);
+
     free(pool->threads);
     free_queue(pool->jobs);
     free(pool);
@@ -151,51 +163,35 @@ void add_job(thread_pool* pool, unsigned long (*func)(void*), void* params, job_
     WakeConditionVariable(&pool->cv);
 }
 
-void exec_range_parallel(unsigned long(* func)(void *), void* params, const int total, const int threadCount) {
-    HANDLE* threads = malloc(sizeof(HANDLE) * threadCount);
-    parallel_range_data* data = malloc(sizeof(parallel_range_data) * threadCount);
-    range_split_iterator it = range_split(total, threadCount);
+parallel_range_executor* alloc_pr_executor(thread_pool* pool, const int count) {
+    parallel_range_executor* executor = malloc(sizeof(parallel_range_executor));
+    executor->pool = pool;
+    executor->group = alloc_job_group(count);
+    executor->data = malloc(count * sizeof(parallel_range_data));
+    executor->count = count;
 
-    for (int i = 0; i < threadCount; i++) {
-        parallel_range_data* pd = data + i;
+    return executor;
+}
+void free_pr_executor(parallel_range_executor* pre) {
+    if (pre == NULL) return;
 
-        pd->params = params;
-        pd->range = range_split_next(&it);
-
-        threads[i] = CreateThread(
-            NULL,
-            0,
-            func,
-            pd,
-            0,
-            NULL);
-    }
-
-    WaitForMultipleObjects(threadCount, threads, TRUE, INFINITE);
-
-    for (int i = 0; i < threadCount; i++) {
-        CloseHandle(threads[i]);
-    }
-
-    free(threads);
-    free(data);
+    free_job_group(pre->group);
+    free(pre->data);
+    free(pre);
 }
 
-void exec_range_parallel_worker(unsigned long (*func)(void*), void* params, const int total, const worker_context* context) {
-    parallel_range_data* data = malloc(sizeof(parallel_range_data) * context->pool->count);
-    range_split_iterator it = range_split(total, context->pool->count);
+void exec_parallel_range(const parallel_range_executor* executor, unsigned long(*func)(void*), void* params, const range baseRange) {
+    range_split_iterator it = range_split(baseRange.from, baseRange.to - baseRange.from, executor->count);
+    reset_group(executor->group, executor->count);
 
-    reset_group(context->group, context->pool->count);
-
-    for (int i = 0; i < context->pool->count; i++) {
-        parallel_range_data* pd = data + i;
+    for (int i = 0; i < executor->count; i++) {
+        parallel_range_data* pd = executor->data + i;
 
         pd->params = params;
-        pd->range = range_split_next(&it);
+        pd->range = to_iteration_range(range_split_next(&it), i);
 
-        add_job(context->pool, func, pd, context->group);
+        add_job(executor->pool, func, pd, executor->group);
     }
 
-    WaitForSingleObject(context->group->event, INFINITE);
-    free(data);
+    wait_for_group(executor->group);
 }

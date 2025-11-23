@@ -5,6 +5,7 @@
 #ifndef NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H
 #define NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H
 #include "optimizer.h"
+#include "../multi-threading.h"
 
 enum optimizers {
     SIMPLE,
@@ -39,6 +40,7 @@ typedef union optimizer_cnstr_args {
 } optimizer_cnstr_args;
 
 extern optimizer* cnstr_optimizer(int type, optimizer_cnstr_args args);
+extern optimizer* cnstr_mt_optimizer(int type, optimizer_cnstr_args args, thread_pool* pool, int parallelCount);
 extern char* get_opt_name(int type);
 
 #endif //NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H

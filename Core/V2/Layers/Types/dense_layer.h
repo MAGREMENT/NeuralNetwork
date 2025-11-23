@@ -9,8 +9,7 @@
 #include "../../multi-threading.h"
 
 layer* cnstr_dense_layer(int inputCount, int outputCount, void (*initialize)(const layer* l));
-layer* cnstr_multi_thread_dense_layer(int inputCount, int outputCount, int thread_count, void (*initialize)(const layer* l));
-layer* cnstr_worker_multi_thread_dense_layer(int inputCount, int outputCount, worker_context* context, void (*initialize)(const layer* l));
+layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, thread_pool* pool, int parallelCount, void (*initialize)(const layer* l));
 
 extern void set_weights(const layer* l, double values[]);
 extern void set_biases(const layer* l, double values[]);

@@ -45,3 +45,10 @@ optimizer* cnstr_optimizer(const int type, const optimizer_cnstr_args args) {
         default : return NULL;
     }
 }
+
+optimizer* cnstr_mt_optimizer(const int type, const optimizer_cnstr_args args, thread_pool* pool, const int parallelCount) {
+    switch (type) {
+        case ADAM : return cnstr_mt_adam_optimizer(args.value2.v1, args.value2.v2, pool, parallelCount);
+        default : return NULL;
+    }
+}

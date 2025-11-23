@@ -1,11 +1,7 @@
 #ifndef ITERATOR_H
 #define ITERATOR_H
 
-typedef struct iteration_range {
-    int iteration;
-    int from;
-    int to;
-} iteration_range;
+#include "../Util/range.h"
 
 typedef struct range_iterator range_iterator;
 

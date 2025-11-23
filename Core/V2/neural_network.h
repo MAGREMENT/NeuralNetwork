@@ -6,6 +6,7 @@
 #define NEWIMPLEMENTATION_NEURAL_NETWORK_H
 
 #include "cost.h"
+#include "multi-threading.h"
 #include "DataSelector/data_selector.h"
 #include "Iterators/iterator.h"
 #include "Optimizers/optimizer.h"
@@ -18,13 +19,20 @@ typedef struct test_data {
     int count;
 } test_data;
 
+typedef struct learning_buffers {
+    double** gradient_buffers;
+    double** iv_buffers;
+} learning_buffers;
+
 typedef struct learning_state {
     int iteration;
     void* optimizerState;
-
-    double** gradient_buffers;
-    double** iv_buffers;
 } learning_state;
+
+typedef struct learning_data {
+    learning_state state;
+    learning_buffers* buffers;
+} learning_data;
 
 typedef struct neural_network_vtable {
     void (*free_params) (neural_network*);
@@ -43,8 +51,8 @@ typedef struct neural_network {
 
     cost_vtable* cost_vtable;
 
-    void* params; //TODO just transform into threadpool
-    neural_network_vtable* vtable;
+    thread_pool* thread_pool;
+    parallel_range_executor* batch_executor;
 } neural_network;
 
 extern neural_network* alloc_neural_network(int layerCount);
@@ -57,13 +65,13 @@ extern double** alloc_gradient_buffers(const neural_network* network, int initTo
 extern void free_buffers(const neural_network* network, double** buffers);
 
 extern void predict(const neural_network* network, const double* inputs, double* outputs);
-extern void learn(const neural_network* network, test_data data, iteration_range range, learning_state* state, double learningRate);
+extern void learn(const neural_network* network, test_data data, iteration_range range, learning_data* ld, double learningRate);
 extern void learn_stateless(const neural_network* network, test_data data, iteration_range range, double learningRate);
-extern void iterative_learn(const neural_network* network, test_data data, learning_state* state, int iterations);
+extern void iterative_learn(const neural_network* network, test_data data, learning_data* ld, int iterations);
 extern void iterative_learn_stateless(const neural_network* network, test_data data, int iterations);
 
-extern learning_state* alloc_state(const neural_network* network);
-extern void free_state(const neural_network* network, learning_state* state);
+extern learning_data* alloc_learning_data(const neural_network* network);
+extern void free_learning_data(const neural_network* network, learning_data* state);
 
 extern void initialize(const neural_network* network);
 

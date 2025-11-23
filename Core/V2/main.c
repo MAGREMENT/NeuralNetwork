@@ -83,7 +83,9 @@ void mnist_run() {
     b->shuffleDataOnIteration = 1;
     b->learningRate = 0.01;
 
-    neural_network* n = build_free(b, def_b_params());
+    builder_params bp = def_b_params();
+    bp.batch_threads = 1;
+    neural_network* n = build_free(b, bp);
     initialize(n);
 
     shuffle_test_data(original, n, 3);
@@ -93,12 +95,12 @@ void mnist_run() {
 
     printf("Iteration 0 : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n",
         get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
-    learning_state* state = alloc_state(n);
+    learning_data* data = alloc_learning_data(n);
 
     clock_t start = clock();
 
     for (int i = 0; i < 10; i++) {
-        iterative_learn(n, training, state, 1);
+        iterative_learn(n, training, data, 1);
         printf("Iteration %d : TRAINING => Cost -> %f | Accuracy -> %f TESTING => Cost -> %f | Accuracy -> %f\n", i + 1,
         get_avg_cost(n, training), get_classification_accuracy(n, training), get_avg_cost(n, testing), get_classification_accuracy(n, testing));
     }
@@ -107,7 +109,7 @@ void mnist_run() {
 
     printf("Learning time : %f s", (double)(end - start) / CLOCKS_PER_SEC);
 
-    free_state(n, state);
+    free_learning_data(n, data);
     free_neural_network(n, 1);
     free(images);
     free(labels);
@@ -480,20 +482,20 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
         neural_network* n = build(b, st_b_params());
         initialize(n);
 
-        learning_state* state = alloc_state(n);
+        learning_data* data = alloc_learning_data(n);
 
         double cost = get_avg_cost(n, test);
         int fail = 0;
 
         for (int j = 0; j < 10; j++) {
-            iterative_learn(n, test, state, 100);
+            iterative_learn(n, test, data, 100);
 
             const double buffer = get_avg_cost(n, test);
             if (buffer >= cost) {
                 if (verbose) fail = 1;
                 else {
                     printf("bit learn cost fail for %s and iteration %d\n", opt_names[builds[i].opt], j * 10);
-                    free_state(n, state);
+                    free_learning_data(n, data);
                     free_neural_network(n, 1);
                     return 1;
                 }
@@ -506,7 +508,7 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
             printf("%s %s-> Cost : %f | Accuracy = %f\n", opt_names[builds[i].opt], fail ? "(FAIL) " : "", cost, get_acc(n, test));
         }
 
-        free_state(n, state);
+        free_learning_data(n, data);
         free_neural_network(n, 1);
     }
 
@@ -644,11 +646,10 @@ void mt_dense_test(const int count, const int verbose) {
     const int inCount = count;
     const int outCount = count;
 
-    worker_context wc = (worker_context) {alloc_thread_pool(8), alloc_job_group(8)};
+    thread_pool* pool = alloc_thread_pool(8);
     layer* layers[] = {
         cnstr_dense_layer(inCount, outCount, initialize_dense_to_zero),
-        cnstr_multi_thread_dense_layer(inCount, outCount, 8, initialize_dense_to_zero),
-        cnstr_worker_multi_thread_dense_layer(inCount, outCount, &wc, initialize_dense_to_zero),
+        cnstr_multi_thread_dense_layer(inCount, outCount, pool, 8, initialize_dense_to_zero),
 #ifdef _MSC_VER
         cnstr_cuda_dense_layer(inCount, outCount, 256, initialize_dense_to_zero)
 #endif
@@ -757,7 +758,7 @@ void mt_dense_test(const int count, const int verbose) {
 
     if (verbose) {
         const char* opNames[] = {"Forward", "Backward", "DTG"};
-        const char* layerNames[] = {"Single-Thread", "Multi-Thread", "Worker", "GPU"};
+        const char* layerNames[] = {"Single-Thread", "Multi-Thread", "GPU"};
         for (int op = 0; op < operations; op++) {
             printf("%s\n", opNames[op]);
             for (int j = 0; j < layerCount; j++) {
@@ -772,8 +773,7 @@ void mt_dense_test(const int count, const int verbose) {
     free:
 
 
-    free_thread_pool(wc.pool);
-    free_job_group(wc.group);
+    free_thread_pool(pool);
     free(in);
     for (int j = 0; j < layerCount; j++) {
         layers[j]->vtable->free(layers[j]);
@@ -970,7 +970,7 @@ void unit_test() {
     optimizer_test(1, 0);
     binary_sum_learn_test(0);
     build_test();
-    mt_dense_test(10000, 1);
+    mt_dense_test(1000, 1);
     dense_test();
     predict_test();
     conv_layer_forward_test();

@@ -7,18 +7,20 @@
 
 #include "Util/range.h"
 
-typedef struct parallel_range_data {
-    void* params;
-    range range;
-} parallel_range_data;
-
-typedef struct job_group job_group; //TODO threading pool specialized in range execution
+typedef struct job_group job_group;
 typedef struct thread_pool thread_pool;
 
-typedef struct worker_context {
+typedef struct parallel_range_data {
+    void* params;
+    iteration_range range;
+} parallel_range_data;
+
+typedef struct parallel_range_executor {
     thread_pool* pool;
     job_group* group;
-} worker_context;
+    parallel_range_data* data;
+    int count;
+} parallel_range_executor;
 
 extern void init_critical_section(void* section);
 extern void enter_critical_section(void* section);
@@ -30,11 +32,15 @@ extern void free_job_group(job_group* g);
 extern void reset_group(job_group* g, int count);
 extern void wait_for_group(job_group* g);
 
+parallel_range_executor* alloc_pr_executor(thread_pool* pool, int count);
+void free_pr_executor(parallel_range_executor* pre);
+
+extern int get_processor_count();
+extern int get_thread_count(thread_pool* pool);
 thread_pool* alloc_thread_pool(int threadCount);
 void free_thread_pool(thread_pool* pool);
 void add_job(thread_pool* pool, unsigned long(*func)(void*), void* params, job_group* group);
 
-extern void exec_range_parallel(unsigned long(* func)(void *), void* params, int total, int threadCount);
-extern void exec_range_parallel_worker(unsigned long(*func)(void*), void* params, int total, const worker_context* context);
+extern void exec_parallel_range(const parallel_range_executor* executor, unsigned long(*func)(void*), void* params, range baseRange);
 
 #endif //MULTI_THREADING_H

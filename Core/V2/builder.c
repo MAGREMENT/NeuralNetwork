@@ -49,16 +49,25 @@ typedef struct builder_element {
     builder_union element;
 } builder_element;
 
+static int def_get_mt_count(const int operationCount, const int total) {
+    if (operationCount >= 250 * 250) return total;
+    return total / 2;
+}
+
 builder_params def_b_params() {
     return (builder_params) {
+        4,
         100 * 100,
-        8,
+        100 * 100,
+        def_get_mt_count,
     };
 }
 
 extern builder_params st_b_params() {
     return (builder_params) {
+        .batch_threads = 1,
         .dense_mt_threshold = INT_MAX,
+        .optimizer_mt_threshold = INT_MAX,
     };
 }
 
@@ -130,7 +139,7 @@ inline void b_activation(const builder* builder, const int type) {
     l_add(builder->list, builder_element, el);
 }
 
-inline void b_conv(const builder* builder, size2D kernelSize, int kernelCount, int stride, int padding) {
+inline void b_conv(const builder* builder, const size2D kernelSize, const int kernelCount, const int stride, const int padding) {
     builder_element el;
     el.type = CONVOLUTIONAL;
     el.element.conv.kernel_size = kernelSize;
@@ -139,7 +148,7 @@ inline void b_conv(const builder* builder, size2D kernelSize, int kernelCount, i
     el.element.conv.padding = padding;
     l_add(builder->list, builder_element, el);
 }
-inline void b_pooling(const builder* builder, int type, size2D windowSize, int stride, int padding) {
+inline void b_pooling(const builder* builder, const int type, const size2D windowSize, const int stride, const int padding) {
     builder_element el;
     el.type = POOLING;
     el.element.pooling.type = type;
@@ -182,32 +191,23 @@ static int get_total_size(const size3D size) {
     return total;
 }
 
-static void free_wc_params(neural_network* n) {
-    worker_context* wc = n->params;
-    free_thread_pool(wc->pool);
-    free_job_group(wc->group);
-    free(wc);
-}
-
-neural_network_vtable wc_table = {free_wc_params};
-
 neural_network* build(const builder* builder, const builder_params params) {
     if (builder->in_size.width <= 0) return NULL;
 
     neural_network* n = alloc_neural_network(builder->list->count);
+    const int pool_treads = get_processor_count();
+    int operation_threads = pool_treads;
+    if (params.batch_threads > 1) {
+        operation_threads -= params.batch_threads;
+        n->thread_pool = alloc_thread_pool(pool_treads);
+        n->batch_executor = alloc_pr_executor(n->thread_pool, params.batch_threads);
+    } else n->batch_executor = NULL;
 
     n->learningRate = builder->learningRate;
     n->shuffleDataOnIteration = builder->shuffleDataOnIteration;
 
-    if (builder->optimizer >= 0) n->optimizer = cnstr_optimizer(builder->optimizer, builder->opt_args);
-    if (builder->data_selector >= 0) n->data_selector = cnstr_data_selector(builder->data_selector, builder->ds_args);
-    if (builder->scheduler >= 0) n->scheduler = cnstr_scheduler(builder->scheduler, builder->sch_args);
-
-    int softmax_bce_optimization = 0;
-    int in;
+    int softmax_bce_optimization = 0, in, max_param_count = 0;
     void (*initialize)(const layer*);
-
-    worker_context* context = NULL;
 
     size3D inSize = builder->in_size;
     for (int i = 0; i < builder->list->count; i++) {
@@ -221,16 +221,10 @@ neural_network* build(const builder* builder, const builder_params params) {
 
                 const int operationCount = in * de.out_count;
 
-                if (operationCount >= params.dense_mt_threshold) {
-                    if (context == NULL) {
-                        context = malloc(sizeof(worker_context));
-                        context->pool = alloc_thread_pool(params.mt_t_count);
-                        context->group = alloc_job_group(params.mt_t_count);
-
-                        n->params = context;
-                        n->vtable = &wc_table;
-                    }
-                    n->layers[i] = cnstr_worker_multi_thread_dense_layer(in, de.out_count, context, initialize);
+                if (operationCount >= params.dense_mt_threshold && operation_threads > 1) {
+                    if (n->thread_pool == NULL) n->thread_pool = alloc_thread_pool(pool_treads);
+                    n->layers[i] = cnstr_multi_thread_dense_layer(in, de.out_count, n->thread_pool,
+                        params.get_mt_count(operationCount, operation_threads), initialize);
                 }
                 else n->layers[i] = cnstr_dense_layer(in, de.out_count, initialize);
                 inSize = (size3D){de.out_count, 0, 0};
@@ -266,10 +260,23 @@ neural_network* build(const builder* builder, const builder_params params) {
                 free_neural_network(n, 1);
                 return NULL;
         }
+
+        max_param_count = n->layers[i]->parameters_count > max_param_count ? n->layers[i]->parameters_count : max_param_count;
     }
 
     if (softmax_bce_optimization) n->cost_vtable = &softmax_bce_cost_vtable;
     else if (builder->cost_type >= 0) n->cost_vtable = cost_vtables + builder->cost_type;
+
+    if (builder->optimizer >= 0) {
+        if (max_param_count >= params.optimizer_mt_threshold && operation_threads > 1) {
+            if (n->thread_pool == NULL) n->thread_pool = alloc_thread_pool(pool_treads);
+            n->optimizer = cnstr_mt_optimizer(builder->optimizer, builder->opt_args, n->thread_pool,
+                def_get_mt_count(max_param_count,operation_threads));
+        }
+        else n->optimizer = cnstr_optimizer(builder->optimizer, builder->opt_args);
+    }
+    if (builder->data_selector >= 0) n->data_selector = cnstr_data_selector(builder->data_selector, builder->ds_args);
+    if (builder->scheduler >= 0) n->scheduler = cnstr_scheduler(builder->scheduler, builder->sch_args);
 
     return n;
 }

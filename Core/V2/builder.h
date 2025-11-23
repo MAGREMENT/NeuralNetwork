@@ -13,8 +13,10 @@
 #include "Util/Collections/list.h"
 
 typedef struct builder_params {
+    int batch_threads;
     int dense_mt_threshold;
-    int mt_t_count;
+    int optimizer_mt_threshold;
+    int (*get_mt_count)(int operationCount, int total);
 } builder_params;
 
 typedef struct builder {
