@@ -41,8 +41,9 @@ void* shift_rear(queue* queue) {
         assert(queue->arr != NULL);
 
         if (queue->front != 0) {
-            const int until = queue->front + queue->count - queue->capacity / 2;
-            memcpy((char*)queue->arr + (queue->front + queue->count - 1) * queue->el_size, queue->arr, until * queue->el_size);
+            const int oldCapacity =  queue->capacity / 2;
+            const int until = queue->front + queue->count - oldCapacity;
+            memcpy((char*)queue->arr + oldCapacity * queue->el_size, queue->arr, until * queue->el_size);
         }
     }
 

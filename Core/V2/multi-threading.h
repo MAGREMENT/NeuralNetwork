@@ -43,4 +43,6 @@ void add_job(thread_pool* pool, unsigned long(*func)(void*), void* params, job_g
 
 extern void exec_parallel_range(const parallel_range_executor* executor, unsigned long(*func)(void*), void* params, range baseRange);
 
+extern void sleep(long ms);
+
 #endif //MULTI_THREADING_H

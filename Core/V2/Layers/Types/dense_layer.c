@@ -127,7 +127,7 @@ static void mt_dense_delta_to_gradients(const layer* l, const double* inputs, co
     exec_parallel_range(l->data, async_dense_delta_to_gradients, &pdfp, (range){0, l->out_count});
 }
 
-layer_vtable dense_vtable = {NULL, st_dense_forward, NULL, st_dense_backward, st_dense_delta_to_gradients, NULL, empty_layer_free};
+layer_vtable dense_vtable = {NULL, st_dense_forward, NULL, st_dense_backward, st_dense_delta_to_gradients, empty_layer_free};
 
 static layer* cnstr_base_dense_layer(const int inputCount, const int outputCount, void (*initialize)(const layer* l), layer_vtable* vtable) {
     layer* l = malloc(sizeof(layer));
@@ -150,7 +150,7 @@ layer* cnstr_dense_layer(const int inputCount, const int outputCount, void (*ini
     return l;
 }
 
-layer_vtable wmt_dense_vtable = {NULL, mt_dense_forward, NULL, mt_dense_backward, mt_dense_delta_to_gradients, NULL, empty_layer_free};
+layer_vtable wmt_dense_vtable = {NULL, mt_dense_forward, NULL, mt_dense_backward, mt_dense_delta_to_gradients, empty_layer_free};
 
 layer* cnstr_multi_thread_dense_layer(const int inputCount, const int outputCount, thread_pool* pool, const int parallelCount, void (*initialize)(const layer* l)) {
     layer* l = cnstr_base_dense_layer(inputCount, outputCount, initialize, &wmt_dense_vtable);

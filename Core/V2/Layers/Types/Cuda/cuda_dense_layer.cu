@@ -46,7 +46,7 @@ __global__ void kernel_dense_backward(const double *d, const double *p, double *
     }
 }
 
-__global__ void kernel_dense_delta_to_gradients(const double *in, const double* d, const double *p, double *g, const int in_count, const int out_count) {
+__global__ void kernel_dense_delta_to_gradients(const double *in, const double* d, double *g, const int in_count, const int out_count) {
     const int o = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (o < out_count) {
@@ -92,7 +92,7 @@ static void cuda_dense_delta_to_gradients(const layer* l, const double* inputs, 
     cudaMemcpy(p->gpu_gradients, gradients, l->parameters_count * sizeof(double), cudaMemcpyHostToDevice);
 
     kernel_dense_delta_to_gradients<<<get_blocks(l->out_count, p->threads), p->threads>>>(
-        p->gpu_in, p->gpu_out, p->gpu_parameters, p->gpu_gradients, l->in_count, l->out_count);
+        p->gpu_in, p->gpu_out, p->gpu_gradients, l->in_count, l->out_count);
 
     cudaDeviceSynchronize();
     cudaMemcpy(gradients, p->gpu_gradients, l->parameters_count * sizeof(double), cudaMemcpyDeviceToHost);
@@ -112,7 +112,7 @@ static void free_cuda_dense_layer(layer* l) {
 }
 
 layer_vtable cuda_dense_vtable = {NULL, cuda_dense_forward, NULL, cuda_dense_backward, cuda_dense_delta_to_gradients,
-    on_parameters_change, free_cuda_dense_layer};
+    free_cuda_dense_layer};
 
 layer* cnstr_cuda_dense_layer(const int inputCount, const int outputCount, const int threads, void (*initialize)(const layer* l)) {
     const auto l = (layer*)malloc(sizeof(layer));

@@ -84,7 +84,7 @@ void mnist_run() {
     b->learningRate = 0.01;
 
     builder_params bp = def_b_params();
-    bp.batch_threads = 1;
+    bp.dense_mt_threshold = INT_MAX;
     neural_network* n = build_free(b, bp);
     initialize(n);
 
@@ -164,6 +164,20 @@ TEST(queue_test) {
 
     ASSERT_M(buffer == 5, "Buffer should be 5")
 
+    ASSERT_M(is_empty(q), "Queue should be empty");
+
+    const int count = 10000;
+    for (int i = 0; i < count; i++) {
+        q_enq(q, int, i);
+    }
+
+    for (int i = 0; i < count; i++) {
+        const int curr = q_deq(q, int);
+        ASSERT(curr == i);
+    }
+
+    ASSERT_M(is_empty(q), "Queue should be empty");
+
     TEARDOWN
     free_queue(q);
 }
@@ -229,31 +243,34 @@ unsigned long copy_arr_tp_test(void* params) {
 }
 
 TEST(threadpool_test) {
+    const int count = 1000;
+
     thread_pool* tp = alloc_thread_pool(4);
-    job_group* group = alloc_job_group(6);
+    job_group* group = alloc_job_group(count);
 
-    const int n[] = {1, 2, 3, 4, 5, 6};
-    int r[6];
-    arr_tp_test arrs[] = {
-        {n, r, 0},
-        {n, r, 1},
-        {n, r, 2},
-        {n, r, 3},
-        {n, r, 4},
-        {n, r, 5},
-    };
+    int* n = malloc(sizeof(int) * count);
+    int* r = malloc(sizeof(int) * count);
+    arr_tp_test* arrs = malloc(sizeof(arr_tp_test) * count);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < count; i++) {
+        n[i] = i + 1;
+        arrs[i] = (arr_tp_test) {n, r, i};
+    }
+
+    for (int i = 0; i < count; i++) {
         add_job(tp, copy_arr_tp_test, arrs + i, group);
     }
 
     wait_for_group(group);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < count; i++) {
         ASSERT_M(n[i] == r[i], "Wrong result");
     }
 
     TEARDOWN
+    free(n);
+    free(r);
+    free(arrs);
     free_thread_pool(tp);
     free_job_group(group);
 }
@@ -693,9 +710,7 @@ void mt_dense_test(const int count, const int verbose) {
         }
 
 #ifdef _MSC_VER
-        for (int j = 0; j < layerCount; j++) {
-            if (layers[j]->vtable->on_parameters_change != NULL) layers[j]->vtable->on_parameters_change(layers[j]);
-        }
+        on_parameters_change(layers[layerCount - 1]);
 #endif
 
         int op = 0;

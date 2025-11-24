@@ -195,3 +195,7 @@ void exec_parallel_range(const parallel_range_executor* executor, unsigned long(
 
     wait_for_group(executor->group);
 }
+
+inline void sleep(long ms) {
+    Sleep(ms);
+}

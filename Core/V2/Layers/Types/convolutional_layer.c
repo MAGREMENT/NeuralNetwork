@@ -53,7 +53,7 @@ static void conv_delta_to_gradients(const layer* l, const double* inputs, const 
         to3D(p->kernel_size, p->output_size.depth), p->padding, p->stride);
 }
 
-layer_vtable conv_vtable = {NULL, forward_conv_layer, NULL, conv_backward, conv_delta_to_gradients, NULL, default_layer_free};
+layer_vtable conv_vtable = {NULL, forward_conv_layer, NULL, conv_backward, conv_delta_to_gradients, default_layer_free};
 
 layer* cnstr_conv_layer(const size3D inputSize, const size2D kernelSize, const int kernelCount, const int stride, const int padding, void (*initialize)(const layer* l)) {
     conv_layer_params* p = malloc(sizeof(conv_layer_params));

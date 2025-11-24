@@ -20,7 +20,6 @@ typedef struct layer_vtable {
     void (*on_learn_start)(const layer* l);
     void (*backward)(const layer* l, const double* inputs, const double* deltas, double* outputs);
     void (*deltas_to_gradients)(const layer* l, const double* inputs, const double* deltas, double* gradients);
-    void (*on_parameters_change)(layer* l);
     void (*free)(layer* l);
 } layer_vtable;
 

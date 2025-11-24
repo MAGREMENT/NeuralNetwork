@@ -153,7 +153,8 @@ static void get_gradients(const neural_network* network, const test_data data, c
     const int in_count = get_in_count(network);
     const int out_count = get_out_count(network);
 
-    double** intermediateValues = buffers[buffersIndex].iv_buffers;
+    const learning_buffers b = buffers[buffersIndex];
+    double** intermediateValues = b.iv_buffers;
 
     for (int r = range.from; r < range.to; r++) {
         const double* inputs = data.inputs + r * in_count;
@@ -166,7 +167,7 @@ static void get_gradients(const neural_network* network, const test_data data, c
             l->vtable->forward(l, in, intermediateValues[i]);
         }
 
-        double* currentDeltas = malloc(sizeof(double) * out_count);
+        double* currentDeltas = b.delta_buffers[lastIndex];
         network->cost_vtable->get_cost_deltas(intermediateValues[lastIndex], expected, currentDeltas, out_count);
 
         //backward pass
@@ -175,17 +176,16 @@ static void get_gradients(const neural_network* network, const test_data data, c
 
             if (l->parameters_count > 0) {
                 const double* in = i == 0 ? inputs : intermediateValues[i - 1];
-                l->vtable->deltas_to_gradients(l, in, currentDeltas, buffers[buffersIndex].gradient_buffers[i]);
+                l->vtable->deltas_to_gradients(l, in, currentDeltas, b.gradient_buffers[i]);
             }
 
             if (i == 0) break;
 
             if (l->in_count == l->out_count) l->vtable->backward(l, intermediateValues[i - 1], currentDeltas, currentDeltas);
             else {
-                double* buffer = malloc(sizeof(double) * l->in_count);
-                l->vtable->backward(l, intermediateValues[i - 1], currentDeltas, buffer);
-                free(currentDeltas);
-                currentDeltas = buffer;
+                double* nextDeltas = b.delta_buffers[i - 1];
+                l->vtable->backward(l, intermediateValues[i - 1], currentDeltas, nextDeltas);
+                currentDeltas = nextDeltas;
             }
         }
     }
@@ -307,6 +307,7 @@ learning_data* alloc_learning_data(const neural_network* network) {
     for (int i = 0; i < get_batch_threads(network); i++) {
         data->buffers[i].gradient_buffers = alloc_gradient_buffers(network, 0);
         data->buffers[i].iv_buffers = alloc_layer_output_buffers(network);
+        data->buffers[i].delta_buffers = alloc_layer_output_buffers(network);
     }
 
     return data;
@@ -317,6 +318,7 @@ void free_learning_data(const neural_network* network, learning_data* data) {
     for (int i = 0; i < get_batch_threads(network); i++) {
         free_buffers(network, data->buffers[i].gradient_buffers);
         free_buffers(network, data->buffers[i].iv_buffers);
+        free_buffers(network, data->buffers[i].delta_buffers);
     }
     free(data->buffers);
     free(data);

@@ -198,7 +198,7 @@ neural_network* build(const builder* builder, const builder_params params) {
     const int pool_treads = get_processor_count();
     int operation_threads = pool_treads;
     if (params.batch_threads > 1) {
-        operation_threads -= params.batch_threads;
+        operation_threads = (operation_threads - params.batch_threads) / params.batch_threads;
         n->thread_pool = alloc_thread_pool(pool_treads);
         n->batch_executor = alloc_pr_executor(n->thread_pool, params.batch_threads);
     } else n->batch_executor = NULL;

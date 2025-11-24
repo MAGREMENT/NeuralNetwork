@@ -21,7 +21,8 @@ typedef struct test_data {
 
 typedef struct learning_buffers {
     double** gradient_buffers;
-    double** iv_buffers;
+    double** iv_buffers; //Intermediate values
+    double** delta_buffers;
 } learning_buffers;
 
 typedef struct learning_state {
