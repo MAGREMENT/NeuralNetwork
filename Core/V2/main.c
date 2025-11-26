@@ -139,11 +139,25 @@ TEST(builder_yaml_test) {
     to_yaml(b, w);
     save_yaml(w, "yaml-test.yaml");
 
-    //TODO read & test
+    yaml_reader* r = alloc_yaml_reader();
+    download_yaml(r, "yaml-test.yaml");
+
+    ASSERT(w->lines->count == r->lines->count);
+
+    for (int i = 0; i < w->lines->count; i++) {
+        const yaml_line wl = l_get(w->lines, yaml_line, i);
+        const yaml_line rl = l_get(r->lines, yaml_line, i);
+
+        ASSERT(wl.indentation == rl.indentation);
+        ASSERT(wl.is_array == rl.is_array);
+        ASSERT(strcmp(wl.name, rl.name) == 0);
+        ASSERT(strcmp(wl.value, rl.value) == 0);
+    }
 
     TEARDOWN
     free_builder(b);
     free_yaml_writer(w);
+    free_yaml_reader(r);
 }
 
 TEST(queue_test) {

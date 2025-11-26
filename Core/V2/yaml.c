@@ -8,44 +8,60 @@
 #include <stdlib.h>
 #include <string.h>
 
-inline yaml_line cnstr_yl(const int ind, const int is_array, char name[], char* v) {
+#define YAML_READER_BUFFER 1024
+
+inline yaml_line cnstr_empty_yl(const int ind, const int is_array) {
     yaml_line p;
     p.indentation = ind;
     p.is_array = is_array;
+    return p;
+}
+
+inline yaml_line cnstr_yl(const int ind, const int is_array, char name[], char* v) {
+    yaml_line p = cnstr_empty_yl(ind, is_array);
     strcpy_s(p.name, YAML_LINE_MAX_LENGTH, name);
     strcpy_s(p.value, YAML_LINE_MAX_LENGTH, v);
     return p;
 }
 
 inline yaml_line cnstr_d_yl(const int ind, const int is_array, char name[], double v) {
-    yaml_line p;
-    p.indentation = ind;
-    p.is_array = is_array;
+    yaml_line p = cnstr_empty_yl(ind, is_array);
     strcpy_s(p.name, YAML_LINE_MAX_LENGTH, name);
     snprintf(p.value, sizeof(p.value), "%f", v);
     return p;
 }
 
 inline yaml_line cnstr_i_yl(const int ind, const int is_array, char name[], int v) {
-    yaml_line p;
-    p.indentation = ind;
-    p.is_array = is_array;
+    yaml_line p = cnstr_empty_yl(ind, is_array);
     strcpy_s(p.name, YAML_LINE_MAX_LENGTH, name);
     snprintf(p.value, sizeof(p.value), "%d", v);
     return p;
 }
 
-inline yaml_writer* alloc_yaml_writer() {
+yaml_writer* alloc_yaml_writer() {
     yaml_writer* writer = malloc(sizeof(yaml_writer));
     writer->lines = alloc_list(sizeof(yaml_line));
     writer->array_indentations = alloc_list(sizeof(int));
     writer->indentation = 0;
     return writer;
 }
-inline void free_yaml_writer(yaml_writer* writer) {
+
+void free_yaml_writer(yaml_writer* writer) {
     free_list(writer->lines);
     free_list(writer->array_indentations);
     free(writer);
+}
+
+yaml_reader* alloc_yaml_reader() {
+    yaml_reader* reader = malloc(sizeof(yaml_reader));
+    reader->lines = alloc_list(sizeof(yaml_line));
+    reader->index = 0;
+    return reader;
+}
+
+void free_yaml_reader(yaml_reader* reader) {
+    free_list(reader->lines);
+    free(reader);
 }
 
 inline void yw_begin_map(yaml_writer* writer) {
@@ -92,7 +108,7 @@ inline void yw_d_nv(yaml_writer* writer, char name[], const double d) {
         contains_int(writer->array_indentations, writer->indentation), name, d));
 }
 
-void save_yaml(yaml_writer* writer, const char* file) {
+void save_yaml(const yaml_writer* writer, const char* file) {
     FILE* fptr = fopen(file, "w");
 
     for (int i = 0; i < writer->lines->count; i++) {
@@ -106,6 +122,96 @@ void save_yaml(yaml_writer* writer, const char* file) {
 
         fprintf(fptr, "%s%s%s%s%s\n", ind, line.is_array ? "- " : "", line.name, line.name[0] == '\0' ? "" : ": ", line.value);
         free(ind);
+    }
+
+    fclose(fptr);
+}
+
+void download_yaml(const yaml_reader* reader, const char* file) {
+    FILE* fptr = fopen(file, "r");
+
+    char buffer[YAML_READER_BUFFER];
+    while (fgets(buffer, YAML_READER_BUFFER, fptr)) {
+        int indentation = 0;
+        int cursor = 0;
+        int isOk = 1;
+
+        while (cursor < YAML_READER_BUFFER && buffer[cursor] == ' ') {
+            if (buffer[cursor + 1] != ' ') {
+                isOk = 0;
+                break;
+            }
+
+            indentation++;
+            cursor += 2;
+        }
+
+        if (!isOk || cursor >= YAML_READER_BUFFER - 4) continue;
+
+        int is_array = 0;
+        if (buffer[cursor] == '-') {
+            if (buffer[cursor + 1] != ' ') continue;
+
+            is_array = 1;
+            cursor += 2;
+        }
+
+        if (cursor >= YAML_READER_BUFFER - 4) continue;
+
+        const int nameStart = cursor;
+        int nameEnd = -1;
+        int hadDots = 0;
+        for (; cursor < YAML_READER_BUFFER && buffer[cursor] != '\n'; cursor++) {
+            if (buffer[cursor] == ' ') {
+                if (nameEnd == -1) nameEnd = cursor;
+            }
+
+            if (buffer[cursor] == ':') {
+                if (nameEnd == -1) nameEnd = cursor;
+                hadDots = 1;
+                cursor++;
+                break;
+            }
+
+            if (nameEnd >= 0) {
+                isOk = 0;
+                break;
+            }
+        }
+
+        if (!isOk) continue;
+
+        if (!hadDots) {
+            if (is_array) {
+                yaml_line line = cnstr_empty_yl(indentation, 1);
+
+                const int nameSize = cursor - nameStart;
+                memcpy(line.value, buffer + nameStart, nameSize);
+                line.value[nameSize] = '\0';
+                line.name[0] = '\0';
+
+                l_add(reader->lines, yaml_line, line);
+            }
+
+            continue;
+        }
+
+        while (cursor < YAML_READER_BUFFER && buffer[cursor] == ' ') cursor++;
+
+        const int valueStart = cursor;
+        while (cursor < YAML_READER_BUFFER && buffer[cursor] != '\n') cursor++;
+
+        yaml_line line = cnstr_empty_yl(indentation, is_array);
+
+        const int nameSize = nameEnd - nameStart;
+        memcpy(line.name, buffer + nameStart, nameSize);
+        line.name[nameSize] = '\0';
+
+        const int valueSize = cursor - valueStart;
+        memcpy(line.value, buffer + valueStart, valueSize);
+        line.value[valueSize] = '\0';
+
+        l_add(reader->lines, yaml_line, line);
     }
 
     fclose(fptr);

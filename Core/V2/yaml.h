@@ -21,12 +21,21 @@ typedef struct yaml_writer {
     list* array_indentations;
 } yaml_writer;
 
+typedef struct yaml_reader {
+    list* lines;
+    int index;
+} yaml_reader;
+
+extern yaml_line cnstr_empty_yl(int ind, int is_array);
 extern yaml_line cnstr_yl(int ind, int is_array, char name[], char* v);
 extern yaml_line cnstr_d_yl(int ind, int is_array, char name[], double v);
 extern yaml_line cnstr_i_yl(int ind, int is_array, char name[], int i);
 
 extern yaml_writer* alloc_yaml_writer();
 extern void free_yaml_writer(yaml_writer* writer);
+
+extern yaml_reader* alloc_yaml_reader();
+extern void free_yaml_reader(yaml_reader* reader);
 
 extern void yw_begin_map(yaml_writer* writer);
 extern void yw_begin_arr(yaml_writer* writer);
@@ -38,6 +47,7 @@ extern void yw_int_nv(yaml_writer* writer, char name[], int i);
 extern void yw_int_v(yaml_writer* writer, int i);
 extern void yw_d_nv(yaml_writer* writer, char name[], double b);
 
-void save_yaml(yaml_writer* writer, const char* file);
+void save_yaml(const yaml_writer* writer, const char* file);
+void download_yaml(const yaml_reader* reader, const char* file);
 
 #endif //YAML_H

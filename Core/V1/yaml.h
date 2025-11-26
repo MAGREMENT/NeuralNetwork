@@ -4,7 +4,6 @@
 
 #ifndef YAML_H
 #define YAML_H
-#include "list.h"
 
 typedef struct yaml_line {
     int indentation;

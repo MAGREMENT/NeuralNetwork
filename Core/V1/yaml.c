@@ -5,6 +5,7 @@
 #include "yaml.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 inline yaml_line constr_yl(int ind, char name[], char v[]) {
