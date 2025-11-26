@@ -29,9 +29,9 @@ void unit_test();
 void unit_test2();
 
 int main(void) {
-    mnist_run();
-    //unit_test(); //TODO convert
-    //unit_test2();
+    //mnist_run();
+    unit_test(); //TODO convert
+    unit_test2();
     return EXIT_SUCCESS;
 }
 
@@ -74,9 +74,9 @@ void mnist_run() {
     b_dense(b, 10);
     b_activation(b, SOFTMAX);*/
 
-    b_opt(b, ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}});
-    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
-    b_ds(b, MINI_BATCH, (data_selector_cnstr_args) {.value = 64});
+    b_opt(b, ADAM, TCA_DOUBLE2(0.9, 0.999));
+    b_sch(b, CONSTANT, TCA_NONE);
+    b_ds(b, MINI_BATCH, TCA_INT(64));
 
     b->cost_type = BINARY_CROSS_ENTROPY;
 
@@ -84,7 +84,8 @@ void mnist_run() {
     b->learningRate = 0.01;
 
     builder_params bp = def_b_params();
-    bp.dense_mt_threshold = INT_MAX;
+    //bp.dense_mt_threshold = INT_MAX;
+    bp.batch_threads = 1;
     neural_network* n = build_free(b, bp);
     initialize(n);
 
@@ -113,6 +114,36 @@ void mnist_run() {
     free_neural_network(n, 1);
     free(images);
     free(labels);
+}
+
+TEST(builder_yaml_test) {
+    builder* b = alloc_builder_3D((size3D){28, 28, 1});
+
+    b_dense(b, 200);
+    b_activation(b, LEAKY_RELU);
+    b_dense(b, 100);
+    b_activation(b, LEAKY_RELU);
+    b_dense(b, 10);
+    b_activation(b, SOFTMAX);
+
+    b_opt(b, ADAM, TCA_DOUBLE2(0.9, 0.999));
+    b_sch(b, CONSTANT, TCA_NONE);
+    b_ds(b, MINI_BATCH, TCA_INT(64));
+
+    b->cost_type = BINARY_CROSS_ENTROPY;
+
+    b->shuffleDataOnIteration = 1;
+    b->learningRate = 0.01;
+
+    yaml_writer* w = alloc_yaml_writer();
+    to_yaml(b, w);
+    save_yaml(w, "yaml-test.yaml");
+
+    //TODO read & test
+
+    TEARDOWN
+    free_builder(b);
+    free_yaml_writer(w);
 }
 
 TEST(queue_test) {
@@ -189,9 +220,9 @@ TEST(save_test) {
     b_dense(b, 5);
     b_activation(b, SOFTMAX);
 
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
-    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
-    b_opt(b, SIMPLE, (optimizer_cnstr_args) {.value = 0.0});
+    b_ds(b, FULL_BATCH, TCA_NONE);
+    b_sch(b, CONSTANT, TCA_NONE);
+    b_opt(b, SIMPLE, TCA_NONE);
 
     b->cost_type = BINARY_CROSS_ENTROPY;
     b->shuffleDataOnIteration = 0;
@@ -280,6 +311,7 @@ void unit_test2() {
     ADD_TEST(queue_test);
     ADD_TEST(save_test);
     ADD_TEST(threadpool_test);
+    ADD_TEST(builder_yaml_test);
     RUN
 }
 
@@ -392,7 +424,7 @@ void pooling_layer_test() {
 
 typedef struct opt_builder {
     int opt;
-    optimizer_cnstr_args opt_args;
+    tc_cnstr_args opt_args;
     double learning_rate;
 } opt_builder;
 
@@ -417,16 +449,16 @@ static void print_costs(double* costs, const int count) {
 
 void optimizer_test(const int error, const int verbose) {
     const opt_builder builds[] = {
-        {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 0.1},
-        {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.2}, 0.1},
-        {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.3}, 0.1},
-        {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 0.1},
-        {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 0.1},
-        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {ADAMAX, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 0.1},
-        {ADAMW, (optimizer_cnstr_args) {.value3 = (double3) {0.9, 0.999, 0.01}}, 0.1},
+        {SIMPLE, TCA_NONE, 0.1},
+        {FREE_MOMENTUM, TCA_DOUBLE(0.2), 0.1},
+        {PROPORTIONAL_MOMENTUM, TCA_DOUBLE(0.9), 0.1},
+        {SIMPLIFIED_NESTEROV, TCA_DOUBLE(0.3), 0.1},
+        {RMS_PROP, TCA_DOUBLE(0.9), 0.1},
+        {ADAM, TCA_DOUBLE2(0.9, 0.999), 0.1},
+        {ADAGRAD, TCA_NONE, 0.1},
+        {ADADELTA, TCA_DOUBLE(0.9), 0.1},
+        {ADAMAX, TCA_DOUBLE2(0.9, 0.999), 0.1},
+        {ADAMW, TCA_DOUBLE3(0.9, 0.999, 0.01), 0.1}
     };
 
     neural_network* dummy = alloc_neural_network(1);
@@ -440,7 +472,7 @@ void optimizer_test(const int error, const int verbose) {
     double cost[4];
 
     for (int i = 0; i < sizeof(builds) / sizeof(opt_builder); ++i) {
-        if (verbose) printf("%s : \n", opt_names[builds[i].opt]);
+        if (verbose) printf("%s : \n", opt_metadata[builds[i].opt].name);
 
         l->parameters[0] = 1;
         l->parameters[1] = 1;
@@ -466,7 +498,7 @@ void optimizer_test(const int error, const int verbose) {
             if (error) {
                 for (int j = 0; j < 4; j++) {
                     if (fabs(buffer[j]) > fabs(cost[j])) {
-                        printf("%s : Fail\n", opt_names[builds[i].opt]);
+                        printf("%s : Fail\n", opt_metadata[builds[i].opt].name);
                         opt->vtable->free_state(state, dummy);
                         opt->vtable->free(opt);
                         goto free;
@@ -511,7 +543,7 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
             if (buffer >= cost) {
                 if (verbose) fail = 1;
                 else {
-                    printf("bit learn cost fail for %s and iteration %d\n", opt_names[builds[i].opt], j * 10);
+                    printf("bit learn cost fail for %s and iteration %d\n", opt_metadata[builds[i].opt].name, j * 10);
                     free_learning_data(n, data);
                     free_neural_network(n, 1);
                     return 1;
@@ -522,7 +554,7 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
         }
 
         if (verbose) {
-            printf("%s %s-> Cost : %f | Accuracy = %f\n", opt_names[builds[i].opt], fail ? "(FAIL) " : "", cost, get_acc(n, test));
+            printf("%s %s-> Cost : %f | Accuracy = %f\n", opt_metadata[builds[i].opt].name, fail ? "(FAIL) " : "", cost, get_acc(n, test));
         }
 
         free_learning_data(n, data);
@@ -534,16 +566,16 @@ int a(builder* b, const opt_builder builds[], const int buildCount, const test_d
 
 void binary_sum_learn_test(const int verbose) {
     const opt_builder builds[] = {
-        {SIMPLE, (optimizer_cnstr_args) {.value = 0}, 1},
-        {FREE_MOMENTUM, (optimizer_cnstr_args) {.value = 0.1}, 1},
-        {PROPORTIONAL_MOMENTUM, (optimizer_cnstr_args) {.value = 0.9}, 1},
-        {SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.8}, 1},
-        {RMS_PROP, (optimizer_cnstr_args) {.value = 0.9}, 0.1},
-        {ADAM, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 1},
-        {ADAGRAD, (optimizer_cnstr_args) {.value = 0.0}, 1},
-        {ADADELTA, (optimizer_cnstr_args) {.value = 0.9}, 1},
-        {ADAMAX, (optimizer_cnstr_args) {.value2 = (double2) {0.9, 0.999}}, 1},
-        {ADAMW, (optimizer_cnstr_args) {.value3 = (double3) {0.9, 0.999, 0.01}}, 1}
+        {SIMPLE, TCA_NONE, 1},
+        {FREE_MOMENTUM, TCA_DOUBLE(0.2), 1},
+        {PROPORTIONAL_MOMENTUM, TCA_DOUBLE(0.9), 1},
+        {SIMPLIFIED_NESTEROV, TCA_DOUBLE(0.3), 1},
+        {RMS_PROP, TCA_DOUBLE(0.9), 1},
+        {ADAM, TCA_DOUBLE2(0.9, 0.999), 1},
+        {ADAGRAD, TCA_NONE, 1},
+        {ADADELTA, TCA_DOUBLE(0.9), 1},
+        {ADAMAX, TCA_DOUBLE2(0.9, 0.999), 1},
+        {ADAMW, TCA_DOUBLE3(0.9, 0.999, 0.01), 1}
     };
 
     builder* b = alloc_builder(7);
@@ -552,8 +584,8 @@ void binary_sum_learn_test(const int verbose) {
     b_dense(b, 3);
     b_activation(b, SIGMOID);
 
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
-    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
+    b_ds(b, FULL_BATCH, TCA_NONE);
+    b_sch(b, CONSTANT, TCA_NONE);
 
     b->cost_type = BINARY_CROSS_ENTROPY;
     b->shuffleDataOnIteration = 0;
@@ -579,8 +611,8 @@ void binary_sum_learn_test(const int verbose) {
     b_dense(b, 8);
     b_activation(b, SOFTMAX);
 
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
-    b_sch(b, CONSTANT, (scheduler_cnstr_args) {.value = 0.0});
+    b_ds(b, FULL_BATCH, TCA_NONE);
+    b_sch(b, CONSTANT, TCA_NONE);
 
     b->cost_type = BINARY_CROSS_ENTROPY;
     b->shuffleDataOnIteration = 0;
@@ -614,9 +646,9 @@ void build_test() {
     b_dense(b, 3);
     b_activation(b, SOFTMAX);
 
-    b_opt(b, SIMPLIFIED_NESTEROV, (optimizer_cnstr_args) {.value = 0.9});
-    b_ds(b, FULL_BATCH, (data_selector_cnstr_args) {.value = 0});
-    b_sch(b, COSINE_DECAY, (scheduler_cnstr_args) {.di_value = (double_int) {0.5, 20}});
+    b_opt(b, SIMPLIFIED_NESTEROV, TCA_DOUBLE(0.9));
+    b_ds(b, FULL_BATCH, TCA_NONE);
+    b_sch(b, COSINE_DECAY, TCA_DOUBLE_INT(0.5, 20));
 
     b->cost_type = MEAN_SQUARE;
 
@@ -879,7 +911,7 @@ void dense_test() {
         const double cost2 = get_cost(n, i, e);
 
         if (cost2 >= cost) {
-            printf("Dense test cost lowering fail\n");
+            printf("Dense test cost lowering fail\n"); //TODO fix
             goto free;
         }
 

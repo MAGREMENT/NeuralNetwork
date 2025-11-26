@@ -120,9 +120,12 @@ double** alloc_gradient_buffers(const neural_network* network, const int initToZ
     return gradients;
 }
 
-static void set_gradient_buffers_to_zero(const neural_network* network, double** gradients) {
-    for (int i = 0; i < network->layerCount; i++) {
-        memset(gradients[i], 0, network->layers[i]->parameters_count * sizeof(double));
+static void set_gradient_buffers_to_zero(const neural_network* network, const learning_buffers* buffers, const int bufferCount) {
+    for (int t = 0; t < bufferCount; t++) {
+        double** grads = buffers[t].gradient_buffers;
+        for (int i = 0; i < network->layerCount; i++) {
+            memset(grads[i], 0, network->layers[i]->parameters_count * sizeof(double));
+        }
     }
 }
 
@@ -135,14 +138,14 @@ void free_buffers(const neural_network* network, double** buffers) {
 }
 
 static void accumulate_gradients(const neural_network* network, const learning_buffers* buffers, const int bufferCount, const int total) {
+    double** grads = buffers[0].gradient_buffers;
     for (int i = 0; i < network->layerCount; i++) {
         for (int o = 0; o < network->layers[i]->parameters_count; o++) {
             for (int t = 1; t < bufferCount; t++) {
-                buffers[0].gradient_buffers[i][o] += buffers[t].gradient_buffers[i][o];
-                buffers[t].gradient_buffers[i][o] = 0;
+                grads[i][o] += buffers[t].gradient_buffers[i][o];
             }
 
-            buffers[0].gradient_buffers[i][o] /= total;
+            grads[i][o] /= total;
         }
     }
 }
@@ -231,7 +234,7 @@ static void on_learn_start(const neural_network* network) {
 
 void learn(const neural_network* network, const test_data data, const iteration_range range, learning_data* ld, const double learningRate) {
     on_learn_start(network);
-    set_gradient_buffers_to_zero(network, ld->buffers[0].gradient_buffers);
+    set_gradient_buffers_to_zero(network, ld->buffers, get_batch_threads(network));
 
     if (network->batch_executor == NULL) {
         get_gradients(network, data, to_range(range), ld->buffers, 0);

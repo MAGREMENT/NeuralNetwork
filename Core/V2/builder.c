@@ -101,26 +101,73 @@ builder* from_yaml(const yaml_line* list, int count) {
     return NULL; //TODO
 }
 
-void to_yaml(const builder* builder, list* list) {
-    int indentation = 0;
+void to_yaml(const builder* builder, yaml_writer* w) {
+    yw_str_n(w, "builder");
+    yw_begin_map(w);
 
-    l_add(list, yaml_line, cnstr_yl(indentation, "builder", ""));
-    indentation++;
+    yw_str_n(w, "input_size");
+    yw_begin_arr(w);
+    yw_int_v(w, builder->in_size.width);
+    yw_int_v(w, builder->in_size.height);
+    yw_int_v(w, builder->in_size.depth);
+    yw_end(w);
 
-    //TODO
+    yw_str_n(w, "layers");
+    yw_begin_arr(w);
+
+    for (int i = 0; i < builder->list->count; i++) {
+        const builder_element el = l_get(builder->list, builder_element, i);
+        switch (el.type) {
+            case DENSE :
+                yw_str_n(w, "dense");
+                yw_begin_map(w);
+
+                yw_int_nv(w, "out_count", el.element.dense.out_count);
+                yw_end(w);
+                break;
+            case ACTIVATION :
+                yw_str_n(w, "activation");
+                yw_begin_map(w);
+
+                yw_str_nv(w, "type", activation_names[el.element.activation.type]);
+                yw_end(w);
+            default : break;
+        }
+    }
+
+    yw_end(w);
+
+    if (builder->optimizer >= 0) {
+        yw_str_nv(w, "optimizer", opt_metadata[builder->optimizer].name);
+        add_to_yaml_writer(w, builder->opt_args, opt_metadata[builder->optimizer].cnstr_type);
+    }
+
+    if (builder->scheduler >= 0) {
+        yw_str_nv(w, "scheduler", sch_metadata[builder->scheduler].name);
+        add_to_yaml_writer(w, builder->sch_args, sch_metadata[builder->scheduler].cnstr_type);
+    }
+
+    if (builder->data_selector >= 0) {
+        yw_str_nv(w, "data_selector", ds_metadata[builder->data_selector].name);
+        add_to_yaml_writer(w, builder->ds_args, ds_metadata[builder->data_selector].cnstr_type);
+    }
+
+    yw_int_nv(w, "cost_type", builder->cost_type);
+    yw_int_nv(w, "shuffle_data_on_iteration", builder->shuffleDataOnIteration);
+    yw_d_nv(w, "learning_rate", builder->learningRate);
 }
 
-inline void b_opt(builder* builder, const int type, const optimizer_cnstr_args args) {
+inline void b_opt(builder* builder, const int type, const tc_cnstr_args args) {
     builder->optimizer = type;
     builder->opt_args = args;
 }
 
-inline void b_sch(builder* builder, const int type, const scheduler_cnstr_args args) {
+inline void b_sch(builder* builder, const int type, const tc_cnstr_args args) {
     builder->scheduler = type;
     builder->sch_args = args;
 }
 
-inline void b_ds(builder* builder, const int type, const data_selector_cnstr_args args) {
+inline void b_ds(builder* builder, const int type, const tc_cnstr_args args) {
     builder->data_selector = type;
     builder->ds_args = args;
 }
@@ -268,10 +315,10 @@ neural_network* build(const builder* builder, const builder_params params) {
     else if (builder->cost_type >= 0) n->cost_vtable = cost_vtables + builder->cost_type;
 
     if (builder->optimizer >= 0) {
-        if (max_param_count >= params.optimizer_mt_threshold && operation_threads > 1) {
+        if (max_param_count >= params.optimizer_mt_threshold && pool_treads > 1) {
             if (n->thread_pool == NULL) n->thread_pool = alloc_thread_pool(pool_treads);
             n->optimizer = cnstr_mt_optimizer(builder->optimizer, builder->opt_args, n->thread_pool,
-                def_get_mt_count(max_param_count,operation_threads));
+                def_get_mt_count(max_param_count,pool_treads));
         }
         else n->optimizer = cnstr_optimizer(builder->optimizer, builder->opt_args);
     }

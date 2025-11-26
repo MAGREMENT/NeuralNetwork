@@ -29,13 +29,13 @@ typedef struct builder {
     int cost_type;
 
     int optimizer;
-    optimizer_cnstr_args opt_args;
+    tc_cnstr_args opt_args;
 
     int scheduler;
-    scheduler_cnstr_args sch_args;
+    tc_cnstr_args sch_args;
 
     int data_selector;
-    data_selector_cnstr_args ds_args;
+    tc_cnstr_args ds_args;
 } builder;
 
 extern builder_params def_b_params();
@@ -46,11 +46,11 @@ extern builder* alloc_builder_3D(size3D inSize);
 extern void free_builder(builder* builder);
 
 builder* from_yaml(const yaml_line* list, int count);
-void to_yaml(const builder* builder, list* list);
+void to_yaml(const builder* builder, yaml_writer* w);
 
-extern void b_opt(builder* builder, int type, optimizer_cnstr_args args);
-extern void b_sch(builder* builder, int type, scheduler_cnstr_args args);
-extern void b_ds(builder* builder, int type, data_selector_cnstr_args args);
+extern void b_opt(builder* builder, int type, tc_cnstr_args args);
+extern void b_sch(builder* builder, int type, tc_cnstr_args args);
+extern void b_ds(builder* builder, int type, tc_cnstr_args args);
 
 extern void b_dense(const builder* builder, int outputCount);
 extern void b_activation(const builder* builder, int type);

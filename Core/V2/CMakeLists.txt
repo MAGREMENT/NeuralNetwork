@@ -57,7 +57,8 @@ set(SOURCES
         Util/range.c
         yaml.c
         tester.c
-        Util/console.c)
+        Util/console.c
+        training_component.c)
 
 if(MSVC)
     message(STATUS "MVSC detected -> Enabling CUDA")

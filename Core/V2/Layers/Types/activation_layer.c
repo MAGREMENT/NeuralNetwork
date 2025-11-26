@@ -10,6 +10,15 @@
 
 #define LEAK 0.01
 
+char* activation_names[] = {
+    "Sigmoid",
+    "TanH",
+    "RelU",
+    "Leaky RelU",
+    "SilU",
+    "Softmax"
+};
+
 static void sigmoid_forward(const layer* l, const double* inputs, double* outputs) {
     for (int i = 0; i < l->out_count; i++) {
         outputs[i] = sigmoid(inputs[i]);

@@ -5,6 +5,7 @@
 #ifndef NEWIMPLEMENTATION_SCHEDULER_FACTORY_H
 #define NEWIMPLEMENTATION_SCHEDULER_FACTORY_H
 #include "scheduler.h"
+#include "../training_component.h"
 
 enum schedulers {
     CONSTANT,
@@ -14,16 +15,8 @@ enum schedulers {
     COSINE_DECAY
 };
 
-typedef struct double_int {
-    double d;
-    int i;
-} double_int;
+extern tc_metadata sch_metadata[];
 
-typedef union scheduler_cnstr_args {
-    double value;
-    double_int di_value;
-} scheduler_cnstr_args;
-
-extern scheduler* cnstr_scheduler(int type, scheduler_cnstr_args args);
+extern scheduler* cnstr_scheduler(int type, tc_cnstr_args args);
 
 #endif //NEWIMPLEMENTATION_SCHEDULER_FACTORY_H

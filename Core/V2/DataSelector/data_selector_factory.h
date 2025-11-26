@@ -5,16 +5,15 @@
 #ifndef NEWIMPLEMENTATION_DATA_SELECTOR_FACTORY_H
 #define NEWIMPLEMENTATION_DATA_SELECTOR_FACTORY_H
 #include "data_selector.h"
+#include "../training_component.h"
 
 enum data_selectors {
     FULL_BATCH,
     MINI_BATCH
 };
 
-typedef union data_selector_cnstr_args {
-    int value;
-} data_selector_cnstr_args;
+extern tc_metadata ds_metadata[];
 
-extern data_selector* cnstr_data_selector(int type, data_selector_cnstr_args args);
+extern data_selector* cnstr_data_selector(int type, tc_cnstr_args args);
 
 #endif //NEWIMPLEMENTATION_DATA_SELECTOR_FACTORY_H

@@ -22,14 +22,13 @@ void free_list(list* l) {
     free(l);
 }
 
-void grow_if_needed(list* list) {
-    if (list->count < list->capacity) return;
+list* grow_if_needed(list* list) {
+    if (list->count < list->capacity) return list;
 
     list->capacity *= 2;
-    void* buffer = malloc(list->el_size * list->capacity);
-    memcpy(buffer, list->data, list->el_size * list->count);
-    free(list->data);
-    list->data = buffer;
+    list->data = realloc(list->data, list->capacity * list->el_size);
+
+    return list;
 }
 
 s_arr* alloc_s_arr(size_t el_size, int count) {
@@ -42,4 +41,24 @@ s_arr* alloc_s_arr(size_t el_size, int count) {
 void free_s_arr(s_arr* arr) {
     free(arr->data);
     free(arr);
+}
+
+int index_of_int(const list* l, const int v) {
+    if (l->el_size != sizeof(int)) return -1;
+
+    const int* values = l->data;
+    for (int i = 0; i < l->count; i++) {
+        if (values[i] == v) return i;
+    }
+
+    return -1;
+}
+
+inline int contains_int(const list* l, int v) {
+    return index_of_int(l, v) + 1;
+}
+
+void remove_at(list* l, int ind) {
+    memcpy((char*)l->data + ind * l->el_size, (char*)l->data + (ind + 1) * l->el_size, (l->count - ind - 1) * l->el_size);
+    l->count--;
 }

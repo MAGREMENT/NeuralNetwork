@@ -12,13 +12,21 @@
 #include "Types/inverse_decay_scheduler.h"
 #include "Types/iteration_decay_scheduler.h"
 
-scheduler* cnstr_scheduler(const int type, const scheduler_cnstr_args args) {
+tc_metadata sch_metadata[] = {
+    {"Constant", TCT_NONE},
+    {"Iteration Decay", TCT_DOUBLE_INT},
+    {"Exponential Decay", TCT_DOUBLE},
+    {"Inverse Decay", TCT_DOUBLE},
+    {"Cosine Decay", TCT_DOUBLE_INT}
+};
+
+scheduler* cnstr_scheduler(const int type, const tc_cnstr_args args) {
     switch (type) {
         case CONSTANT : return cnstr_constant_scheduler();
-        case ITERATION_DECAY : return cnstr_iteration_decay_scheduler(args.di_value.d, args.di_value.i);
-        case EXPONENTIAL_DECAY : return cnstr_exponential_decay_scheduler(args.value);
-        case INVERSE_DECAY : return cnstr_inverse_decay_scheduler(args.value);
-        case COSINE_DECAY : return cnstr_cosine_decay_scheduler(args.di_value.d, args.di_value.i);
+        case ITERATION_DECAY : return cnstr_iteration_decay_scheduler(args.di.d, args.di.i);
+        case EXPONENTIAL_DECAY : return cnstr_exponential_decay_scheduler(args.d);
+        case INVERSE_DECAY : return cnstr_inverse_decay_scheduler(args.d);
+        case COSINE_DECAY : return cnstr_cosine_decay_scheduler(args.di.d, args.di.i);
         default : return NULL;
     }
 }

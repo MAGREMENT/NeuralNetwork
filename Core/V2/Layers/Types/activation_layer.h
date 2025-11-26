@@ -12,6 +12,8 @@ enum activation_types {
     SOFTMAX
 };
 
+extern char* activation_names[];
+
 extern layer* cnstr_activation_layer(int type, int outputCount);
 extern layer* cnstr_softmax_bce_layer(int outputCount);
 
