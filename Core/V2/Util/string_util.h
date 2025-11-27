@@ -7,5 +7,6 @@
 #include <stdarg.h>
 
 extern char* alloc_format(char format[], va_list args, int* size);
+int index_of_str(char** arr, int count, char* str, int def);
 
 #endif //STRING_UTIL_H

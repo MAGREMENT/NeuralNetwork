@@ -7,6 +7,8 @@
 #include "scheduler.h"
 #include "../training_component.h"
 
+#define SCHEDULER_COUNT 5
+
 enum schedulers {
     CONSTANT,
     ITERATION_DECAY,

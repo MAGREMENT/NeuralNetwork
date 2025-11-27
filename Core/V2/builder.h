@@ -5,10 +5,10 @@
 #ifndef BUILDER_H
 #define BUILDER_H
 
+#include "neural_network.h"
+#include "training_component.h"
 #include "yaml.h"
-#include "DataSelector/data_selector_factory.h"
-#include "Optimizers/optimizer_factory.h"
-#include "Schedulers/scheduler_factory.h"
+
 #include "Util/size.h"
 #include "Util/Collections/list.h"
 
@@ -38,6 +38,40 @@ typedef struct builder {
     tc_cnstr_args ds_args;
 } builder;
 
+typedef struct dense_element {
+    int out_count;
+} dense_element;
+
+typedef struct activation_element {
+    int type;
+} activation_element;
+
+typedef struct conv_element {
+    size2D kernel_size;
+    int kernel_count;
+    int stride;
+    int padding;
+} conv_element;
+
+typedef struct pooling_element {
+    int type;
+    size2D window_size;
+    int stride;
+    int padding;
+} pooling_element;
+
+typedef union builder_union {
+    dense_element dense;
+    activation_element activation;
+    conv_element conv;
+    pooling_element pooling;
+} builder_union ;
+
+typedef struct builder_element {
+    int type;
+    builder_union element;
+} builder_element;
+
 extern builder_params def_b_params();
 extern builder_params st_b_params();
 
@@ -45,7 +79,7 @@ extern builder* alloc_builder(int inSize);
 extern builder* alloc_builder_3D(size3D inSize);
 extern void free_builder(builder* builder);
 
-builder* from_yaml(const yaml_line* list, int count);
+void from_yaml(builder* builder, yaml_reader* r);
 void to_yaml(const builder* builder, yaml_writer* w);
 
 extern void b_opt(builder* builder, int type, tc_cnstr_args args);

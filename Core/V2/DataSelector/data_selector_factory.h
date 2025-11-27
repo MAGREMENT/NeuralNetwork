@@ -7,6 +7,8 @@
 #include "data_selector.h"
 #include "../training_component.h"
 
+#define DATA_SELECTOR_COUNT 2
+
 enum data_selectors {
     FULL_BATCH,
     MINI_BATCH

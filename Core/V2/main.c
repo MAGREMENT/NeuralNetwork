@@ -11,10 +11,13 @@
 #include "Layers/Types/convolutional_layer.h"
 #include "neural_network.h"
 #include "tester.h"
+#include "DataSelector/data_selector_factory.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/dense_layer.h"
 #include "Layers/Types/pooling_layer.h"
+#include "Optimizers/optimizer_factory.h"
 #include "Optimizers/Types/simple_optimizer.h"
+#include "Schedulers/scheduler_factory.h"
 #include "Util/double_util.h"
 #include "Util/math_util.h"
 #include "Util/rand_util.h"
@@ -118,6 +121,7 @@ void mnist_run() {
 
 TEST(builder_yaml_test) {
     builder* b = alloc_builder_3D((size3D){28, 28, 1});
+    builder* copy = alloc_builder(0);
 
     b_dense(b, 200);
     b_activation(b, LEAKY_RELU);
@@ -154,8 +158,45 @@ TEST(builder_yaml_test) {
         ASSERT(strcmp(wl.value, rl.value) == 0);
     }
 
+    from_yaml(copy, r);
+
+    ASSERT(copy->in_size.width == b->in_size.width);
+    ASSERT(copy->in_size.height == b->in_size.height);
+    ASSERT(copy->in_size.depth == b->in_size.depth);
+
+    ASSERT(copy->list->count == b->list->count);
+
+    for (int i = 0; i < copy->list->count; i++) {
+        const builder_element el1 = l_get(copy->list, builder_element, i);
+        const builder_element el2 = l_get(b->list, builder_element, i);
+
+        ASSERT(el1.type == el2.type);
+        switch (el1.type) {
+            case DENSE :
+                ASSERT(el1.element.dense.out_count == el2.element.dense.out_count);
+                break;
+            case ACTIVATION :
+                ASSERT(el1.element.activation.type == el2.element.activation.type);
+                break;
+            default : break;
+        }
+    }
+
+    ASSERT(b->cost_type == copy->cost_type);
+    ASSERT(b->shuffleDataOnIteration == copy->shuffleDataOnIteration);
+    ASSERT(def_deq(b->learningRate, copy->learningRate));
+
+    ASSERT(copy->optimizer == ADAM);
+    ASSERT(def_deq(copy->opt_args.d2.d1, 0.9) && def_deq(copy->opt_args.d2.d2, 0.999));
+
+    ASSERT(copy->scheduler == CONSTANT)
+
+    ASSERT(copy->data_selector == MINI_BATCH)
+    ASSERT(copy->ds_args.i == 64)
+
     TEARDOWN
     free_builder(b);
+    free_builder(copy);
     free_yaml_writer(w);
     free_yaml_reader(r);
 }

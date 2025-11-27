@@ -4,50 +4,22 @@
 
 #include "builder.h"
 
+#include <string.h>
+
 #include "asserter.h"
 #include "neural_network.h"
+#include "DataSelector/data_selector_factory.h"
 #include "Layers/Types/activation_layer.h"
 #include "Layers/Types/convolutional_layer.h"
 #include "Layers/Types/dense_layer.h"
 #include "Layers/Types/pooling_layer.h"
+#include "Optimizers/optimizer_factory.h"
+#include "Schedulers/scheduler_factory.h"
+#include "Util/string_util.h"
 
 #ifdef _MSC_VER
 #include "Layers/Types/Cuda/cuda_dense_layer.cuh"
 #endif
-
-typedef struct dense_element {
-    int out_count;
-} dense_element;
-
-typedef struct activation_element {
-    int type;
-} activation_element;
-
-typedef struct conv_element {
-    size2D kernel_size;
-    int kernel_count;
-    int stride;
-    int padding;
-} conv_element;
-
-typedef struct pooling_element {
-    int type;
-    size2D window_size;
-    int stride;
-    int padding;
-} pooling_element;
-
-typedef union builder_union {
-    dense_element dense;
-    activation_element activation;
-    conv_element conv;
-    pooling_element pooling;
-} builder_union ;
-
-typedef struct builder_element {
-    int type;
-    builder_union element;
-} builder_element;
 
 static int def_get_mt_count(const int operationCount, const int total) {
     if (operationCount >= 250 * 250) return total;
@@ -97,8 +69,97 @@ inline void free_builder(builder* builder) {
     free(builder);
 }
 
-builder* from_yaml(const yaml_line* list, int count) {
-    return NULL; //TODO
+void from_yaml(builder* builder, yaml_reader* r) {
+    if (!yr_seek(r, "builder") || !yr_enter(r)) return;
+
+    if (yr_seek(r, "input_size") && yr_enter(r)) {
+        size3D inSize;
+
+        inSize.width = yr_int_v(r);
+        inSize.height = yr_next(r) ? yr_int_v(r) : 0;
+        inSize.depth = yr_next(r) ? yr_int_v(r) : 0;
+
+        builder->in_size = inSize;
+
+        if (!yr_exit(r)) return;
+    }
+
+    char buffer[YAML_LINE_MAX_LENGTH];
+    if (yr_seek(r, "layers") && yr_enter(r)) {
+        do {
+            yr_str_n(r, buffer);
+
+            if (strcmp(buffer, "dense") == 0) {
+                if (!yr_enter(r)) continue;
+
+                b_dense(builder, yr_int_v(r));
+
+                if (!yr_exit(r)) return;
+            } else if (strcmp(buffer, "activation") == 0) {
+                if (!yr_enter(r)) continue;
+
+                yr_str_v(r, buffer);
+                b_activation(builder, index_of_str(activation_names, ACTIVATION_COUNT, buffer, 0));
+
+                if (!yr_exit(r)) return;
+            }
+        } while (yr_next(r));
+
+        if (!yr_exit(r)) return;
+    }
+
+    tc_cnstr_args args;
+    int type;
+    if (yr_seek(r, "optimizer")) {
+        yr_str_v(r, buffer);
+        type = index_of_tc(opt_metadata, OPTIMIZER_COUNT, buffer, 0);
+
+        args = TCA_NONE;
+        if (yr_enter(r)) {
+            args = get_args_from_yaml(r, opt_metadata[type].cnstr_type);
+            if (!yr_exit(r)) return;
+        }
+
+        b_opt(builder, type, args);
+    }
+
+    if (yr_seek(r, "scheduler")) {
+        yr_str_v(r, buffer);
+        type = index_of_tc(sch_metadata, SCHEDULER_COUNT, buffer, 0);
+
+        args = TCA_NONE;
+        if (yr_enter(r)) {
+            args = get_args_from_yaml(r, sch_metadata[type].cnstr_type);
+            if (!yr_exit(r)) return;
+        }
+
+        b_sch(builder, type, args);
+    }
+
+    if (yr_seek(r, "data_selector")) {
+        yr_str_v(r, buffer);
+        type = index_of_tc(ds_metadata, DATA_SELECTOR_COUNT, buffer, 0);
+
+        args = TCA_NONE;
+        if (yr_enter(r)) {
+            args = get_args_from_yaml(r, ds_metadata[type].cnstr_type);
+            if (!yr_exit(r)) return;
+        }
+
+        b_ds(builder, type, args);
+    }
+
+    if (yr_seek(r, "cost_type")) {
+        builder->cost_type = yr_int_v(r);
+    }
+
+    if (yr_seek(r, "shuffle_data_on_iteration")) {
+        builder->shuffleDataOnIteration = yr_int_v(r);
+    }
+
+    if (yr_seek(r, "learning_rate")) {
+        builder->learningRate = yr_d_v(r);
+    }
 }
 
 void to_yaml(const builder* builder, yaml_writer* w) {

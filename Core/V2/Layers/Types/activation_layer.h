@@ -3,6 +3,8 @@
 
 #include "../layer.h"
 
+#define ACTIVATION_COUNT 6
+
 enum activation_types {
     SIGMOID,
     TANH,

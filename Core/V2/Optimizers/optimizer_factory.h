@@ -4,9 +4,12 @@
 
 #ifndef NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H
 #define NEWIMPLEMENTATION_OPTIMIZER_FACTORY_H
+
 #include "optimizer.h"
 #include "../training_component.h"
 #include "../multi-threading.h"
+
+#define OPTIMIZER_COUNT 10
 
 enum optimizers {
     SIMPLE,

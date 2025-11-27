@@ -52,5 +52,7 @@ typedef struct tc_metadata {
 } tc_metadata;
 
 void add_to_yaml_writer(yaml_writer* writer, tc_cnstr_args args, int args_type);
+tc_cnstr_args get_args_from_yaml(yaml_reader* reader, int args_type);
+int index_of_tc(const tc_metadata* arr, int count, const char* str, int def);
 
 #endif //NEWIMPLEMENTATION_TRAINING_COMPONENT_H

@@ -4,8 +4,6 @@
 
 #include "data_selector_factory.h"
 
-#include <stddef.h>
-
 #include "Types/full_batch_data_selector.h"
 #include "Types/mini_batch_data_selector.h"
 

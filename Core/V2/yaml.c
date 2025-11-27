@@ -56,6 +56,7 @@ yaml_reader* alloc_yaml_reader() {
     yaml_reader* reader = malloc(sizeof(yaml_reader));
     reader->lines = alloc_list(sizeof(yaml_line));
     reader->index = 0;
+    reader->indentation = 0;
     return reader;
 }
 
@@ -106,6 +107,94 @@ inline void yw_int_v(yaml_writer* writer, int i) {
 inline void yw_d_nv(yaml_writer* writer, char name[], const double d) {
     l_add(writer->lines, yaml_line, cnstr_d_yl(writer->indentation,
         contains_int(writer->array_indentations, writer->indentation), name, d));
+}
+
+int yr_seek(yaml_reader* reader, char name[]) {
+    for (int i = reader->index - 1; i >= 0; i--) {
+        const yaml_line line = l_get(reader->lines, yaml_line, i);
+        if (line.indentation > reader->indentation) continue;
+        if (line.indentation < reader->indentation) break;
+
+        if (strcmp(line.name, name) == 0) {
+            reader->index = i;
+            return 1;
+        }
+    }
+
+    for (int i = reader->index; i < reader->lines->count; i++) {
+        const yaml_line line = l_get(reader->lines, yaml_line, i);
+        if (line.indentation > reader->indentation) continue;
+        if (line.indentation < reader->indentation) break;
+
+        if (strcmp(line.name, name) == 0) {
+            reader->index = i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int yr_next(yaml_reader* reader) {
+    for (int i = reader->index + 1; i < reader->lines->count; i++) {
+        const yaml_line line = l_get(reader->lines, yaml_line, i);
+        if (line.indentation > reader->indentation) continue;
+        if (line.indentation < reader->indentation) return 0;
+
+        reader->index = i;
+        return 1;
+    }
+
+    return 0;
+}
+
+int yr_enter(yaml_reader* reader) {
+    if (reader->index == reader->lines->count - 1) return 0;
+
+    const yaml_line line = l_get(reader->lines, yaml_line, reader->index + 1);
+    if (line.indentation <= reader->indentation) return 0;
+
+    reader->index++;
+    reader->indentation = line.indentation;
+
+    return 1;
+}
+
+int yr_exit(yaml_reader* reader) {
+    for (int i = reader->index - 1; i >= 0; i--) {
+        const yaml_line line = l_get(reader->lines, yaml_line, i);
+        if (line.indentation < reader->indentation) {
+            reader->index = i;
+            reader->indentation = line.indentation;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+inline int yr_int_v(yaml_reader* reader) {
+    return atoi(l_get(reader->lines, yaml_line, reader->index).value);
+}
+
+inline int yr_int_seekv(yaml_reader* reader, char name[], const int def) {
+    return yr_seek(reader, name) ? yr_int_v(reader) : def;
+}
+
+inline double yr_d_v(yaml_reader* reader) {
+    return atof(l_get(reader->lines, yaml_line, reader->index).value);
+}
+
+inline double yr_d_seekv(yaml_reader* reader, char name[], const double def) {
+    return yr_seek(reader, name) ? yr_d_v(reader) : def;
+}
+
+inline void yr_str_n(yaml_reader* reader, char name[]) {
+    strcpy_s(name, YAML_LINE_MAX_LENGTH, l_get(reader->lines, yaml_line, reader->index).name);
+}
+
+inline void yr_str_v(yaml_reader* reader, char value[]) {
+    strcpy_s(value, YAML_LINE_MAX_LENGTH, l_get(reader->lines, yaml_line, reader->index).value);
 }
 
 void save_yaml(const yaml_writer* writer, const char* file) {
