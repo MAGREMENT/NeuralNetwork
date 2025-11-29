@@ -3,22 +3,23 @@ using Base;
 
 namespace NeuralNetwork.V1;
 
-public partial class NeuralNetwork : INeuralNetwork, IDisposable
+public partial class NeuralNetwork : INeuralNetwork
 {
-    internal IntPtr Ptr { get; }
+    private readonly IntPtr _ptr;
+    
     public int Length { get; }
 
     public NeuralNetwork(params int[] layers)
     {
-        Ptr = Create(layers.Length, layers);
-        Length = GetCount(Ptr);
+        _ptr = Create(layers.Length, layers);
+        Length = GetCount(_ptr);
         InitializeWeightsAndBiases();
     }
 
     private NeuralNetwork(IntPtr ptr)
     {
-        Ptr = ptr;
-        Length = GetCount(Ptr);
+        _ptr = ptr;
+        Length = GetCount(_ptr);
     }
 
     public static NeuralNetwork Restore(string file)
@@ -30,92 +31,94 @@ public partial class NeuralNetwork : INeuralNetwork, IDisposable
 
     public void Save(string file)
     {
-        if(Save(Ptr, file) != 0) throw new Exception("Save failed");
+        if(Save(_ptr, file) != 0) throw new Exception("Save failed");
     }
+
+    public IntPtr GetPointer() => _ptr;
 
     public void InitializeWeightsAndBiases()
     {
-        Initialize(Ptr);
+        Initialize(_ptr);
     }
 
     public int GetInCount(int layer)
     {
-        if (layer < 0 || layer >= GetCount(Ptr)) throw new IndexOutOfRangeException();
-        return GetInCount(Ptr, layer);
+        if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
+        return GetInCount(_ptr, layer);
     }
 
     public int GetInputInCount()
     {
-        return GetInCount(Ptr, 0);
+        return GetInCount(_ptr, 0);
     }
 
     public int GetOutCount(int layer)
     {
-        if (layer < 0 || layer >= GetCount(Ptr)) throw new IndexOutOfRangeException();
-        return GetOutCount(Ptr, layer);
+        if (layer < 0 || layer >= GetCount(_ptr)) throw new IndexOutOfRangeException();
+        return GetOutCount(_ptr, layer);
     }
 
     public int GetOutputOutCount()
     {
-        return GetOutCount(Ptr, Length - 1);
+        return GetOutCount(_ptr, Length - 1);
     }
 
     public void SetWeight(int layer, int input, int output, double value)
     {
         CheckBounds(layer, input, output);
-        SetWeight(Ptr, layer, input, output, value);
+        SetWeight(_ptr, layer, input, output, value);
     }
 
     public double GetWeight(int layer, int input, int output)
     {
         CheckBounds(layer, input, output);
-        return GetWeight(Ptr, layer, input, output);
+        return GetWeight(_ptr, layer, input, output);
     }
     
     public void SetBias(int layer, int output, double value)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
-        SetBias(Ptr, layer, output, value);
+        SetBias(_ptr, layer, output, value);
     }
     
     public double GetBias(int layer, int output)
     {
         if (output < 0 || output >= GetOutCount(layer)) throw new IndexOutOfRangeException();
-        return GetBias(Ptr, layer, output);
+        return GetBias(_ptr, layer, output);
     }
 
     public void SetAllWeightsAndBiases(double weights, double biases)
     {
-        SetAllWeightsAndBiases(Ptr, weights, biases);
+        SetAllWeightsAndBiases(_ptr, weights, biases);
     }
 
-    public double GetLearningRate() => GetLearningRate(Ptr);
-    public void SetLearningRate(double lr) => SetLearningRate(Ptr, lr);
-    public int GetShuffleDataOnIteration() => GetShuffleDataOnIteration(Ptr);
-    public void SetShuffleDataOnIteration(int sdoi) => SetShuffleDataOnIteration(Ptr, sdoi);
-    public int GetThreadCount() => GetThreadCount(Ptr);
-    public void SetThreadCount(int count) => SetThreadCount(Ptr, count);
-    public void SetOptimizerGradientDescent() => SetOptimizerGradientDescent(Ptr);
-    public void SetOptimizerMomentum(double momentum) => SetOptimizerMomentum(Ptr, momentum);
-    public void SetOptimizerNesterov(double decay) => SetOptimizerNesterov(Ptr, decay);
-    public void SetOptimizerAdam(double delta1, double delta2) => SetOptimizerAdam(Ptr, delta1, delta2);
-    public void SetDataSelectorFullBatch() => SetDataSelectorFullBatch(Ptr);
-    public void SetDataSelectorMiniBatch(int batchSize) => SetDataSelectorMiniBatch(Ptr, batchSize);
-    public void SetSchedulerConstant() => SetSchedulerConstant(Ptr);
-    public void SetSchedulerIterationDecay(double proportion) => SetSchedulerIterationDecay(Ptr, proportion);
-    public void SetSchedulerExponentialDecay(double decay) => SetSchedulerExponentialDecay(Ptr, decay);
-    public void SetSchedulerInverseDecay(double decay) => SetSchedulerInverseDecay(Ptr, decay);
+    public double GetLearningRate() => GetLearningRate(_ptr);
+    public void SetLearningRate(double lr) => SetLearningRate(_ptr, lr);
+    public int GetShuffleDataOnIteration() => GetShuffleDataOnIteration(_ptr);
+    public void SetShuffleDataOnIteration(int sdoi) => SetShuffleDataOnIteration(_ptr, sdoi);
+    public int GetThreadCount() => GetThreadCount(_ptr);
+    public void SetThreadCount(int count) => SetThreadCount(_ptr, count);
+    public void SetOptimizerGradientDescent() => SetOptimizerGradientDescent(_ptr);
+    public void SetOptimizerMomentum(double momentum) => SetOptimizerMomentum(_ptr, momentum);
+    public void SetOptimizerNesterov(double decay) => SetOptimizerNesterov(_ptr, decay);
+    public void SetOptimizerAdam(double delta1, double delta2) => SetOptimizerAdam(_ptr, delta1, delta2);
+    public void SetDataSelectorFullBatch() => SetDataSelectorFullBatch(_ptr);
+    public void SetDataSelectorMiniBatch(int batchSize) => SetDataSelectorMiniBatch(_ptr, batchSize);
+    public void SetSchedulerConstant() => SetSchedulerConstant(_ptr);
+    public void SetSchedulerIterationDecay(double proportion) => SetSchedulerIterationDecay(_ptr, proportion);
+    public void SetSchedulerExponentialDecay(double decay) => SetSchedulerExponentialDecay(_ptr, decay);
+    public void SetSchedulerInverseDecay(double decay) => SetSchedulerInverseDecay(_ptr, decay);
     public void SetSchedulerCosineDecay(double endLearningRate, int iterationSpan) =>
-        SetSchedulerCosineDecay(Ptr, endLearningRate, iterationSpan);
+        SetSchedulerCosineDecay(_ptr, endLearningRate, iterationSpan);
 
     public void SetActivationType(ActivationType type, ActivationType outputType)
     {
-        SetActivationType(Ptr, (int)type, (int)outputType);
+        SetActivationType(_ptr, (int)type, (int)outputType);
     }
     
     public void SetCostType(CostType type)
     {
-        SetCostType(Ptr, (int)type);
+        SetCostType(_ptr, (int)type);
     }
 
     public double[] Predict(double[] inputs) => Predict(inputs, inputs.Length);
@@ -128,24 +131,24 @@ public partial class NeuralNetwork : INeuralNetwork, IDisposable
         var count = GetOutCount(Length - 1);
         var arr = new double[count]; //TODO Look into using stackalloc when output is a single int
         
-        Predict(Ptr, inputs, length, arr, count);
+        Predict(_ptr, inputs, length, arr, count);
         return arr;
     }
-
-    public void Learn(FlattenedData data, int iterations, LearningState? state = null)
+    
+    public void Learn(FlattenedData data, int iterations, ILearningState? state)
     {
         var count = data.GetCount();
         if (count == 0) return;
         
-        var statePtr = state?.Ptr ?? IntPtr.Zero;
-        Learn(Ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count,
+        var statePtr = state?.GetPointer() ?? IntPtr.Zero;
+        Learn(_ptr, statePtr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count,
             iterations);
     }
 
     public double GetCost(double[] inputs, double[] expected)
     {
         CheckTestDataBounds(inputs.Length, expected.Length);
-        return Cost(Ptr, inputs, inputs.Length, expected, expected.Length); 
+        return Cost(_ptr, inputs, inputs.Length, expected, expected.Length); 
     }
 
     public double GetCost(FlattenedData data)
@@ -154,13 +157,13 @@ public partial class NeuralNetwork : INeuralNetwork, IDisposable
         if (count == 0) return 0;
         
         CheckTestDataBounds(data.InputCutOff, data.ExpectedCutOff);
-        return MultiCost(Ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count);
+        return MultiCost(_ptr, data.Inputs, data.InputCutOff, data.Expected, data.ExpectedCutOff, count);
     }
-    
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        Dispose(Ptr);
+        Dispose(_ptr);
     }
 
     private void CheckBounds(int layer, int input, int output)

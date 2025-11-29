@@ -16,15 +16,13 @@ public class DoodleGuesserPresenter
 
     private readonly Random _random = new();
 
-    private readonly NeuralNetwork _network;
+    private readonly INeuralNetwork _network;
     private int _index = -1;
 
     public DoodleGuesserPresenter(IDoodleGuesserView view)
     {
         _view = view;
-        _network = NeuralNetwork.Restore("test.nn");
-        _network.SetActivationType(ActivationType.RELU, ActivationType.SOFTMAX);
-        _network.SetCostType(CostType.BINARY_CROSS_ENTROPY);
+        _network = IPresenterService.Instance.GetDoodleGuesserNetwork();
     }
 
     public void Next()

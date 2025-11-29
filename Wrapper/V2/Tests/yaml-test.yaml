@@ -1,0 +1,27 @@
+builder: 
+  input_size: 
+    - 28
+    - 28
+    - 1
+  layers: 
+    - dense: 
+        out_count: 200
+    - activation: 
+        type: Leaky RelU
+    - dense: 
+        out_count: 100
+    - activation: 
+        type: Leaky RelU
+    - dense: 
+        out_count: 10
+    - activation: 
+        type: Softmax
+  optimizer: Adam
+    d1: 0.900000
+    d2: 0.999000
+  scheduler: Constant
+  data_selector: Mini Batch
+    i: 64
+  cost_type: 3
+  shuffle_data_on_iteration: 1
+  learning_rate: 0.010000

@@ -8,9 +8,8 @@ public class GraphGuesserPresenter : IDisposable
 {
     private readonly IGraphGuesserView _view;
     
-    private static readonly int[] _layers = { 2, 3, 2 };
-    private readonly NeuralNetwork _network;
-    private readonly LearningState _state;
+    private readonly INeuralNetwork _network;
+    private readonly ILearningState _state;
     
     private readonly List<GuessingPoint> _points = new();
     private readonly Dictionary<(double, double), int> _valueBuffer = new();
@@ -22,14 +21,13 @@ public class GraphGuesserPresenter : IDisposable
 
     public GraphGuesserPresenter(IGraphGuesserView view)
     {
-        _network = new NeuralNetwork(_layers);
-        _state = new LearningState(_network);
+        (_network, _state) = IPresenterService.Instance.GetGraphGuesserNetwork();
         _view = view;
     }
 
     public void Start()
     {
-        _view.InitWeightsAndBiases(_layers);
+        //_view.InitWeightsAndBiases(_layers);
         UpdateWeightsAndBiases();
         _view.SetCost(_network.GetCost(GetFlattenedData()));
     }
@@ -86,19 +84,7 @@ public class GraphGuesserPresenter : IDisposable
 
     private void UpdateWeightsAndBiases()
     {
-        for (int l = 0; l < _network.Length; l++)
-        {
-            var oc = _network.GetOutCount(l);
-            for (int o = 0; o < oc; o++)
-            {
-                for (int i = 0; i < _network.GetInCount(l); i++)
-                {
-                    _view.SetWeight(l, i, o, oc, _network.GetWeight(l, i, o));
-                }
-                
-                _view.SetBias(l, o, _network.GetBias(l, o));
-            }
-        }
+        
     }
 
     private FlattenedData GetFlattenedData()

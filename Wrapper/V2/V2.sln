@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetwork.V2", "NeuralNetwork.V2\NeuralNetwork.V2.csproj", "{FE7FAD49-50C5-4B2D-B578-A47E97A25F5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Base", "..\Base\Base\Base.csproj", "{A19AB0EF-2F2D-406E-9106-EB0A61F940DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{EF51BA75-DFCD-4EC2-95E3-5414DBEEEDB4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FE7FAD49-50C5-4B2D-B578-A47E97A25F5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE7FAD49-50C5-4B2D-B578-A47E97A25F5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE7FAD49-50C5-4B2D-B578-A47E97A25F5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE7FAD49-50C5-4B2D-B578-A47E97A25F5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A19AB0EF-2F2D-406E-9106-EB0A61F940DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A19AB0EF-2F2D-406E-9106-EB0A61F940DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A19AB0EF-2F2D-406E-9106-EB0A61F940DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A19AB0EF-2F2D-406E-9106-EB0A61F940DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF51BA75-DFCD-4EC2-95E3-5414DBEEEDB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF51BA75-DFCD-4EC2-95E3-5414DBEEEDB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF51BA75-DFCD-4EC2-95E3-5414DBEEEDB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF51BA75-DFCD-4EC2-95E3-5414DBEEEDB4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

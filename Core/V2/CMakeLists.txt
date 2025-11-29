@@ -6,7 +6,6 @@ option (FOR_DEVELOPMENT "For development" OFF)
 project(NewImplementation C)
 
 set(SOURCES
-        main.c
         cost.c
         logger.c
         builder.c
@@ -48,7 +47,6 @@ set(SOURCES
         Optimizers/Types/proportional_momentum_optimizer.c
         Optimizers/Types/adagrad_optimizer.c
         Optimizers/Types/adadelta_optimizer.c
-        i_o.c
         Optimizers/Types/adamax_optimizer.c
         Optimizers/Types/adamw_optimizer.c
         Layers/Types/dropout_layer.c
@@ -56,8 +54,6 @@ set(SOURCES
         Util/Collections/queue.c
         Util/range.c
         yaml.c
-        tester.c
-        Util/console.c
         training_component.c)
 
 if(MSVC)
@@ -86,7 +82,19 @@ if(MSVC)
     endif()
 endif()
 
-add_executable(NewImplementation ${SOURCES})
+set(TEST_SOURCES
+        ${SOURCES}
+        i_o.c
+        tester.c
+        Util/console.c
+        main.c)
+
+set(EXPORT_SOURCES
+        ${SOURCES}
+        export.c)
+
+add_executable(NewImplementation ${TEST_SOURCES})
+add_library(Export SHARED ${EXPORT_SOURCES})
 
 if(MSVC)
     target_include_directories(NewImplementation PRIVATE ${CUDA_INCLUDE_DIRS})

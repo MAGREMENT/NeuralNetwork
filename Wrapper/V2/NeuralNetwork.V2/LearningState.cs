@@ -1,12 +1,12 @@
 ﻿using System.Runtime.InteropServices;
 using Base;
 
-namespace NeuralNetwork.V1;
+namespace NeuralNetwork.V2;
 
 public partial class LearningState : ILearningState
 {
-    private readonly NeuralNetwork _network;
     private readonly IntPtr _ptr;
+    private readonly NeuralNetwork _network;
 
     public LearningState(NeuralNetwork network)
     {
@@ -14,18 +14,18 @@ public partial class LearningState : ILearningState
         _network = network;
     }
 
-    public IntPtr GetPointer() => _ptr;
-
     public void Dispose()
     {
         DisposeState(_network.GetPointer(), _ptr);
     }
+
+    public IntPtr GetPointer() => _ptr;
     
-    [LibraryImport("libExport.dll")]
+    [LibraryImport("Export.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial IntPtr CreateState(IntPtr ptr);
 
-    [LibraryImport("libExport.dll")]
+    [LibraryImport("Export.dll")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.AssemblyDirectory | DllImportSearchPath.ApplicationDirectory)]
     private static partial void DisposeState(IntPtr ptr, IntPtr state);
 }
